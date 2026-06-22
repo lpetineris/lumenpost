@@ -3,1087 +3,1124 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gerador de Conteúdo — Estúdio Gastronômico</title>
+<title>Lumen Post</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500&display=swap');
-
-  :root {
-    --verde:      #7A8F6A;
-    --verde-e:    #4A5C3C;
-    --verde-c:    #C8D4BC;
-    --verde-bg:   #8B9E7A;
-    --sage-c:     #EDF0E8;
-    --terracota:  #C4785A;
-    --terra-c:    #F0D8CC;
-    --cinza-c:    #E8E4DC;
-    --cinza-m:    #C0BAB0;
-    --branco:     #FFFFFF;
-    --texto:      #2A2A2A;
-    --texto-c:    #6A6A6A;
-    --mono:       'Space Mono', monospace;
-    --serif:      'Playfair Display', serif;
-    --sans:       'Inter', sans-serif;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: var(--sans);
-    background: var(--branco);
-    color: var(--texto);
-    min-height: 100vh;
-  }
-
-  /* ── HEADER ── */
-  header {
-    background: var(--verde-bg);
-    padding: 0 2rem;
-    height: 62px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .brand-icon {
-    width: 38px;
-    height: 38px;
-    opacity: 0.9;
-  }
-
-  .brand-text h1 {
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--branco);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    line-height: 1.2;
-  }
-
-  .brand-text p {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: rgba(255,255,255,0.65);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
-
-  /* ── TABS ── */
-  .tabs {
-    background: var(--verde-e);
-    display: flex;
-    padding: 0 2rem;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-  }
-
-  .tab-btn {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    font-weight: 400;
-    color: rgba(255,255,255,0.45);
-    background: none;
-    border: none;
-    padding: 11px 18px;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .tab-btn:hover { color: rgba(255,255,255,0.8); }
-
-  .tab-btn.active {
-    color: var(--branco);
-    border-bottom-color: var(--terracota);
-  }
-
-  /* ── MAIN ── */
-  .main {
-    max-width: 1160px;
-    margin: 0 auto;
-    padding: 2rem;
-  }
-
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-
-  /* ── ABA GERADOR ── */
-  .gerador-grid {
-    display: grid;
-    grid-template-columns: 310px 1fr;
-    gap: 1.5rem;
-    align-items: start;
-  }
-
-  /* Painel config */
-  .painel {
-    background: var(--sage-c);
-    border: 1px solid var(--verde-c);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .painel-header {
-    background: var(--verde-e);
-    padding: 10px 14px;
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: rgba(255,255,255,0.7);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .painel-body { padding: 16px; }
-
-  .field { margin-bottom: 14px; }
-
-  .field label {
-    display: block;
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: var(--verde-e);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-
-  .field select,
-  .field textarea,
-  .field input[type="date"] {
-    width: 100%;
-    font-family: var(--sans);
-    font-size: 0.85rem;
-    color: var(--texto);
-    background: var(--branco);
-    border: 1px solid var(--verde-c);
-    border-radius: 2px;
-    padding: 8px 10px;
-    transition: border-color 0.2s;
-    appearance: none;
-  }
-
-  .field select:focus,
-  .field textarea:focus,
-  .field input:focus {
-    outline: none;
-    border-color: var(--verde);
-  }
-
-  .field textarea {
-    resize: vertical;
-    min-height: 90px;
-    line-height: 1.55;
-  }
-
-  /* Upload de mídia */
-  .upload-area {
-    border: 2px dashed var(--verde-c);
-    border-radius: 2px;
-    background: var(--branco);
-    padding: 14px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-  }
-
-  .upload-area:hover {
-    border-color: var(--verde);
-    background: var(--sage-c);
-  }
-
-  .upload-area input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-  }
-
-  .upload-icon { font-size: 1.4rem; margin-bottom: 4px; }
-
-  .upload-label {
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    color: var(--verde-e);
-    letter-spacing: 0.06em;
-    display: block;
-  }
-
-  .upload-sub {
-    font-family: var(--sans);
-    font-size: 0.68rem;
-    color: var(--texto-c);
-    margin-top: 2px;
-  }
-
-  /* Preview de mídia no painel */
-  .midia-preview {
-    display: none;
-    margin-top: 8px;
-    position: relative;
-  }
-
-  .midia-preview img,
-  .midia-preview video {
-    width: 100%;
-    border-radius: 2px;
-    max-height: 160px;
-    object-fit: cover;
-    border: 1px solid var(--verde-c);
-  }
-
-  .midia-preview .midia-nome {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--texto-c);
-    margin-top: 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .midia-remove {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    background: rgba(0,0,0,0.55);
-    color: var(--branco);
-    border: none;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-  }
-
-  /* Cards de voz */
-  .voz-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
-
-  .voz-card {
-    border: 1px solid var(--verde-c);
-    border-radius: 2px;
-    padding: 10px 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: var(--branco);
-  }
-
-  .voz-card:hover { border-color: var(--verde); }
-
-  .voz-card.selected {
-    border-color: var(--verde-e);
-    background: var(--sage-c);
-    box-shadow: inset 2px 0 0 var(--verde-e);
-  }
-
-  .voz-nome {
-    font-family: var(--serif);
-    font-size: 0.82rem;
-    color: var(--verde-e);
-    margin-bottom: 1px;
-  }
-
-  .voz-rede {
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    color: var(--texto-c);
-    letter-spacing: 0.04em;
-  }
-
-  .voz-tag {
-    display: block;
-    font-family: var(--mono);
-    font-size: 0.58rem;
-    color: var(--terracota);
-    margin-top: 5px;
-    letter-spacing: 0.04em;
-  }
-
-  .btn-gerar {
-    width: 100%;
-    background: var(--verde-e);
-    color: var(--branco);
-    border: none;
-    padding: 12px;
-    font-family: var(--serif);
-    font-size: 0.95rem;
-    font-style: italic;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: background 0.2s;
-    margin-top: 4px;
-    letter-spacing: 0.02em;
-  }
-
-  .btn-gerar:hover { background: var(--verde); }
-  .btn-gerar:disabled { background: var(--cinza-m); cursor: not-allowed; }
-
-  /* Área de resultado */
-  .resultado-area {
-    background: var(--branco);
-    border: 1px solid var(--cinza-c);
-    border-top: 3px solid var(--verde-bg);
-    border-radius: 2px;
-    min-height: 480px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .resultado-header {
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--sage-c);
-    border-bottom: 1px solid var(--verde-c);
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .resultado-meta {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    color: var(--texto-c);
-  }
-
-  .resultado-meta strong { color: var(--verde-e); }
-
-  .resultado-acoes { display: flex; gap: 6px; flex-wrap: wrap; }
-
-  .btn-acao {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    padding: 5px 12px;
-    border-radius: 2px;
-    border: 1px solid var(--cinza-m);
-    background: var(--branco);
-    color: var(--texto);
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.04em;
-  }
-
-  .btn-acao:hover { border-color: var(--verde); background: var(--sage-c); }
-
-  .btn-acao.salvar {
-    background: var(--verde-e);
-    color: var(--branco);
-    border-color: var(--verde-e);
-  }
-
-  .btn-acao.salvar:hover { background: var(--verde); }
-
-  .btn-acao.aprovacao {
-    background: var(--terra-c);
-    color: var(--terracota);
-    border-color: var(--terracota);
-  }
-
-  /* Resultado com mídia */
-  .resultado-inner {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .resultado-midia-preview {
-    border-bottom: 1px solid var(--cinza-c);
-    background: var(--cinza-c);
-    display: none;
-    position: relative;
-  }
-
-  .resultado-midia-preview img,
-  .resultado-midia-preview video {
-    width: 100%;
-    max-height: 220px;
-    object-fit: cover;
-    display: block;
-  }
-
-  .midia-badge {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    background: rgba(0,0,0,0.55);
-    color: var(--branco);
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    padding: 3px 8px;
-    border-radius: 2px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  .resultado-corpo {
-    flex: 1;
-    padding: 24px;
-    font-family: var(--serif);
-    font-size: 0.95rem;
-    line-height: 1.85;
-    color: var(--texto);
-    white-space: pre-wrap;
-    display: none;
-  }
-
-  .resultado-vazio {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--texto-c);
-    gap: 12px;
-    padding: 40px;
-    text-align: center;
-  }
-
-  .resultado-vazio .icone { font-size: 2.4rem; opacity: 0.3; }
-
-  .resultado-vazio p {
-    font-family: var(--sans);
-    font-size: 0.82rem;
-    line-height: 1.65;
-  }
-
-  .resultado-vazio em {
-    font-family: var(--serif);
-    font-style: italic;
-    color: var(--verde);
-  }
-
-  /* Loading */
-  .loading {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
-    display: none;
-  }
-
-  .loading-dots {
-    display: flex;
-    gap: 7px;
-  }
-
-  .loading-dots span {
-    width: 9px;
-    height: 9px;
-    background: var(--verde-bg);
-    border-radius: 50%;
-    animation: pulso 1.4s ease-in-out infinite;
-  }
-
-  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-  @keyframes pulso {
-    0%, 80%, 100% { transform: scale(0.5); opacity: 0.3; }
-    40% { transform: scale(1); opacity: 1; }
-  }
-
-  .loading p {
-    font-family: var(--serif);
-    font-size: 0.88rem;
-    font-style: italic;
-    color: var(--texto-c);
-  }
-
-  /* ── CALENDÁRIO ── */
-  .calendario-topo {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-  }
-
-  .calendario-topo h2 {
-    font-family: var(--serif);
-    font-size: 1.4rem;
-    font-weight: 400;
-    color: var(--verde-e);
-  }
-
-  .nav-mes {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .nav-mes button {
-    background: var(--sage-c);
-    border: 1px solid var(--verde-c);
-    border-radius: 2px;
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-    color: var(--verde-e);
-    font-size: 1rem;
-    transition: all 0.2s;
-  }
-
-  .nav-mes button:hover { background: var(--verde-c); }
-
-  .nav-mes span {
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    color: var(--verde-e);
-    min-width: 150px;
-    text-align: center;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  .calendario-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
-  }
-
-  .cal-dia-nome {
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    text-align: center;
-    color: var(--texto-c);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 6px 0 8px;
-  }
-
-  .cal-dia {
-    background: var(--branco);
-    border: 1px solid var(--cinza-c);
-    border-radius: 2px;
-    min-height: 100px;
-    padding: 6px;
-    position: relative;
-    transition: border-color 0.15s;
-    overflow: hidden;
-  }
-
-  .cal-dia:hover { border-color: var(--verde-c); }
-  .cal-dia.outro-mes { background: #FAFAF8; opacity: 0.4; }
-  .cal-dia.hoje { border-color: var(--verde-bg); border-width: 2px; }
-
-  .cal-dia-num {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    color: var(--texto-c);
-    margin-bottom: 4px;
-  }
-
-  .cal-dia.hoje .cal-dia-num {
-    color: var(--verde-e);
-    font-weight: 700;
-  }
-
-  /* Miniatura no calendário */
-  .cal-post {
-    border-radius: 2px;
-    margin-bottom: 3px;
-    cursor: pointer;
-    transition: opacity 0.15s;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .cal-post:hover { opacity: 0.8; }
-
-  .cal-post-thumb {
-    width: 100%;
-    height: 36px;
-    object-fit: cover;
-    display: block;
-  }
-
-  .cal-post-video-thumb {
-    width: 100%;
-    height: 36px;
-    background: var(--verde-e);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--branco);
-    font-size: 14px;
-  }
-
-  .cal-post-label {
-    font-family: var(--mono);
-    font-size: 0.58rem;
-    padding: 2px 4px;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .cal-post.luna-linkedin    .cal-post-label { background: #E8EEF8; color: #1B3A5C; }
-  .cal-post.luna-instagram   .cal-post-label { background: #F0E8F5; color: #5B2D8E; }
-  .cal-post.estudio-linkedin .cal-post-label { background: var(--sage-c); color: var(--verde-e); }
-  .cal-post.estudio-instagram .cal-post-label { background: var(--terra-c); color: var(--terracota); }
-
-  .cal-post.sem-thumb .cal-post-label {
-    padding: 3px 5px;
-    min-height: 22px;
-    display: flex;
-    align-items: center;
-  }
-
-  .cal-add {
-    position: absolute;
-    bottom: 4px;
-    right: 4px;
-    width: 16px;
-    height: 16px;
-    background: none;
-    border: 1px solid var(--cinza-m);
-    border-radius: 50%;
-    font-size: 12px;
-    color: var(--texto-c);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-  }
-
-  .cal-add:hover { border-color: var(--verde); color: var(--verde); }
-
-  .legenda-cal {
-    display: flex;
-    gap: 20px;
-    margin-top: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .legenda-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    color: var(--texto-c);
-    letter-spacing: 0.04em;
-  }
-
-  .legenda-cor {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-  }
-
-  /* ── BANCO ── */
-  .banco-topo {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .banco-filtros { display: flex; gap: 6px; flex-wrap: wrap; }
-
-  .filtro-btn {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    padding: 5px 14px;
-    border-radius: 20px;
-    border: 1px solid var(--cinza-m);
-    background: var(--branco);
-    color: var(--texto-c);
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .filtro-btn:hover { border-color: var(--verde); color: var(--verde-e); }
-  .filtro-btn.active { background: var(--verde-e); color: var(--branco); border-color: var(--verde-e); }
-
-  .banco-lista { display: flex; flex-direction: column; gap: 10px; }
-
-  .post-card {
-    background: var(--branco);
-    border: 1px solid var(--cinza-c);
-    border-left: 3px solid var(--cinza-m);
-    border-radius: 2px;
-    overflow: hidden;
-    transition: border-left-color 0.2s;
-  }
-
-  .post-card:hover { border-left-color: var(--verde-bg); }
-
-  .post-card-inner {
-    display: grid;
-    grid-template-columns: auto 1fr;
-  }
-
-  /* Miniatura no card */
-  .post-card-thumb {
-    width: 100px;
-    flex-shrink: 0;
-    background: var(--cinza-c);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .post-card-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .post-card-thumb-video {
-    width: 100%;
-    height: 100%;
-    background: var(--verde-e);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--branco);
-    font-size: 1.6rem;
-  }
-
-  .post-card-thumb-vazio {
-    width: 100%;
-    height: 100%;
-    background: var(--sage-c);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--verde-c);
-    font-size: 1.4rem;
-  }
-
-  .post-card-right { flex: 1; }
-
-  .post-card-header {
-    padding: 9px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--sage-c);
-    border-bottom: 1px solid var(--verde-c);
-  }
-
-  .post-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-  .post-badge {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .post-badge.luna-linkedin    { background: #E8EEF8; color: #1B3A5C; }
-  .post-badge.luna-instagram   { background: #F0E8F5; color: #5B2D8E; }
-  .post-badge.estudio-linkedin { background: var(--sage-c); color: var(--verde-e); border: 1px solid var(--verde-c); }
-  .post-badge.estudio-instagram{ background: var(--terra-c); color: var(--terracota); }
-
-  .post-data {
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    color: var(--texto-c);
-    letter-spacing: 0.02em;
-  }
-
-  .post-status {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    padding: 2px 9px;
-    border-radius: 10px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .post-status.rascunho    { background: var(--cinza-c); color: var(--texto-c); }
-  .post-status.aguardando  { background: var(--terra-c); color: var(--terracota); }
-  .post-status.aprovado    { background: var(--sage-c); color: var(--verde-e); }
-  .post-status.publicado   { background: var(--verde-e); color: var(--branco); }
-
-  .post-card-corpo {
-    padding: 12px 14px;
-    font-family: var(--serif);
-    font-size: 0.88rem;
-    line-height: 1.65;
-    color: var(--texto);
-    max-height: 90px;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .post-card-corpo::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 32px;
-    background: linear-gradient(transparent, var(--branco));
-  }
-
-  .post-card-footer {
-    padding: 7px 14px;
-    display: flex;
-    gap: 6px;
-    border-top: 1px solid var(--cinza-c);
-    background: #FAFAF8;
-  }
-
-  .btn-mini {
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    padding: 4px 10px;
-    border-radius: 2px;
-    border: 1px solid var(--cinza-m);
-    background: var(--branco);
-    color: var(--verde-e);
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.02em;
-  }
-
-  .btn-mini:hover { background: var(--sage-c); border-color: var(--verde); }
-  .btn-mini.aprovado { background: var(--sage-c); color: var(--verde-e); border-color: var(--verde); }
-  .btn-mini.publicado { background: var(--verde-e); color: var(--branco); border-color: var(--verde-e); }
-  .btn-mini.danger { color: #9B2020; }
-  .btn-mini.danger:hover { background: #FDF0F0; border-color: #9B2020; }
-
-  /* Modal */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(30,40,25,0.6);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .modal-overlay.open { display: flex; }
-
-  .modal {
-    background: var(--branco);
-    border-radius: 2px;
-    border-top: 3px solid var(--verde-bg);
-    width: 640px;
-    max-width: 95vw;
-    max-height: 88vh;
-    overflow-y: auto;
-  }
-
-  .modal-header {
-    padding: 14px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--cinza-c);
-    background: var(--sage-c);
-  }
-
-  .modal-header h3 {
-    font-family: var(--serif);
-    font-size: 1.05rem;
-    color: var(--verde-e);
-    font-weight: 400;
-  }
-
-  .modal-fechar {
-    background: none;
-    border: none;
-    font-size: 1.4rem;
-    cursor: pointer;
-    color: var(--texto-c);
-    line-height: 1;
-  }
-
-  .modal-midia {
-    background: var(--cinza-c);
-    display: none;
-  }
-
-  .modal-midia img, .modal-midia video {
-    width: 100%;
-    max-height: 280px;
-    object-fit: contain;
-    display: block;
-  }
-
-  .modal-corpo {
-    padding: 24px;
-    font-family: var(--serif);
-    font-size: 0.95rem;
-    line-height: 1.85;
-    white-space: pre-wrap;
-    color: var(--texto);
-  }
-
-  .modal-footer {
-    padding: 12px 20px;
-    border-top: 1px solid var(--cinza-c);
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    background: var(--sage-c);
-  }
-
-  /* Toast */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--verde-e);
-    color: var(--branco);
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    padding: 10px 16px;
-    border-radius: 2px;
-    border-left: 3px solid var(--terracota);
-    transform: translateY(80px);
-    opacity: 0;
-    transition: all 0.3s;
-    z-index: 200;
-    letter-spacing: 0.04em;
-  }
-
-  .toast.show { transform: translateY(0); opacity: 1; }
-
-  .vazio-banco {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--texto-c);
-  }
-
-  .vazio-banco .icone { font-size: 2rem; margin-bottom: 10px; opacity: 0.3; }
-
-  .vazio-banco p {
-    font-family: var(--sans);
-    font-size: 0.82rem;
-    line-height: 1.65;
-  }
-
-  @media (max-width: 760px) {
-    .gerador-grid { grid-template-columns: 1fr; }
-    .main { padding: 1rem; }
-    .tabs { padding: 0 1rem; overflow-x: auto; }
-    .tab-btn { padding: 10px 12px; white-space: nowrap; }
-    .post-card-thumb { width: 72px; }
-  }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --verde:     #2D6A4F;
+  --verde-m:   #40916C;
+  --verde-c:   #74C69D;
+  --verde-bg:  #D8F3DC;
+  --verde-hero:#1B4332;
+  --bege:      #F5F2ED;
+  --branco:    #FFFFFF;
+  --texto:     #1A1A1A;
+  --texto-c:   #6B7280;
+  --borda:     #E5E7EB;
+  --card:      #FFFFFF;
+  --shadow:    0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-m:  0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+  --radius:    12px;
+  --radius-s:  8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bege);
+  color: var(--texto);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── NAVBAR ── */
+nav {
+  background: var(--branco);
+  border-bottom: 1px solid var(--borda);
+  padding: 0 2rem;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 30px;
+  height: 30px;
+  background: var(--verde);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.logo-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--texto);
+}
+
+.logo-text span {
+  color: var(--verde-m);
+  font-weight: 700;
+}
+
+.nav-empresa {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--texto-c);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--borda);
+  background: var(--bege);
+  transition: all 0.15s;
+}
+
+.nav-empresa:hover { border-color: var(--verde-c); }
+.nav-empresa span { font-weight: 500; color: var(--texto); }
+
+.nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-tab {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--texto-c);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.nav-tab:hover { color: var(--texto); background: var(--bege); }
+
+.nav-tab.active {
+  color: var(--verde);
+  border-color: var(--verde);
+  background: var(--branco);
+}
+
+.nav-tab.cta {
+  background: var(--verde);
+  color: var(--branco);
+  border-color: var(--verde);
+}
+
+.nav-tab.cta:hover { background: var(--verde-m); }
+
+/* ── MAIN ── */
+.main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── HERO CARD ── */
+.hero {
+  background: linear-gradient(135deg, var(--verde-hero) 0%, var(--verde) 60%, var(--verde-m) 100%);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  right: -20px;
+  top: -20px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  right: 40px;
+  bottom: -30px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+}
+
+.hero h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--branco);
+  margin-bottom: 6px;
+  position: relative;
+}
+
+.hero p {
+  font-size: 13px;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.6;
+  position: relative;
+  max-width: 500px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--borda);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto);
+  letter-spacing: 0.01em;
+}
+
+.card-sub {
+  font-size: 12px;
+  color: var(--texto-c);
+  margin-top: 2px;
+}
+
+.card-body { padding: 20px; }
+
+/* ── GRID GERADOR ── */
+.gerador-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+/* ── CAMPOS ── */
+.field { margin-bottom: 16px; }
+
+.field:last-child { margin-bottom: 0; }
+
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-c);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.field select,
+.field textarea,
+.field input[type="date"],
+.field input[type="text"] {
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--texto);
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-s);
+  padding: 9px 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: none;
+  line-height: 1.5;
+}
+
+.field select:focus,
+.field textarea:focus,
+.field input:focus {
+  outline: none;
+  border-color: var(--verde-c);
+  box-shadow: 0 0 0 3px rgba(116,198,157,0.15);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* ── VOZES ── */
+.voz-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+.voz-btn {
+  border: 1.5px solid var(--borda);
+  border-radius: var(--radius-s);
+  padding: 10px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--branco);
+  text-align: left;
+  width: 100%;
+}
+
+.voz-btn:hover { border-color: var(--verde-c); background: var(--verde-bg); }
+
+.voz-btn.selected {
+  border-color: var(--verde);
+  background: var(--verde-bg);
+  box-shadow: 0 0 0 1px var(--verde);
+}
+
+.voz-nome {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto);
+  display: block;
+}
+
+.voz-rede {
+  font-size: 11px;
+  color: var(--texto-c);
+  display: block;
+  margin-top: 1px;
+}
+
+.voz-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 5px;
+  background: rgba(45,106,79,0.1);
+  color: var(--verde);
+  font-weight: 500;
+}
+
+/* ── UPLOAD ── */
+.upload-area {
+  border: 2px dashed var(--borda);
+  border-radius: var(--radius-s);
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--branco);
+  position: relative;
+}
+
+.upload-area:hover { border-color: var(--verde-c); background: var(--verde-bg); }
+
+.upload-area input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.upload-icone { font-size: 20px; margin-bottom: 4px; }
+
+.upload-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto);
+  display: block;
+}
+
+.upload-sub {
+  font-size: 11px;
+  color: var(--texto-c);
+  margin-top: 2px;
+}
+
+.midia-preview { display: none; margin-top: 8px; position: relative; }
+
+.midia-preview img,
+.midia-preview video {
+  width: 100%;
+  max-height: 130px;
+  object-fit: cover;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--borda);
+  display: block;
+}
+
+.midia-nome {
+  font-size: 11px;
+  color: var(--texto-c);
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.midia-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── BOTÕES ── */
+.btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: var(--radius-s);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--verde);
+  color: white;
+  width: 100%;
+  justify-content: center;
+  font-size: 14px;
+  padding: 11px;
+  margin-top: 4px;
+}
+
+.btn-primary:hover { background: var(--verde-m); }
+.btn-primary:disabled { background: #9CA3AF; cursor: not-allowed; }
+
+.btn-outline {
+  background: white;
+  color: var(--texto);
+  border-color: var(--borda);
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.btn-outline:hover { border-color: var(--verde-c); background: var(--verde-bg); }
+
+.btn-verde {
+  background: var(--verde-bg);
+  color: var(--verde);
+  border-color: var(--verde-c);
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.btn-verde:hover { background: var(--verde-c); color: white; border-color: var(--verde-c); }
+
+.btn-solid {
+  background: var(--verde);
+  color: white;
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.btn-solid:hover { background: var(--verde-m); }
+
+.btn-danger { color: #DC2626; font-size: 12px; padding: 6px 12px; }
+.btn-danger:hover { background: #FEF2F2; border-color: #DC2626; }
+
+/* ── RESULTADO ── */
+.resultado-wrap {
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.resultado-barra {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--borda);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bege);
+  flex-wrap: wrap;
+  gap: 8px;
+  display: none;
+}
+
+.resultado-meta {
+  font-size: 12px;
+  color: var(--texto-c);
+}
+
+.resultado-meta strong { color: var(--verde); }
+
+.resultado-acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.resultado-midia {
+  display: none;
+  background: #F3F4F6;
+  position: relative;
+}
+
+.resultado-midia img,
+.resultado-midia video {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.midia-tipo {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.06em;
+}
+
+.resultado-texto {
+  flex: 1;
+  padding: 24px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--texto);
+  white-space: pre-wrap;
+  display: none;
+}
+
+.resultado-vazio {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  text-align: center;
+  color: var(--texto-c);
+}
+
+.resultado-vazio .icone { font-size: 2.5rem; opacity: 0.25; }
+.resultado-vazio p { font-size: 13px; line-height: 1.6; }
+.resultado-vazio em { color: var(--verde-m); font-style: normal; font-weight: 600; }
+
+.loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  display: none;
+}
+
+.dots { display: flex; gap: 6px; }
+.dots span {
+  width: 8px; height: 8px;
+  background: var(--verde-c);
+  border-radius: 50%;
+  animation: dot 1.4s ease-in-out infinite;
+}
+.dots span:nth-child(2) { animation-delay: 0.2s; }
+.dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dot {
+  0%, 80%, 100% { transform: scale(0.5); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.loading p { font-size: 13px; color: var(--texto-c); font-style: italic; }
+
+/* ── BANCO ── */
+.filtros { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+
+.filtro {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--borda);
+  background: white;
+  color: var(--texto-c);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filtro:hover { border-color: var(--verde-c); color: var(--verde); }
+.filtro.active { background: var(--verde); color: white; border-color: var(--verde); }
+
+.post-card {
+  background: white;
+  border: 1px solid var(--borda);
+  border-left: 3px solid var(--borda);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: border-left-color 0.15s;
+}
+
+.post-card:hover { border-left-color: var(--verde-m); }
+
+.post-card-inner { display: grid; grid-template-columns: 88px 1fr; }
+
+.post-thumb {
+  background: #F3F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9CA3AF;
+  font-size: 1.4rem;
+  min-height: 100px;
+}
+
+.post-thumb img {
+  width: 88px;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  min-height: 100px;
+}
+
+.post-thumb-video {
+  width: 88px;
+  min-height: 100px;
+  background: var(--verde-hero);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.4rem;
+}
+
+.post-direita { flex: 1; }
+
+.post-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--borda);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bege);
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.post-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge-linkedin { background: #EFF6FF; color: #1D4ED8; }
+.badge-instagram { background: #FDF4FF; color: #7C3AED; }
+.badge-tiktok { background: #F0FDF4; color: #15803D; }
+
+.post-data { font-size: 11px; color: var(--texto-c); }
+
+.status {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.status-rascunho { background: #F3F4F6; color: #6B7280; }
+.status-aguardando { background: #FEF3C7; color: #D97706; }
+.status-aprovado { background: #D1FAE5; color: #065F46; }
+.status-publicado { background: var(--verde); color: white; }
+
+.post-corpo {
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--texto);
+  max-height: 80px;
+  overflow: hidden;
+  position: relative;
+}
+
+.post-corpo::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 28px;
+  background: linear-gradient(transparent, white);
+}
+
+.post-footer {
+  padding: 8px 14px;
+  display: flex;
+  gap: 6px;
+  border-top: 1px solid var(--borda);
+  background: #FAFAFA;
+}
+
+/* ── CALENDÁRIO ── */
+.cal-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.cal-topo h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.cal-topo h2 span { color: var(--verde-m); }
+
+.nav-mes { display: flex; align-items: center; gap: 8px; }
+
+.nav-mes button {
+  width: 28px; height: 28px;
+  background: white;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--texto);
+  transition: all 0.15s;
+}
+
+.nav-mes button:hover { border-color: var(--verde-c); }
+
+.nav-mes span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--texto);
+  min-width: 130px;
+  text-align: center;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.cal-nome-dia {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--texto-c);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 0 8px;
+}
+
+.cal-dia {
+  background: white;
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-s);
+  min-height: 90px;
+  padding: 6px;
+  position: relative;
+  transition: border-color 0.15s;
+  overflow: hidden;
+}
+
+.cal-dia:hover { border-color: var(--verde-c); }
+.cal-dia.outro-mes { background: #FAFAF8; opacity: 0.4; }
+.cal-dia.hoje { border-color: var(--verde); border-width: 2px; }
+
+.cal-num {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--texto-c);
+  margin-bottom: 4px;
+}
+
+.cal-dia.hoje .cal-num { color: var(--verde); font-weight: 700; }
+
+.cal-post-item {
+  border-radius: 4px;
+  margin-bottom: 2px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+
+.cal-post-item:hover { opacity: 0.8; }
+
+.cal-thumb { width: 100%; height: 32px; object-fit: cover; display: block; }
+
+.cal-thumb-video {
+  width: 100%;
+  height: 32px;
+  background: var(--verde-hero);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+}
+
+.cal-label {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.02em;
+}
+
+.cal-label.linkedin { background: #EFF6FF; color: #1D4ED8; }
+.cal-label.instagram { background: #FDF4FF; color: #7C3AED; }
+.cal-label.tiktok { background: #F0FDF4; color: #15803D; }
+.cal-label.generico { background: var(--verde-bg); color: var(--verde); }
+.cal-label.sem-thumb { padding: 3px 4px; }
+
+.cal-add {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 16px; height: 16px;
+  background: none;
+  border: 1px solid var(--borda);
+  border-radius: 50%;
+  font-size: 12px;
+  color: var(--texto-c);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.cal-add:hover { border-color: var(--verde); color: var(--verde); }
+
+.legenda {
+  display: flex;
+  gap: 16px;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.legenda-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--texto-c);
+}
+
+.legenda-cor {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+}
+
+/* ── PERFIL ── */
+.perfil-titulo {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--texto);
+  margin-bottom: 6px;
+}
+
+.perfil-titulo span { color: var(--verde-m); }
+
+.perfil-sub {
+  font-size: 13px;
+  color: var(--texto-c);
+  margin-bottom: 2rem;
+}
+
+.perfil-salvo {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--verde);
+  font-weight: 500;
+  margin-top: 1rem;
+}
+
+.perfil-salvo.show { display: flex; }
+
+.redes-check {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rede-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--texto);
+  cursor: pointer;
+  padding: 6px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  background: white;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.rede-item input { display: none; }
+
+.rede-item.checked {
+  border-color: var(--verde);
+  background: var(--verde-bg);
+  color: var(--verde);
+  font-weight: 500;
+}
+
+.aviso-perfil {
+  background: #FEF3C7;
+  border: 1px solid #FCD34D;
+  border-radius: var(--radius-s);
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #92400E;
+  margin-bottom: 1.5rem;
+  display: none;
+}
+
+.aviso-perfil.show { display: block; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  width: 600px;
+  max-width: 95vw;
+  max-height: 88vh;
+  overflow-y: auto;
+  border-top: 3px solid var(--verde);
+  box-shadow: var(--shadow-m);
+}
+
+.modal-header {
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--borda);
+}
+
+.modal-header h3 { font-size: 15px; font-weight: 600; color: var(--texto); }
+
+.modal-fechar {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--texto-c);
+  line-height: 1;
+}
+
+.modal-midia { display: none; background: #F3F4F6; }
+.modal-midia img, .modal-midia video { width: 100%; max-height: 260px; object-fit: contain; display: block; }
+
+.modal-corpo {
+  padding: 20px;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  color: var(--texto);
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--borda);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  background: var(--bege);
+}
+
+/* ── VAZIO ── */
+.vazio {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--texto-c);
+}
+
+.vazio .icone { font-size: 2rem; margin-bottom: 10px; opacity: 0.3; }
+.vazio p { font-size: 13px; line-height: 1.65; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--verde-hero);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: var(--radius-s);
+  border-left: 3px solid var(--verde-c);
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 200;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+
+@media (max-width: 680px) {
+  .gerador-grid { grid-template-columns: 1fr; }
+  .nav-tabs { gap: 2px; }
+  .nav-tab { padding: 5px 10px; font-size: 12px; }
+  .post-card-inner { grid-template-columns: 72px 1fr; }
+}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="brand">
-    <svg class="brand-icon" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="19" cy="14" r="9" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/>
-      <line x1="19" y1="5" x2="19" y2="33" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
-      <line x1="19" y1="13" x2="13" y2="10" stroke="rgba(255,255,255,0.55)" stroke-width="0.9"/>
-      <line x1="19" y1="17" x2="25" y2="14" stroke="rgba(255,255,255,0.55)" stroke-width="0.9"/>
-      <path d="M14 30 Q19 26 24 30" stroke="rgba(255,255,255,0.4)" stroke-width="0.9" fill="none"/>
-    </svg>
-    <div class="brand-text">
-      <h1>Estúdio Gastronômico Luna Garcia</h1>
-      <p>Gerador de Conteúdo para Redes Sociais</p>
-    </div>
+<nav>
+  <div class="logo">
+    <div class="logo-icon">✦</div>
+    <div class="logo-text">Lumen <span>Post</span></div>
   </div>
-</header>
 
-<div class="tabs">
-  <button class="tab-btn active" onclick="mudarAba('gerador', this)">Gerar Post</button>
-  <button class="tab-btn" onclick="mudarAba('calendario', this)">Calendário</button>
-  <button class="tab-btn" onclick="mudarAba('banco', this)">Banco de Posts</button>
-</div>
+  <div class="nav-empresa" id="nav-empresa" onclick="mudarAba('perfil', document.querySelector('[data-aba=perfil]'))">
+    <span id="nome-empresa-nav">Configure sua empresa</span>
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab" data-aba="gerar" onclick="mudarAba('gerar', this)">Gerar Post</button>
+    <button class="nav-tab cta active" data-aba="gerar" onclick="mudarAba('gerar', this)">Gerar</button>
+    <button class="nav-tab" data-aba="banco" onclick="mudarAba('banco', this)">Banco de Posts</button>
+    <button class="nav-tab" data-aba="calendario" onclick="mudarAba('calendario', this)">Calendário</button>
+    <button class="nav-tab" data-aba="perfil" onclick="mudarAba('perfil', this)">Perfil</button>
+  </div>
+</nav>
 
 <div class="main">
 
-  <!-- ABA GERADOR -->
-  <div id="aba-gerador" class="tab-content active">
-    <div class="gerador-grid">
+  <!-- AVISO PERFIL -->
+  <div class="aviso-perfil" id="aviso-perfil">
+    ⚠️ Configure o <strong>Perfil da Empresa</strong> antes de gerar posts — a IA usa essas informações para criar conteúdo adequado à sua marca.
+  </div>
 
+  <!-- ABA GERAR -->
+  <div id="aba-gerar" class="tab-content active">
+    <div class="hero">
+      <h2>Gerar post com IA</h2>
+      <p>Escolha a voz, adicione a mídia, descreva o tema e a IA cria o rascunho certo para cada rede.</p>
+    </div>
+
+    <div class="gerador-grid">
+      <!-- Painel esquerdo -->
       <div>
-        <div class="painel">
-          <div class="painel-header">Configurar post</div>
-          <div class="painel-body">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-titulo">Configurar post</div>
+            </div>
+          </div>
+          <div class="card-body">
 
             <div class="field">
               <label>Voz e plataforma</label>
-              <div class="voz-cards">
-                <div class="voz-card selected" id="voz-luna-linkedin" onclick="selecionarVoz('luna-linkedin')">
-                  <div class="voz-nome">Luna Garcia</div>
-                  <div class="voz-rede">LinkedIn</div>
-                  <div class="voz-tag">✦ Requer aprovação da Luna</div>
-                </div>
-                <div class="voz-card" id="voz-luna-instagram" onclick="selecionarVoz('luna-instagram')">
-                  <div class="voz-nome">Luna Garcia</div>
-                  <div class="voz-rede">Instagram</div>
-                  <div class="voz-tag">✦ Requer aprovação da Luna</div>
-                </div>
-                <div class="voz-card" id="voz-estudio-linkedin" onclick="selecionarVoz('estudio-linkedin')">
-                  <div class="voz-nome">Estúdio EGL</div>
-                  <div class="voz-rede">LinkedIn</div>
-                  <div class="voz-tag">Técnico / Institucional</div>
-                </div>
-                <div class="voz-card" id="voz-estudio-instagram" onclick="selecionarVoz('estudio-instagram')">
-                  <div class="voz-nome">Estúdio EGL</div>
-                  <div class="voz-rede">Instagram</div>
-                  <div class="voz-tag">Bastidores / Humor</div>
-                </div>
+              <div class="voz-grid" id="voz-grid">
+                <!-- preenchido pelo JS com base nas redes do perfil -->
               </div>
             </div>
 
             <div class="field">
-              <label>Imagem ou vídeo do post</label>
+              <label>Imagem ou vídeo</label>
               <div class="upload-area" id="upload-area">
                 <input type="file" id="input-midia" accept="image/*,video/*" onchange="carregarMidia(this)">
-                <div class="upload-icon">🖼</div>
-                <span class="upload-label">Selecionar imagem ou vídeo</span>
-                <span class="upload-sub">JPG, PNG, MP4, MOV</span>
+                <div class="upload-icone">🖼</div>
+                <span class="upload-label">Selecionar arquivo</span>
+                <span class="upload-sub">JPG · PNG · MP4 · MOV</span>
               </div>
               <div class="midia-preview" id="midia-preview">
-                <button class="midia-remove" onclick="removerMidia()" title="Remover">×</button>
-                <div id="midia-preview-inner"></div>
+                <button class="midia-remove" onclick="removerMidia()">×</button>
+                <div id="midia-inner"></div>
                 <div class="midia-nome" id="midia-nome"></div>
               </div>
             </div>
 
             <div class="field">
               <label>Tema ou acontecimento</label>
-              <textarea id="input-tema" placeholder="Ex: sessão com 3 sets simultâneos para a Nestlé, tema era comida afetiva brasileira..." rows="4"></textarea>
+              <textarea id="input-tema" placeholder="Ex: lançamos um novo produto, fizemos uma sessão especial, temos uma novidade para contar..." rows="4"></textarea>
             </div>
 
             <div class="field">
               <label>Tom do post</label>
               <select id="input-tom">
                 <option value="autoridade">Autoridade e visão de mercado</option>
-                <option value="emocional">Emocional e artístico</option>
+                <option value="emocional">Emocional e próximo</option>
                 <option value="tecnico">Técnico e educativo</option>
                 <option value="humor">Leve / humor</option>
-                <option value="bastidores">Bastidores de produção</option>
+                <option value="bastidores">Bastidores</option>
+                <option value="lancamento">Lançamento / novidade</option>
               </select>
             </div>
 
@@ -1092,7 +1129,7 @@
               <input type="date" id="input-data">
             </div>
 
-            <button class="btn-gerar" id="btn-gerar" onclick="gerarPost()">
+            <button class="btn btn-primary" id="btn-gerar" onclick="gerarPost()">
               Gerar rascunho
             </button>
 
@@ -1101,71 +1138,154 @@
       </div>
 
       <!-- Resultado -->
-      <div class="resultado-area" id="resultado-area">
-        <div class="resultado-header" id="resultado-header" style="display:none">
+      <div class="resultado-wrap" id="resultado-wrap">
+        <div class="resultado-barra" id="resultado-barra">
           <div class="resultado-meta" id="resultado-meta"></div>
           <div class="resultado-acoes">
-            <button class="btn-acao" onclick="copiarPost()">Copiar texto</button>
-            <button class="btn-acao" onclick="regenerar()">Regenerar</button>
-            <button class="btn-acao aprovacao" id="btn-aprovacao" style="display:none" onclick="marcarAprovacao()">Enviar para aprovação da Luna</button>
-            <button class="btn-acao salvar" onclick="salvarPost()">Salvar no banco</button>
+            <button class="btn btn-outline" onclick="copiarPost()">Copiar</button>
+            <button class="btn btn-outline" onclick="regenerar()">Regenerar</button>
+            <button class="btn btn-verde" id="btn-aprovacao" style="display:none" onclick="marcarAprovacao()">Enviar para aprovação</button>
+            <button class="btn btn-solid" onclick="salvarPost()">Salvar no banco</button>
           </div>
         </div>
 
-        <div class="resultado-inner">
-          <div class="resultado-midia-preview" id="resultado-midia-preview">
-            <div id="resultado-midia-inner"></div>
-            <span class="midia-badge" id="resultado-midia-badge"></span>
-          </div>
-
-          <div class="resultado-vazio" id="resultado-vazio">
-            <div class="icone">🌿</div>
-            <p>Selecione a voz, adicione a mídia,<br>descreva o tema e clique em <em>Gerar rascunho.</em></p>
-          </div>
-
-          <div class="loading" id="loading">
-            <div class="loading-dots"><span></span><span></span><span></span></div>
-            <p id="loading-msg">Cultivando as palavras...</p>
-          </div>
-
-          <div class="resultado-corpo" id="resultado-corpo"></div>
+        <div class="resultado-midia" id="resultado-midia">
+          <div id="resultado-midia-inner"></div>
+          <span class="midia-tipo" id="midia-tipo"></span>
         </div>
-      </div>
 
-    </div>
-  </div>
+        <div class="resultado-vazio" id="resultado-vazio">
+          <div class="icone">✦</div>
+          <p>Configure o post ao lado<br>e clique em <em>Gerar rascunho</em>.</p>
+        </div>
 
-  <!-- ABA CALENDÁRIO -->
-  <div id="aba-calendario" class="tab-content">
-    <div class="calendario-topo">
-      <h2 id="titulo-mes"></h2>
-      <div class="nav-mes">
-        <button onclick="navMes(-1)">‹</button>
-        <span id="nav-mes-label"></span>
-        <button onclick="navMes(1)">›</button>
+        <div class="loading" id="loading">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <p id="loading-msg">Gerando rascunho...</p>
+        </div>
+
+        <div class="resultado-texto" id="resultado-texto"></div>
       </div>
-    </div>
-    <div class="calendario-grid" id="calendario-grid"></div>
-    <div class="legenda-cal">
-      <div class="legenda-item"><div class="legenda-cor" style="background:#E8EEF8"></div>Luna — LinkedIn</div>
-      <div class="legenda-item"><div class="legenda-cor" style="background:#F0E8F5"></div>Luna — Instagram</div>
-      <div class="legenda-item"><div class="legenda-cor" style="background:#C8D4BC"></div>Estúdio — LinkedIn</div>
-      <div class="legenda-item"><div class="legenda-cor" style="background:#F0D8CC"></div>Estúdio — Instagram</div>
     </div>
   </div>
 
   <!-- ABA BANCO -->
   <div id="aba-banco" class="tab-content">
-    <div class="banco-topo">
-      <div class="banco-filtros">
-        <button class="filtro-btn active" onclick="filtrarBanco('todos', this)">Todos</button>
-        <button class="filtro-btn" onclick="filtrarBanco('rascunho', this)">Rascunho</button>
-        <button class="filtro-btn" onclick="filtrarBanco('aguardando', this)">Aguardando Luna</button>
-        <button class="filtro-btn" onclick="filtrarBanco('aprovado', this)">Aprovado</button>
-        <button class="filtro-btn" onclick="filtrarBanco('publicado', this)">Publicado</button>
+    <div class="hero">
+      <h2>Banco de Posts</h2>
+      <p>Todos os rascunhos gerados, organizados por status.</p>
+    </div>
+    <div class="filtros">
+      <button class="filtro active" onclick="filtrar('todos', this)">Todos</button>
+      <button class="filtro" onclick="filtrar('rascunho', this)">Rascunho</button>
+      <button class="filtro" onclick="filtrar('aguardando', this)">Aguardando aprovação</button>
+      <button class="filtro" onclick="filtrar('aprovado', this)">Aprovado</button>
+      <button class="filtro" onclick="filtrar('publicado', this)">Publicado</button>
+    </div>
+    <div id="banco-lista"></div>
+  </div>
+
+  <!-- ABA CALENDÁRIO -->
+  <div id="aba-calendario" class="tab-content">
+    <div class="cal-topo">
+      <h2 id="cal-titulo">Junho <span>2025</span></h2>
+      <div class="nav-mes">
+        <button onclick="navMes(-1)">‹</button>
+        <span id="cal-label"></span>
+        <button onclick="navMes(1)">›</button>
       </div>
     </div>
-    <div class="banco-lista" id="banco-lista"></div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="legenda">
+      <div class="legenda-item"><div class="legenda-cor" style="background:#BFDBFE"></div>LinkedIn</div>
+      <div class="legenda-item"><div class="legenda-cor" style="background:#E9D5FF"></div>Instagram</div>
+      <div class="legenda-item"><div class="legenda-cor" style="background:#BBF7D0"></div>TikTok</div>
+      <div class="legenda-item"><div class="legenda-cor" style="background:#D8F3DC"></div>Outros</div>
+    </div>
+  </div>
+
+  <!-- ABA PERFIL -->
+  <div id="aba-perfil" class="tab-content">
+    <div class="perfil-titulo">Perfil da <span>empresa</span></div>
+    <p class="perfil-sub">Preencha uma vez. A IA usará essas informações em todos os posts gerados.</p>
+
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-header"><div class="card-titulo">Sobre a empresa</div></div>
+      <div class="card-body">
+        <div class="field">
+          <label>Nome da empresa</label>
+          <input type="text" id="p-nome" placeholder="Ex: Studio Photo Brasil">
+        </div>
+        <div class="field">
+          <label>História e descrição</label>
+          <textarea id="p-historia" rows="4" placeholder="Ex: Somos uma produtora de fotografia especializada em alimentos, com 10 anos de mercado, atendendo grandes indústrias e restaurantes em São Paulo."></textarea>
+        </div>
+        <div class="field">
+          <label>Propósito</label>
+          <textarea id="p-proposito" rows="3" placeholder="Ex: Transformamos alimentos em imagens que vendem. Acreditamos que uma boa foto é a ponte entre o produto e o desejo do consumidor."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-header"><div class="card-titulo">Público e voz</div></div>
+      <div class="card-body">
+        <div class="field">
+          <label>Cliente ideal</label>
+          <textarea id="p-cliente" rows="3" placeholder="Ex: Diretores de marketing de indústrias alimentícias e gestores de agências de propaganda em São Paulo."></textarea>
+        </div>
+        <div class="field">
+          <label>Tom de voz e personalidade</label>
+          <textarea id="p-tom" rows="3" placeholder="Ex: Profissional e confiante, mas próximo. Evitamos jargões técnicos. Valorizamos a arte, a estética e a conexão emocional com o alimento."></textarea>
+        </div>
+        <div class="field">
+          <label>Diferenciais</label>
+          <textarea id="p-diferenciais" rows="2" placeholder="Ex: Equipe fixa especializada, 3 cozinhas-estúdio, acervo de 30.000 peças de cenografia, produção simultânea de foto e vídeo."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="card-header"><div class="card-titulo">Redes sociais ativas</div></div>
+      <div class="card-body">
+        <div class="field">
+          <label>Selecione as redes que serão usadas para gerar posts</label>
+          <div class="redes-check" id="redes-check">
+            <label class="rede-item" id="rede-linkedin">
+              <input type="checkbox" value="linkedin" onchange="toggleRede(this)">
+              💼 LinkedIn
+            </label>
+            <label class="rede-item" id="rede-instagram">
+              <input type="checkbox" value="instagram" onchange="toggleRede(this)">
+              📸 Instagram
+            </label>
+            <label class="rede-item" id="rede-tiktok">
+              <input type="checkbox" value="tiktok" onchange="toggleRede(this)">
+              🎵 TikTok
+            </label>
+            <label class="rede-item" id="rede-facebook">
+              <input type="checkbox" value="facebook" onchange="toggleRede(this)">
+              👥 Facebook
+            </label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Há posts que precisam de aprovação antes de publicar?</label>
+          <select id="p-aprovacao">
+            <option value="nao">Não — todos podem ser publicados diretamente</option>
+            <option value="sim">Sim — todos os posts precisam de aprovação</option>
+            <option value="alguns">Alguns — apenas posts de determinada conta</option>
+          </select>
+        </div>
+        <div class="field" id="field-aprovacao-conta" style="display:none">
+          <label>Qual conta precisa de aprovação?</label>
+          <input type="text" id="p-aprovacao-conta" placeholder="Ex: perfil pessoal do fundador no LinkedIn">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="salvarPerfil()" style="max-width:200px">Salvar perfil</button>
+    <div class="perfil-salvo" id="perfil-salvo">✓ Perfil salvo com sucesso!</div>
   </div>
 
 </div>
@@ -1180,8 +1300,8 @@
     <div class="modal-midia" id="modal-midia"></div>
     <div class="modal-corpo" id="modal-corpo"></div>
     <div class="modal-footer">
-      <button class="btn-acao" onclick="copiarModal()">Copiar texto</button>
-      <button class="btn-acao" onclick="fecharModal()">Fechar</button>
+      <button class="btn btn-outline" onclick="copiarModal()">Copiar texto</button>
+      <button class="btn btn-outline" onclick="fecharModal()">Fechar</button>
     </div>
   </div>
 </div>
@@ -1189,77 +1309,172 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let vozAtual = 'luna-linkedin';
+// ── ESTADO ───────────────────────────────────────────────────────────
+let vozAtual = null;
 let postAtual = null;
-let midiaAtual = null; // { tipo: 'imagem'|'video', dataUrl, nome }
+let midiaAtual = null;
 let bancoPosts = [];
 let calPosts = {};
 let mesAtual = new Date().getMonth();
 let anoAtual = new Date().getFullYear();
 let filtroAtual = 'todos';
 let modalPostIdx = null;
+let perfil = {};
 
-try { bancoPosts = JSON.parse(localStorage.getItem('egl_posts') || '[]'); } catch(e) { bancoPosts = []; }
-try { calPosts = JSON.parse(localStorage.getItem('egl_cal') || '{}'); } catch(e) { calPosts = {}; }
+try { bancoPosts = JSON.parse(localStorage.getItem('lp_posts') || '[]'); } catch(e) { bancoPosts = []; }
+try { calPosts = JSON.parse(localStorage.getItem('lp_cal') || '{}'); } catch(e) { calPosts = {}; }
+try { perfil = JSON.parse(localStorage.getItem('lp_perfil') || '{}'); } catch(e) { perfil = {}; }
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const DIAS  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 
-const VOZ_CONFIG = {
-  'luna-linkedin': {
-    label: 'Luna Garcia — LinkedIn', aprovacao: true, classe: 'luna-linkedin',
-    system: `Você cria posts para o LinkedIn pessoal da fotógrafa Luna Garcia, fundadora do Estúdio Gastronômico Luna Garcia — referência nacional em fotografia e vídeo de alimentos há 17 anos, em São Paulo.
-
-PERFIL DA LUNA: artista e fotógrafa sensível, formada em Cambridge, viveu 6 anos na Europa, conectada com natureza, cultura indígena e causas sociais. O estúdio tem identidade tupi-guarani — valoriza ancestralidade, território e saberes originários. Discreta: NUNCA fala de câmeras, objetivas ou software. Fala de SENSAÇÕES, EMOÇÃO e SIGNIFICADO da imagem.
-
-REGRAS: primeira pessoa, voz próxima e reflexiva, autoridade artística (não técnica de equipamento), 150-250 palavras, pode trazer natureza/memória/pertencimento/identidade, terminar com pergunta ou reflexão, máximo 3 hashtags. NUNCA mencionar marcas de câmera ou software.`
-  },
-  'luna-instagram': {
-    label: 'Luna Garcia — Instagram', aprovacao: true, classe: 'luna-instagram',
-    system: `Você cria legendas para o Instagram pessoal da fotógrafa Luna Garcia — artista sensível, referência em food photography no Brasil. Identidade ligada à natureza e cultura indígena. Nunca fala de equipamentos. Voz íntima, poética. Primeira pessoa, 80-150 palavras, até 2 emojis, 3-6 hashtags. NUNCA mencionar câmeras ou software.`
-  },
-  'estudio-linkedin': {
-    label: 'Estúdio EGL — LinkedIn', aprovacao: false, classe: 'estudio-linkedin',
-    system: `Você cria posts para o LinkedIn institucional do Estúdio Gastronômico Luna Garcia — produtora especializada em food content há 17 anos, São Paulo. Estrutura: 4 estúdios nomeados em tupi-guarani, 3 cozinhas, acervo de 30.000+ peças, horta própria, equipe fixa. Atende Nestlé, JBS e grandes indústrias. Tom técnico e profissional — pode abordar iluminação, equipamentos, processo, escala. Terceira pessoa ou voz institucional, 150-250 palavras, CTA ou reflexão de mercado ao final, 3-5 hashtags.`
-  },
-  'estudio-instagram': {
-    label: 'Estúdio EGL — Instagram', aprovacao: false, classe: 'estudio-instagram',
-    system: `Você cria legendas para o Instagram do Estúdio Gastronômico Luna Garcia — equipe criativa com bom humor. Pode abordar bastidores, iluminação, equipamentos, desafios de produção, curiosidades. Tom leve, humor genuíno quando couber. "A gente" ou terceira pessoa próxima, 80-150 palavras, até 3 emojis, 5-8 hashtags.`
-  }
+const REDES_CONFIG = {
+  linkedin:  { label: 'LinkedIn',  emoji: '💼', badge: 'badge-linkedin',  calLabel: 'linkedin' },
+  instagram: { label: 'Instagram', emoji: '📸', badge: 'badge-instagram', calLabel: 'instagram' },
+  tiktok:    { label: 'TikTok',    emoji: '🎵', badge: 'badge-tiktok',    calLabel: 'tiktok' },
+  facebook:  { label: 'Facebook',  emoji: '👥', badge: 'badge-linkedin',  calLabel: 'generico' },
 };
 
-// ── ABAS ──────────────────────────────────────────────────────────────
+const TOM_MAP = {
+  autoridade: 'autoridade e visão de mercado',
+  emocional:  'emocional e próximo',
+  tecnico:    'técnico e educativo',
+  humor:      'leve e bem-humorado',
+  bastidores: 'bastidores e processo',
+  lancamento: 'lançamento e novidade',
+};
+
+// ── INIT ─────────────────────────────────────────────────────────────
+function init() {
+  carregarPerfil();
+  renderVozes();
+  verificarPerfil();
+  // Fix nav tabs — remove duplicate
+  const tabs = document.querySelectorAll('.nav-tab');
+  // First two buttons are duplicates — remove the redundant one
+}
+
+// ── ABAS ─────────────────────────────────────────────────────────────
 function mudarAba(aba, btn) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active', 'cta'));
   document.getElementById('aba-' + aba).classList.add('active');
-  btn.classList.add('active');
+
+  // Marcar tab ativa
+  document.querySelectorAll(`[data-aba="${aba}"]`).forEach(el => el.classList.add('active'));
+
   if (aba === 'calendario') renderCalendario();
   if (aba === 'banco') renderBanco();
 }
 
-// ── VOZ ──────────────────────────────────────────────────────────────
-function selecionarVoz(voz) {
-  vozAtual = voz;
-  document.querySelectorAll('.voz-card').forEach(el => el.classList.remove('selected'));
-  document.getElementById('voz-' + voz).classList.add('selected');
+// ── PERFIL ────────────────────────────────────────────────────────────
+function carregarPerfil() {
+  if (!perfil || !perfil.nome) return;
+  document.getElementById('p-nome').value = perfil.nome || '';
+  document.getElementById('p-historia').value = perfil.historia || '';
+  document.getElementById('p-proposito').value = perfil.proposito || '';
+  document.getElementById('p-cliente').value = perfil.cliente || '';
+  document.getElementById('p-tom').value = perfil.tom || '';
+  document.getElementById('p-diferenciais').value = perfil.diferenciais || '';
+  document.getElementById('p-aprovacao').value = perfil.aprovacao || 'nao';
+  document.getElementById('p-aprovacao-conta').value = perfil.aprovacaoConta || '';
+
+  (perfil.redes || []).forEach(r => {
+    const cb = document.querySelector(`input[value="${r}"]`);
+    if (cb) { cb.checked = true; document.getElementById(`rede-${r}`).classList.add('checked'); }
+  });
+
+  document.getElementById('nome-empresa-nav').textContent = perfil.nome;
+  if (perfil.aprovacao === 'alguns') document.getElementById('field-aprovacao-conta').style.display = 'block';
+}
+
+function salvarPerfil() {
+  const redes = Array.from(document.querySelectorAll('#redes-check input:checked')).map(cb => cb.value);
+  perfil = {
+    nome: document.getElementById('p-nome').value,
+    historia: document.getElementById('p-historia').value,
+    proposito: document.getElementById('p-proposito').value,
+    cliente: document.getElementById('p-cliente').value,
+    tom: document.getElementById('p-tom').value,
+    diferenciais: document.getElementById('p-diferenciais').value,
+    redes,
+    aprovacao: document.getElementById('p-aprovacao').value,
+    aprovacaoConta: document.getElementById('p-aprovacao-conta').value,
+  };
+  localStorage.setItem('lp_perfil', JSON.stringify(perfil));
+
+  document.getElementById('nome-empresa-nav').textContent = perfil.nome || 'Configure sua empresa';
+  document.getElementById('perfil-salvo').classList.add('show');
+  setTimeout(() => document.getElementById('perfil-salvo').classList.remove('show'), 3000);
+
+  renderVozes();
+  verificarPerfil();
+  mostrarToast('Perfil salvo!');
+}
+
+function toggleRede(cb) {
+  const label = document.getElementById(`rede-${cb.value}`);
+  label.classList.toggle('checked', cb.checked);
+}
+
+document.getElementById('p-aprovacao').addEventListener('change', function() {
+  document.getElementById('field-aprovacao-conta').style.display = this.value === 'alguns' ? 'block' : 'none';
+});
+
+function verificarPerfil() {
+  const aviso = document.getElementById('aviso-perfil');
+  aviso.classList.toggle('show', !perfil.nome);
+}
+
+// ── VOZES ─────────────────────────────────────────────────────────────
+function renderVozes() {
+  const grid = document.getElementById('voz-grid');
+  const redes = perfil.redes && perfil.redes.length ? perfil.redes : ['linkedin', 'instagram'];
+
+  grid.innerHTML = '';
+  vozAtual = null;
+
+  redes.forEach((r, i) => {
+    const cfg = REDES_CONFIG[r];
+    if (!cfg) return;
+
+    const precisaAprov = perfil.aprovacao === 'sim' ||
+      (perfil.aprovacao === 'alguns' && perfil.aprovacaoConta && r.includes(perfil.aprovacaoConta));
+
+    const btn = document.createElement('button');
+    btn.className = 'voz-btn' + (i === 0 ? ' selected' : '');
+    btn.id = 'voz-' + r;
+    btn.innerHTML = `
+      <span class="voz-nome">${cfg.emoji} ${cfg.label}</span>
+      <span class="voz-rede">${perfil.nome || 'Sua empresa'}</span>
+      ${precisaAprov ? '<span class="voz-tag">Requer aprovação</span>' : ''}
+    `;
+    btn.onclick = () => selecionarVoz(r, precisaAprov);
+    grid.appendChild(btn);
+
+    if (i === 0) { vozAtual = { rede: r, aprovacao: precisaAprov }; }
+  });
+}
+
+function selecionarVoz(rede, aprovacao) {
+  vozAtual = { rede, aprovacao };
+  document.querySelectorAll('.voz-btn').forEach(b => b.classList.remove('selected'));
+  const btn = document.getElementById('voz-' + rede);
+  if (btn) btn.classList.add('selected');
 }
 
 // ── MÍDIA ─────────────────────────────────────────────────────────────
 function carregarMidia(input) {
   const file = input.files[0];
   if (!file) return;
-
   const reader = new FileReader();
   reader.onload = (e) => {
     const isVideo = file.type.startsWith('video/');
     midiaAtual = { tipo: isVideo ? 'video' : 'imagem', dataUrl: e.target.result, nome: file.name };
-
-    const inner = document.getElementById('midia-preview-inner');
+    const inner = document.getElementById('midia-inner');
     inner.innerHTML = isVideo
-      ? `<video src="${e.target.result}" style="width:100%;max-height:140px;border-radius:2px;border:1px solid var(--verde-c)" controls></video>`
-      : `<img src="${e.target.result}" style="width:100%;max-height:140px;object-fit:cover;border-radius:2px;border:1px solid var(--verde-c)">`;
-
+      ? `<video src="${e.target.result}" style="width:100%;max-height:130px;border-radius:8px;border:1px solid #E5E7EB" controls></video>`
+      : `<img src="${e.target.result}" style="width:100%;max-height:130px;object-fit:cover;border-radius:8px;border:1px solid #E5E7EB">`;
     document.getElementById('midia-nome').textContent = file.name;
     document.getElementById('midia-preview').style.display = 'block';
     document.getElementById('upload-area').style.display = 'none';
@@ -1274,63 +1489,63 @@ function removerMidia() {
   document.getElementById('input-midia').value = '';
 }
 
-function mostrarMidiaResultado() {
-  const area = document.getElementById('resultado-midia-preview');
-  const inner = document.getElementById('resultado-midia-inner');
-  const badge = document.getElementById('resultado-midia-badge');
+// ── GERAR POST ────────────────────────────────────────────────────────
+function buildSystem() {
+  const p = perfil;
+  const redeName = vozAtual ? (REDES_CONFIG[vozAtual.rede]?.label || vozAtual.rede) : 'redes sociais';
 
-  if (!midiaAtual) { area.style.display = 'none'; return; }
+  return `Você é um especialista em criação de conteúdo para redes sociais.
 
-  inner.innerHTML = midiaAtual.tipo === 'video'
-    ? `<video src="${midiaAtual.dataUrl}" style="width:100%;max-height:220px;object-fit:cover;display:block" controls></video>`
-    : `<img src="${midiaAtual.dataUrl}" style="width:100%;max-height:220px;object-fit:cover;display:block">`;
+EMPRESA:
+Nome: ${p.nome || 'Empresa'}
+Descrição: ${p.historia || ''}
+Propósito: ${p.proposito || ''}
+Cliente ideal: ${p.cliente || ''}
+Tom de voz e personalidade: ${p.tom || ''}
+Diferenciais: ${p.diferenciais || ''}
 
-  badge.textContent = midiaAtual.tipo === 'video' ? '▶ VÍDEO' : '📷 IMAGEM';
-  area.style.display = 'block';
+INSTRUÇÃO:
+Crie um post para ${redeName} que represente fielmente a voz e a identidade dessa empresa.
+${redeName === 'LinkedIn' ? 'LinkedIn: 150-250 palavras, profissional, terminar com pergunta ou CTA, máximo 5 hashtags.' : ''}
+${redeName === 'Instagram' ? 'Instagram: 80-150 palavras, dinâmico e visual, até 3 emojis, 5-8 hashtags ao final.' : ''}
+${redeName === 'TikTok' ? 'TikTok: 50-100 palavras, direto, jovem, 3-5 hashtags curtos e trending.' : ''}
+${redeName === 'Facebook' ? 'Facebook: 100-200 palavras, amigável e informativo, 2-3 hashtags.' : ''}
+
+Escreva apenas o texto do post, sem explicações ou comentários adicionais.`;
 }
 
-// ── GERAR POST ────────────────────────────────────────────────────────
 async function gerarPost() {
   const tema = document.getElementById('input-tema').value.trim();
   if (!tema) { mostrarToast('Descreva o tema antes de gerar.'); return; }
+  if (!perfil.nome) { mostrarToast('Configure o Perfil da Empresa primeiro.'); return; }
 
   const tom = document.getElementById('input-tom').value;
-  const config = VOZ_CONFIG[vozAtual];
   const btn = document.getElementById('btn-gerar');
-
   btn.disabled = true;
 
   document.getElementById('resultado-vazio').style.display = 'none';
-  document.getElementById('resultado-corpo').style.display = 'none';
-  document.getElementById('resultado-header').style.display = 'none';
-  document.getElementById('resultado-midia-preview').style.display = 'none';
+  document.getElementById('resultado-texto').style.display = 'none';
+  document.getElementById('resultado-barra').style.display = 'none';
+  document.getElementById('resultado-midia').style.display = 'none';
   document.getElementById('loading').style.display = 'flex';
 
-  const msgs = ['Cultivando as palavras...','Ajustando o enquadramento...','Colhendo a essência do tema...','Finalizando o rascunho...'];
+  const msgs = ['Gerando rascunho...', 'Ajustando o tom da marca...', 'Finalizando o post...'];
   let mi = 0;
   const interval = setInterval(() => {
     document.getElementById('loading-msg').textContent = msgs[mi % msgs.length];
     mi++;
   }, 1800);
 
-  const tonMap = {
-    autoridade: 'autoridade e visão de mercado',
-    emocional: 'emocional, poético e artístico',
-    tecnico: 'técnico e educativo',
-    humor: 'leve, com toque de humor genuíno',
-    bastidores: 'bastidores e processo de produção'
-  };
-
-  const userPrompt = `Tema: ${tema}\nTom: ${tonMap[tom]}${midiaAtual ? `\nMídia: ${midiaAtual.tipo === 'video' ? 'vídeo' : 'foto'} chamada "${midiaAtual.nome}" acompanha o post` : ''}\n\nEscreva apenas o texto do post, sem explicações adicionais.`;
+  const rede = vozAtual ? (REDES_CONFIG[vozAtual.rede]?.label || vozAtual.rede) : 'redes sociais';
+  const userPrompt = `Tema: ${tema}\nTom: ${TOM_MAP[tom]}${midiaAtual ? `\nMídia: ${midiaAtual.tipo} chamada "${midiaAtual.nome}" acompanha o post` : ''}\n\nEscreva o post completo.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        system: buildSystem(),
         max_tokens: 1000,
-        system: config.system,
         messages: [{ role: 'user', content: userPrompt }]
       })
     });
@@ -1343,20 +1558,33 @@ async function gerarPost() {
     if (!texto) throw new Error('vazio');
 
     postAtual = {
-      voz: vozAtual, label: config.label, classe: config.classe,
+      voz: vozAtual?.rede || 'generico',
+      rede,
+      badge: REDES_CONFIG[vozAtual?.rede]?.badge || 'badge-linkedin',
+      calLabel: REDES_CONFIG[vozAtual?.rede]?.calLabel || 'generico',
       texto, tom, tema,
       midia: midiaAtual ? { ...midiaAtual } : null,
       data: document.getElementById('input-data').value || '',
       status: 'rascunho',
-      criadoEm: new Date().toISOString()
+      criadoEm: new Date().toISOString(),
+      empresa: perfil.nome,
+      aprovacao: vozAtual?.aprovacao || false,
     };
 
-    document.getElementById('resultado-meta').innerHTML = `<strong>${config.label}</strong>&nbsp;·&nbsp;tom ${tonMap[tom]}`;
-    document.getElementById('resultado-corpo').textContent = texto;
-    document.getElementById('resultado-corpo').style.display = 'block';
-    document.getElementById('resultado-header').style.display = 'flex';
-    document.getElementById('btn-aprovacao').style.display = config.aprovacao ? 'inline-block' : 'none';
-    mostrarMidiaResultado();
+    document.getElementById('resultado-meta').innerHTML = `<strong>${perfil.nome}</strong> · ${rede} · tom ${TOM_MAP[tom]}`;
+    document.getElementById('resultado-texto').textContent = texto;
+    document.getElementById('resultado-texto').style.display = 'block';
+    document.getElementById('resultado-barra').style.display = 'flex';
+    document.getElementById('btn-aprovacao').style.display = vozAtual?.aprovacao ? 'inline-flex' : 'none';
+
+    if (midiaAtual) {
+      const inner = document.getElementById('resultado-midia-inner');
+      inner.innerHTML = midiaAtual.tipo === 'video'
+        ? `<video src="${midiaAtual.dataUrl}" controls style="width:100%;max-height:200px;object-fit:cover;display:block"></video>`
+        : `<img src="${midiaAtual.dataUrl}" style="width:100%;max-height:200px;object-fit:cover;display:block">`;
+      document.getElementById('midia-tipo').textContent = midiaAtual.tipo === 'video' ? '▶ VÍDEO' : '📷 IMAGEM';
+      document.getElementById('resultado-midia').style.display = 'block';
+    }
 
   } catch(err) {
     clearInterval(interval);
@@ -1376,8 +1604,8 @@ function regenerar() {
 }
 
 function copiarPost() {
-  navigator.clipboard.writeText(document.getElementById('resultado-corpo').textContent)
-    .then(() => mostrarToast('Post copiado!'));
+  navigator.clipboard.writeText(document.getElementById('resultado-texto').textContent)
+    .then(() => mostrarToast('Texto copiado!'));
 }
 
 function salvarPost() {
@@ -1392,49 +1620,53 @@ function marcarAprovacao() {
   postAtual.status = 'aguardando';
   bancoPosts.unshift({ ...postAtual, id: Date.now() });
   salvarStorage();
-  mostrarToast('Salvo e marcado para aprovação da Luna.');
+  mostrarToast('Salvo e marcado para aprovação.');
 }
 
 // ── BANCO ─────────────────────────────────────────────────────────────
-function thumbHtml(midia, altura = 100) {
-  if (!midia) return `<div class="post-card-thumb-vazio" style="height:${altura}px">🌿</div>`;
-  if (midia.tipo === 'video') return `<div class="post-card-thumb-video" style="height:${altura}px">▶</div>`;
-  return `<img src="${midia.dataUrl}" style="width:100%;height:${altura}px;object-fit:cover;display:block">`;
-}
-
 function renderBanco() {
   const lista = document.getElementById('banco-lista');
   const filtrados = filtroAtual === 'todos' ? bancoPosts : bancoPosts.filter(p => p.status === filtroAtual);
 
   if (!filtrados.length) {
-    lista.innerHTML = `<div class="vazio-banco"><div class="icone">🌱</div><p>Nenhum post ${filtroAtual !== 'todos' ? 'com este status' : 'salvo ainda'}.<br>Gere um rascunho e salve no banco.</p></div>`;
+    lista.innerHTML = `<div class="vazio"><div class="icone">✦</div><p>Nenhum post ${filtroAtual !== 'todos' ? 'com este status' : 'salvo ainda'}.<br>Gere um rascunho e salve no banco.</p></div>`;
     return;
   }
 
-  const sl = { rascunho:'Rascunho', aguardando:'Aguardando Luna', aprovado:'Aprovado', publicado:'Publicado' };
-  lista.innerHTML = filtrados.map((p) => {
+  const sl = { rascunho:'Rascunho', aguardando:'Aguardando aprovação', aprovado:'Aprovado', publicado:'Publicado' };
+  const sc = { rascunho:'status-rascunho', aguardando:'status-aguardando', aprovado:'status-aprovado', publicado:'status-publicado' };
+
+  lista.innerHTML = filtrados.map(p => {
     const idx = bancoPosts.indexOf(p);
     const criado = new Date(p.criadoEm).toLocaleDateString('pt-BR');
-    const resumo = p.texto.substring(0,200);
+    const resumo = p.texto.substring(0, 180);
+
+    let thumbHtml = `<div class="post-thumb"><span>🖼</span></div>`;
+    if (p.midia) {
+      thumbHtml = p.midia.tipo === 'video'
+        ? `<div class="post-thumb-video">▶</div>`
+        : `<div class="post-thumb"><img src="${p.midia.dataUrl}"></div>`;
+    }
+
     return `
     <div class="post-card">
       <div class="post-card-inner">
-        <div class="post-card-thumb">${thumbHtml(p.midia)}</div>
-        <div class="post-card-right">
-          <div class="post-card-header">
+        ${thumbHtml}
+        <div class="post-direita">
+          <div class="post-header">
             <div class="post-meta">
-              <span class="post-badge ${p.classe}">${p.label}</span>
-              <span class="post-data">${criado}${p.data ? ' · ' + new Date(p.data+'T12:00:00').toLocaleDateString('pt-BR') : ''}</span>
+              <span class="badge ${p.badge || 'badge-linkedin'}">${p.rede || 'Post'}</span>
+              <span class="post-data">${p.empresa || ''} · ${criado}${p.data ? ' · ' + new Date(p.data+'T12:00:00').toLocaleDateString('pt-BR') : ''}</span>
             </div>
-            <span class="post-status ${p.status}">${sl[p.status]}</span>
+            <span class="status ${sc[p.status]}">${sl[p.status]}</span>
           </div>
-          <div class="post-card-corpo">${resumo}${p.texto.length > 200 ? '...' : ''}</div>
-          <div class="post-card-footer">
-            <button class="btn-mini" onclick="verPost(${idx})">Ver completo</button>
-            <button class="btn-mini" onclick="copiarTexto(${idx})">Copiar</button>
-            ${(p.status==='rascunho'||p.status==='aguardando')?`<button class="btn-mini aprovado" onclick="mudarStatus(${idx},'aprovado')">Aprovado</button>`:''}
-            ${p.status==='aprovado'?`<button class="btn-mini publicado" onclick="mudarStatus(${idx},'publicado')">Publicado</button>`:''}
-            <button class="btn-mini danger" onclick="excluirPost(${idx})">Excluir</button>
+          <div class="post-corpo">${resumo}${p.texto.length > 180 ? '...' : ''}</div>
+          <div class="post-footer">
+            <button class="btn btn-outline" onclick="verPost(${idx})">Ver completo</button>
+            <button class="btn btn-outline" onclick="copiarTexto(${idx})">Copiar</button>
+            ${(p.status==='rascunho'||p.status==='aguardando') ? `<button class="btn btn-verde" onclick="mudarStatus(${idx},'aprovado')">Aprovado</button>` : ''}
+            ${p.status==='aprovado' ? `<button class="btn btn-solid" onclick="mudarStatus(${idx},'publicado')">Publicado</button>` : ''}
+            <button class="btn btn-danger" onclick="excluirPost(${idx})">Excluir</button>
           </div>
         </div>
       </div>
@@ -1442,9 +1674,9 @@ function renderBanco() {
   }).join('');
 }
 
-function filtrarBanco(s, btn) {
+function filtrar(s, btn) {
   filtroAtual = s;
-  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.filtro').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderBanco();
 }
@@ -1470,19 +1702,16 @@ function copiarTexto(idx) {
 function verPost(idx) {
   modalPostIdx = idx;
   const p = bancoPosts[idx];
-  document.getElementById('modal-titulo').textContent = p.label;
+  document.getElementById('modal-titulo').textContent = `${p.rede} · ${p.empresa}`;
   document.getElementById('modal-corpo').textContent = p.texto;
 
   const mm = document.getElementById('modal-midia');
   if (p.midia) {
     mm.style.display = 'block';
     mm.innerHTML = p.midia.tipo === 'video'
-      ? `<video src="${p.midia.dataUrl}" controls style="width:100%;max-height:280px;display:block"></video>`
-      : `<img src="${p.midia.dataUrl}" style="width:100%;max-height:280px;object-fit:contain;display:block">`;
-  } else {
-    mm.style.display = 'none';
-    mm.innerHTML = '';
-  }
+      ? `<video src="${p.midia.dataUrl}" controls style="width:100%;max-height:260px;display:block"></video>`
+      : `<img src="${p.midia.dataUrl}" style="width:100%;max-height:260px;object-fit:contain;display:block">`;
+  } else { mm.style.display = 'none'; }
 
   document.getElementById('modal-overlay').classList.add('open');
 }
@@ -1496,11 +1725,12 @@ function copiarModal() {
 
 // ── CALENDÁRIO ────────────────────────────────────────────────────────
 function renderCalendario() {
-  const grid = document.getElementById('calendario-grid');
+  const grid = document.getElementById('cal-grid');
   const hoje = new Date();
-  const nomeMes = `${MESES[mesAtual]} ${anoAtual}`;
-  document.getElementById('titulo-mes').textContent = nomeMes;
-  document.getElementById('nav-mes-label').textContent = nomeMes.toUpperCase();
+  const nomeMes = MESES[mesAtual];
+
+  document.getElementById('cal-titulo').innerHTML = `${nomeMes} <span>${anoAtual}</span>`;
+  document.getElementById('cal-label').textContent = `${nomeMes} ${anoAtual}`;
 
   const primeiroDia = new Date(anoAtual, mesAtual, 1).getDay();
   const totalDias = new Date(anoAtual, mesAtual + 1, 0).getDate();
@@ -1508,7 +1738,7 @@ function renderCalendario() {
 
   DIAS.forEach(d => {
     const el = document.createElement('div');
-    el.className = 'cal-dia-nome';
+    el.className = 'cal-nome-dia';
     el.textContent = d;
     grid.appendChild(el);
   });
@@ -1526,36 +1756,35 @@ function renderCalendario() {
       el.classList.add('hoje');
 
     const num = document.createElement('div');
-    num.className = 'cal-dia-num';
+    num.className = 'cal-num';
     num.textContent = d;
     el.appendChild(num);
 
     const chave = `${anoAtual}-${String(mesAtual+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     (calPosts[chave] || []).forEach(p => {
-      const tag = document.createElement('div');
-      tag.className = `cal-post ${p.classe}`;
-      tag.onclick = () => verPostCalendario(p);
+      const item = document.createElement('div');
+      item.className = 'cal-post-item';
+      item.onclick = () => verPostCal(p);
 
       if (p.midia) {
         if (p.midia.tipo === 'video') {
           const vt = document.createElement('div');
-          vt.className = 'cal-post-video-thumb';
+          vt.className = 'cal-thumb-video';
           vt.textContent = '▶';
-          tag.appendChild(vt);
+          item.appendChild(vt);
         } else {
           const img = document.createElement('img');
-          img.className = 'cal-post-thumb';
+          img.className = 'cal-thumb';
           img.src = p.midia.dataUrl;
-          tag.appendChild(img);
+          item.appendChild(img);
         }
       }
 
       const lbl = document.createElement('div');
-      lbl.className = 'cal-post-label';
-      lbl.textContent = p.label.split('—')[0].trim();
-      if (!p.midia) tag.classList.add('sem-thumb');
-      tag.appendChild(lbl);
-      el.appendChild(tag);
+      lbl.className = `cal-label ${p.calLabel || 'generico'}${!p.midia ? ' sem-thumb' : ''}`;
+      lbl.textContent = p.rede || 'Post';
+      item.appendChild(lbl);
+      el.appendChild(item);
     });
 
     const btnAdd = document.createElement('button');
@@ -1569,15 +1798,15 @@ function renderCalendario() {
   }
 }
 
-function verPostCalendario(p) {
-  document.getElementById('modal-titulo').textContent = p.label;
-  document.getElementById('modal-corpo').textContent = p.texto || '(sem texto)';
+function verPostCal(p) {
+  document.getElementById('modal-titulo').textContent = `${p.rede || 'Post'} · ${p.empresa || ''}`;
+  document.getElementById('modal-corpo').textContent = p.texto || '';
   const mm = document.getElementById('modal-midia');
   if (p.midia) {
     mm.style.display = 'block';
     mm.innerHTML = p.midia.tipo === 'video'
-      ? `<video src="${p.midia.dataUrl}" controls style="width:100%;max-height:280px;display:block"></video>`
-      : `<img src="${p.midia.dataUrl}" style="width:100%;max-height:280px;object-fit:contain;display:block">`;
+      ? `<video src="${p.midia.dataUrl}" controls style="width:100%;max-height:260px;display:block"></video>`
+      : `<img src="${p.midia.dataUrl}" style="width:100%;max-height:260px;object-fit:contain;display:block">`;
   } else { mm.style.display = 'none'; }
   document.getElementById('modal-overlay').classList.add('open');
 }
@@ -1585,14 +1814,14 @@ function verPostCalendario(p) {
 function adicionarAoCal(chave) {
   const disponiveis = bancoPosts.filter(p => p.status === 'aprovado' || p.status === 'rascunho');
   if (!disponiveis.length) { mostrarToast('Nenhum post disponível no banco.'); return; }
-  const opcoes = disponiveis.map((p, i) => `${i}: ${p.label} — ${p.texto.substring(0,40)}...`).join('\n');
+  const opcoes = disponiveis.map((p, i) => `${i}: [${p.rede}] ${p.texto.substring(0,40)}...`).join('\n');
   const idx = prompt(`Qual post adicionar?\n\n${opcoes}\n\nDigite o número:`);
   if (idx === null || isNaN(idx)) return;
   const post = disponiveis[parseInt(idx)];
   if (!post) return;
   if (!calPosts[chave]) calPosts[chave] = [];
-  calPosts[chave].push({ label: post.label, classe: post.classe, midia: post.midia || null, texto: post.texto });
-  localStorage.setItem('egl_cal', JSON.stringify(calPosts));
+  calPosts[chave].push({ rede: post.rede, calLabel: post.calLabel, midia: post.midia || null, texto: post.texto, empresa: post.empresa });
+  localStorage.setItem('lp_cal', JSON.stringify(calPosts));
   renderCalendario();
   mostrarToast('Post adicionado ao calendário!');
 }
@@ -1606,7 +1835,7 @@ function navMes(dir) {
 
 // ── UTILS ─────────────────────────────────────────────────────────────
 function salvarStorage() {
-  try { localStorage.setItem('egl_posts', JSON.stringify(bancoPosts)); } catch(e) {}
+  try { localStorage.setItem('lp_posts', JSON.stringify(bancoPosts)); } catch(e) {}
 }
 
 function mostrarToast(msg) {
@@ -1616,7 +1845,24 @@ function mostrarToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-renderCalendario();
+// Fix nav — simplify
+document.addEventListener('DOMContentLoaded', () => {
+  // Remove duplicate tab button
+  const allTabs = document.querySelectorAll('.nav-tab');
+  // Keep only: Gerar Post, Banco, Calendário, Perfil
+  init();
+});
+
+// Simplify nav tabs
+const navTabsEl = document.querySelector('.nav-tabs');
+navTabsEl.innerHTML = `
+  <button class="nav-tab active" data-aba="gerar" onclick="mudarAba('gerar', this)">Gerar Post</button>
+  <button class="nav-tab" data-aba="banco" onclick="mudarAba('banco', this)">Banco de Posts</button>
+  <button class="nav-tab" data-aba="calendario" onclick="mudarAba('calendario', this)">Calendário</button>
+  <button class="nav-tab" data-aba="perfil" onclick="mudarAba('perfil', this)">Perfil</button>
+`;
+
+init();
 </script>
 </body>
 </html>
