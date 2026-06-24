@@ -9,8 +9,13 @@ export default async function handler(req, res) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 
+  // Debug — remove after fixing
   if (!supabaseUrl || !supabaseKey) {
-    return res.status(500).json({ error: 'Supabase not configured' });
+    return res.status(500).json({ 
+      error: 'Missing env vars',
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey
+    });
   }
 
   const { action, table, data } = req.body;
@@ -59,7 +64,7 @@ export default async function handler(req, res) {
       method = 'DELETE';
     }
     else {
-      return res.status(400).json({ error: 'Invalid action' });
+      return res.status(400).json({ error: 'Invalid action: ' + action });
     }
 
     const response = await fetch(url, { method, headers, body });
@@ -70,7 +75,10 @@ export default async function handler(req, res) {
     return res.status(response.status).json(result);
 
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ 
+      error: error.message,
+      type: error.constructor.name
+    });
   }
 }
 
