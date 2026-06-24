@@ -1026,6 +1026,81 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 let vozAtual = null;
 let postAtual = null;
 let midiaAtual = null;
+// ── SUPABASE ──────────────────────────────────────────────────
+let CURRENT_USER_ID = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+
+window.addEventListener('message', function(e) {
+  if(e.data && e.data.type === 'set-user-id' && e.data.userId) {
+    CURRENT_USER_ID = e.data.userId;
+    loadFromCloud();
+  }
+});
+
+window.addEventListener('load', function() {
+  if(window.parent !== window) {
+    window.parent.postMessage('lumenpost-ready', '*');
+  }
+});
+
+async function dbCall(action, table, data) {
+  try {
+    const res = await fetch('https://lumenpost.vercel.app/api/db', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({action, table, data})
+    });
+    return await res.json();
+  } catch(e) {
+    console.error('dbCall error:', e);
+    return null;
+  }
+}
+
+async function loadFromCloud() {
+  // Load perfil
+  try {
+    const p = await dbCall('select_perfil', 'perfis_post', {user_id: CURRENT_USER_ID});
+    if(p && p.length > 0) {
+      perfil = {
+        nome: p[0].nome || '',
+        historia: p[0].historia || '',
+        proposito: p[0].proposito || '',
+        cliente: p[0].cliente || '',
+        tom: p[0].tom || '',
+        diferenciais: p[0].diferenciais || '',
+      };
+      carregarCamposPerfil();
+      renderVozes();
+      verificarPerfil();
+    }
+  } catch(e) {}
+
+  // Load posts
+  try {
+    const posts = await dbCall('select', 'posts', {user_id: CURRENT_USER_ID});
+    if(posts && Array.isArray(posts)) {
+      bancoPosts = posts.map(function(p) {
+        var midia = null;
+        try { midia = p.midia ? JSON.parse(p.midia) : null; } catch(e) {}
+        return {
+          id: 'cloud_' + p.id,
+          _cloudId: p.id,
+          texto: p.conteudo || '',
+          rede: p.rede || '',
+          redeName: p.rede || '',
+          status: p.status || 'rascunho',
+          empresa: p.empresa || '',
+          criadoEm: p.criado_em,
+          data: p.data_publicacao || '',
+          badge: p.badge || 'badge-green',
+          midia: midia,
+        };
+      });
+      renderBanco();
+    }
+  } catch(e) {}
+}
+
 let bancoPosts = [];
 let calPosts = {};
 let mesAtual = new Date().getMonth();
@@ -1037,6 +1112,8 @@ let perfil = {};
 try { bancoPosts = JSON.parse(localStorage.getItem('lp_posts') || '[]'); } catch(e) { bancoPosts = []; }
 try { calPosts = JSON.parse(localStorage.getItem('lp_cal') || '{}'); } catch(e) { calPosts = {}; }
 try { perfil = JSON.parse(localStorage.getItem('lp_perfil') || '{}'); } catch(e) { perfil = {}; }
+// Load from cloud when user_id arrives via postMessage
+// (triggered in loadFromCloud called from message listener)
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -1098,12 +1175,35 @@ function salvarPerfil() {
     tom: document.getElementById('p-tom').value,
     diferenciais: document.getElementById('p-diferenciais').value,
   };
-  localStorage.setItem('lp_perfil', JSON.stringify(perfil));
+  // Save to localStorage as fallback
+  try { localStorage.setItem('lp_perfil', JSON.stringify(perfil)); } catch(e) {}
+  // Save to Supabase
+  dbCall('upsert', 'perfis_post', {
+    id: CURRENT_USER_ID,
+    nome: perfil.nome,
+    historia: perfil.historia,
+    proposito: perfil.proposito,
+    cliente: perfil.cliente,
+    tom: perfil.tom,
+    diferenciais: perfil.diferenciais,
+  }).then(function(r) {
+    if(!r || r.error) console.error('Erro ao salvar perfil:', r);
+  });
   document.getElementById('perfil-ok').classList.add('show');
   setTimeout(() => document.getElementById('perfil-ok').classList.remove('show'), 3000);
   renderVozes();
   verificarPerfil();
   mostrarToast('Perfil salvo!');
+}
+
+function carregarCamposPerfil() {
+  if(!perfil || !perfil.nome) return;
+  document.getElementById('p-nome').value = perfil.nome || '';
+  document.getElementById('p-historia').value = perfil.historia || '';
+  document.getElementById('p-proposito').value = perfil.proposito || '';
+  document.getElementById('p-cliente').value = perfil.cliente || '';
+  document.getElementById('p-tom').value = perfil.tom || '';
+  document.getElementById('p-diferenciais').value = perfil.diferenciais || '';
 }
 
 function verificarPerfil() {
@@ -1280,16 +1380,55 @@ function copiarPost() {
 
 function salvarPost() {
   if (!postAtual) return;
-  bancoPosts.unshift({ ...postAtual, id: Date.now() });
+  var post = { ...postAtual, id: Date.now(), criadoEm: new Date().toISOString() };
+  bancoPosts.unshift(post);
   salvarStorage();
+  // Save to Supabase
+  var midiaStr = null;
+  try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
+  dbCall('insert', 'posts', {
+    user_id: CURRENT_USER_ID,
+    conteudo: post.texto || '',
+    rede: post.rede || '',
+    status: post.status || 'rascunho',
+    empresa: perfil.nome || '',
+    badge: post.badge || 'badge-green',
+    midia: midiaStr,
+    data_publicacao: post.data || null,
+  }).then(function(r) {
+    if(r && Array.isArray(r) && r[0]) {
+      post._cloudId = r[0].id;
+      post.id = 'cloud_' + r[0].id;
+    }
+    renderBanco();
+  });
   mostrarToast('Post salvo no banco!');
 }
 
 function marcarAprovacao() {
   if (!postAtual) return;
   postAtual.status = 'aguardando';
-  bancoPosts.unshift({ ...postAtual, id: Date.now() });
+  var post = { ...postAtual, id: Date.now(), criadoEm: new Date().toISOString() };
+  bancoPosts.unshift(post);
   salvarStorage();
+  var midiaStr = null;
+  try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
+  dbCall('insert', 'posts', {
+    user_id: CURRENT_USER_ID,
+    conteudo: post.texto || '',
+    rede: post.rede || '',
+    status: 'aguardando',
+    empresa: perfil.nome || '',
+    badge: post.badge || 'badge-green',
+    midia: midiaStr,
+    data_publicacao: post.data || null,
+  }).then(function(r) {
+    if(r && Array.isArray(r) && r[0]) {
+      post._cloudId = r[0].id;
+      post.id = 'cloud_' + r[0].id;
+    }
+    renderBanco();
+  });
   mostrarToast('Salvo e marcado para aprovação.');
 }
 
@@ -1351,11 +1490,24 @@ function filtrar(s, btn) {
 function mudarStatus(idx, s) {
   bancoPosts[idx].status = s;
   salvarStorage();
+  // Sync to Supabase if cloud item
+  var post = bancoPosts[idx];
+  if(post._cloudId) {
+    dbCall('update', 'posts', {
+      id: post._cloudId,
+      user_id: CURRENT_USER_ID,
+      status: s
+    });
+  }
   renderBanco();
   mostrarToast('Status atualizado!');
 }
 
 function excluirPost(idx) {
+  var post = bancoPosts[idx];
+  if(post._cloudId) {
+    dbCall('delete', 'posts', {id: post._cloudId, user_id: CURRENT_USER_ID});
+  }
   bancoPosts.splice(idx, 1);
   salvarStorage();
   renderBanco();
