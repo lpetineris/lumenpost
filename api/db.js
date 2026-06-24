@@ -1,3 +1,31 @@
+import https from 'https';
+
+function httpsRequest(url, options, body) {
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url);
+    const reqOptions = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      method: options.method || 'GET',
+      headers: options.headers || {},
+    };
+    const req = https.request(reqOptions, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          resolve({ status: res.statusCode, body: JSON.parse(data || '[]') });
+        } catch(e) {
+          resolve({ status: res.statusCode, body: data });
+        }
+      });
+    });
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -9,13 +37,8 @@ export default async function handler(req, res) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 
-  // Debug — remove after fixing
   if (!supabaseUrl || !supabaseKey) {
-    return res.status(500).json({ 
-      error: 'Missing env vars',
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseKey
-    });
+    return res.status(500).json({ error: 'Missing env vars', hasUrl: !!supabaseUrl, hasKey: !!supabaseKey });
   }
 
   const { action, table, data } = req.body;
@@ -62,23 +85,18 @@ export default async function handler(req, res) {
     else if (action === 'delete') {
       url = `${supabaseUrl}/rest/v1/${table}?id=eq.${data.id}&user_id=eq.${data.user_id}`;
       method = 'DELETE';
+      const r = await httpsRequest(url, { method, headers }, null);
+      return res.status(200).json({ success: true });
     }
     else {
       return res.status(400).json({ error: 'Invalid action: ' + action });
     }
 
-    const response = await fetch(url, { method, headers, body });
-
-    if (method === 'DELETE') return res.status(200).json({ success: true });
-
-    const result = await response.json();
-    return res.status(response.status).json(result);
+    const result = await httpsRequest(url, { method, headers }, body);
+    return res.status(result.status).json(result.body);
 
   } catch (error) {
-    return res.status(500).json({ 
-      error: error.message,
-      type: error.constructor.name
-    });
+    return res.status(500).json({ error: error.message, type: error.constructor.name });
   }
 }
 
