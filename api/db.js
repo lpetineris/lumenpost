@@ -38,8 +38,15 @@ export default async function handler(req, res) {
   const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    return res.status(500).json({ error: 'Missing env vars', hasUrl: !!supabaseUrl, hasKey: !!supabaseKey });
+    return res.status(500).json({ 
+      error: 'Missing env vars',
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey
+    });
   }
+
+  // Debug: show key length and first/last chars
+  const keyInfo = `len:${supabaseKey.length} start:${supabaseKey.slice(0,10)} end:${supabaseKey.slice(-5)}`;
 
   const { action, table, data } = req.body;
 
@@ -51,44 +58,46 @@ export default async function handler(req, res) {
   };
 
   try {
+    // Test connection first
+    const testUrl = `${supabaseUrl}/rest/v1/`;
+    const testResult = await httpsRequest(testUrl, { method: 'GET', headers }, null);
+    
+    if (testResult.status === 401) {
+      return res.status(401).json({ 
+        error: 'Invalid Supabase key',
+        keyInfo,
+        supabaseResponse: testResult.body
+      });
+    }
+
     let url, method, body;
 
     if (action === 'select') {
-      const userId = data?.user_id;
-      if (!userId) return res.status(400).json({ error: 'user_id required' });
-      url = `${supabaseUrl}/rest/v1/${table}?user_id=eq.${userId}&order=criado_em.desc`;
+      url = `${supabaseUrl}/rest/v1/${table}?user_id=eq.${data?.user_id}&order=criado_em.desc`;
       method = 'GET';
-    }
-    else if (action === 'select_perfil') {
-      const userId = data?.user_id;
-      if (!userId) return res.status(400).json({ error: 'user_id required' });
-      url = `${supabaseUrl}/rest/v1/${table}?id=eq.${userId}`;
+    } else if (action === 'select_perfil') {
+      url = `${supabaseUrl}/rest/v1/${table}?id=eq.${data?.user_id}`;
       method = 'GET';
-    }
-    else if (action === 'insert') {
+    } else if (action === 'insert') {
       url = `${supabaseUrl}/rest/v1/${table}`;
       method = 'POST';
       body = JSON.stringify(data);
-    }
-    else if (action === 'upsert') {
+    } else if (action === 'upsert') {
       url = `${supabaseUrl}/rest/v1/${table}`;
       method = 'POST';
       headers['Prefer'] = 'return=representation,resolution=merge-duplicates';
       body = JSON.stringify(data);
-    }
-    else if (action === 'update') {
+    } else if (action === 'update') {
       const { id, user_id, ...fields } = data;
       url = `${supabaseUrl}/rest/v1/${table}?id=eq.${id}&user_id=eq.${user_id}`;
       method = 'PATCH';
       body = JSON.stringify(fields);
-    }
-    else if (action === 'delete') {
+    } else if (action === 'delete') {
       url = `${supabaseUrl}/rest/v1/${table}?id=eq.${data.id}&user_id=eq.${data.user_id}`;
       method = 'DELETE';
-      const r = await httpsRequest(url, { method, headers }, null);
+      await httpsRequest(url, { method, headers }, null);
       return res.status(200).json({ success: true });
-    }
-    else {
+    } else {
       return res.status(400).json({ error: 'Invalid action: ' + action });
     }
 
