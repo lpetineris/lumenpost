@@ -240,6 +240,17 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
   box-shadow: 0 0 0 1px var(--g);
 }
 
+.voz-btn.on::after {
+  content: '✓';
+  position: absolute;
+  top: 4px; right: 6px;
+  font-size: 10px;
+  color: var(--g);
+  font-weight: 700;
+}
+
+.voz-btn { position: relative; }
+
 .voz-nome { font-size: 12px; font-weight: 600; color: var(--text); display: block; }
 .voz-rede { font-size: 11px; color: var(--text3); display: block; margin-top: 1px; }
 .voz-tag {
@@ -717,7 +728,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
           <div class="card-body">
 
             <div class="field">
-              <label>Rede social</label>
+              <label>Rede social <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--text3)">— selecione uma ou mais</span></label>
               <div class="voz-grid" id="voz-grid"></div>
             </div>
 
@@ -1036,7 +1047,8 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 
 <script>
 // ── ESTADO ───────────────────────────────────────────────────────────
-let vozAtual = null;
+let vozSelecionadas = new Set(); // multi-select
+let vozAtual = null; // mantido para compatibilidade
 let postAtual = null;
 let midiaAtual = null;
 // ── SUPABASE ──────────────────────────────────────────────────
@@ -1244,6 +1256,7 @@ function verificarPerfil() {
 function renderVozes() {
   const grid = document.getElementById('voz-grid');
   grid.innerHTML = '';
+  vozSelecionadas = new Set();
   vozAtual = null;
 
   Object.entries(REDES).forEach(([key, cfg], i) => {
@@ -1251,18 +1264,32 @@ function renderVozes() {
     btn.className = 'voz-btn' + (i === 0 ? ' on' : '');
     btn.id = 'voz-' + key;
     btn.innerHTML = `<span class="voz-nome">${cfg.emoji} ${cfg.label}</span><span class="voz-rede">${perfil.nome || 'Sua empresa'}</span>`;
-    btn.onclick = () => selecionarVoz(key);
+    btn.onclick = () => toggleVoz(key);
     grid.appendChild(btn);
-    if (i === 0) vozAtual = key;
+    if (i === 0) { vozSelecionadas.add(key); vozAtual = key; }
   });
 }
 
-function selecionarVoz(key) {
-  vozAtual = key;
-  document.querySelectorAll('.voz-btn').forEach(b => b.classList.remove('on'));
-  const btn = document.getElementById('voz-' + key);
-  if (btn) btn.classList.add('on');
+function toggleVoz(key) {
+  if (vozSelecionadas.has(key)) {
+    // Não permite desmarcar se só há uma selecionada
+    if (vozSelecionadas.size === 1) return;
+    vozSelecionadas.delete(key);
+    document.getElementById('voz-' + key).classList.remove('on');
+  } else {
+    vozSelecionadas.add(key);
+    document.getElementById('voz-' + key).classList.add('on');
+  }
+  vozAtual = Array.from(vozSelecionadas)[0];
+  // Atualizar meta
+  if (postAtual) {
+    var nomes = Array.from(vozSelecionadas).map(k => REDES[k].label).join(', ');
+    document.getElementById('resultado-meta').innerHTML =
+      `<strong>${perfil.nome}</strong> · ${nomes} · tom ${TOM_MAP[postAtual.tom]}`;
+  }
 }
+
+function selecionarVoz(key) { toggleVoz(key); } // compatibilidade
 
 // ── MÍDIA ─────────────────────────────────────────────────────────────
 function carregarMidia(input) {
@@ -1364,7 +1391,8 @@ async function gerarPost() {
       criadoEm: new Date().toISOString(),
     };
 
-    document.getElementById('resultado-meta').innerHTML = `<strong>${perfil.nome}</strong> · ${r.label} · tom ${TOM_MAP[tom]}`;
+    var redesNomes = Array.from(vozSelecionadas).map(k => REDES[k].label).join(', ');
+    document.getElementById('resultado-meta').innerHTML = `<strong>${perfil.nome}</strong> · ${redesNomes} · tom ${TOM_MAP[tom]}`;
     document.getElementById('resultado-texto').textContent = texto;
     document.getElementById('resultado-texto').style.display = 'block';
     document.getElementById('resultado-barra').style.display = 'flex';
@@ -1401,33 +1429,46 @@ function copiarPost() {
 
 function salvarPost() {
   if (!postAtual) return;
-  var post = { ...postAtual, id: Date.now(), criadoEm: new Date().toISOString() };
-  bancoPosts.unshift(post);
+  var redes = Array.from(vozSelecionadas);
+  if (redes.length === 0) redes = [vozAtual || 'linkedin'];
+
+  redes.forEach(function(key) {
+    var r = REDES[key] || REDES.linkedin;
+    var post = {
+      ...postAtual,
+      rede: key,
+      redeName: r.label,
+      badge: r.badge,
+      cal: r.cal,
+      id: Date.now() + Math.random(),
+      criadoEm: new Date().toISOString()
+    };
+    bancoPosts.unshift(post);
+    if (post.data) adicionarPostAoCal(post.data, post);
+    // Save to Supabase
+    var midiaStr = null;
+    try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
+    dbCall('insert', 'posts', {
+      user_id: CURRENT_USER_ID,
+      conteudo: post.texto || '',
+      rede: post.rede || '',
+      status: post.status || 'rascunho',
+      empresa: perfil.nome || '',
+      badge: post.badge || 'badge-green',
+      midia: midiaStr,
+      data_publicacao: post.data || null,
+    }).then(function(r) {
+      if(r && Array.isArray(r) && r[0]) {
+        post._cloudId = r[0].id;
+        post.id = 'cloud_' + r[0].id;
+      }
+    });
+  }); // end forEach
+
   salvarStorage();
-  // Auto-add to calendar if date is set
-  if (post.data) {
-    adicionarPostAoCal(post.data, post);
-  }
-  // Save to Supabase
-  var midiaStr = null;
-  try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
-  dbCall('insert', 'posts', {
-    user_id: CURRENT_USER_ID,
-    conteudo: post.texto || '',
-    rede: post.rede || '',
-    status: post.status || 'rascunho',
-    empresa: perfil.nome || '',
-    badge: post.badge || 'badge-green',
-    midia: midiaStr,
-    data_publicacao: post.data || null,
-  }).then(function(r) {
-    if(r && Array.isArray(r) && r[0]) {
-      post._cloudId = r[0].id;
-      post.id = 'cloud_' + r[0].id;
-    }
-    renderBanco();
-  });
-  mostrarToast('Post salvo no banco!');
+  renderBanco();
+  var qtd = redes.length;
+  mostrarToast(qtd > 1 ? qtd + ' posts salvos no banco!' : 'Post salvo no banco!');
 }
 
 function marcarAprovacao() {
