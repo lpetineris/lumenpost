@@ -777,6 +777,10 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
               ✦ Gerar rascunho
             </button>
 
+            <button class="btn2 btn-full" style="margin-top:8px" onclick="limparGerador()">
+              Limpar
+            </button>
+
           </div>
         </div>
       </div>
@@ -1013,6 +1017,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
       <button class="modal-close" onclick="fecharModal()">×</button>
     </div>
     <div class="modal-midia" id="modal-midia"></div>
+    <div id="modal-email" style="display:none;padding:8px 20px;font-size:12px;color:var(--text2);background:var(--bg2);border-bottom:1px solid var(--border)"></div>
     <div class="modal-corpo" id="modal-corpo"></div>
     <div class="modal-footer">
       <button class="btn2" onclick="copiarModal()">Copiar texto</button>
@@ -1492,6 +1497,7 @@ function renderBanco() {
             </div>
             <span class="status ${sc[p.status]}">${sl[p.status]}</span>
           </div>
+          ${p.emailAprovacao ? `<div style="padding:4px 14px;font-size:11px;color:var(--text3);background:var(--bg2);border-bottom:1px solid var(--border)">✉ Aprovador: <strong style="color:var(--text2)">${p.emailAprovacao}</strong></div>` : ''}
           <div class="post-corpo">${resumo}${p.texto.length > 180 ? '...' : ''}</div>
           <div class="post-footer">
             <button class="btn2 btn2-sm" onclick="verPost(${idx})">Ver completo</button>
@@ -1574,6 +1580,14 @@ function verPost(idx) {
   const p = bancoPosts[idx];
   document.getElementById('modal-titulo').textContent = `${p.redeName || 'Post'} · ${p.empresa || ''}`;
   document.getElementById('modal-corpo').textContent = p.texto;
+  // Show email if present
+  var emailEl = document.getElementById('modal-email');
+  if (p.emailAprovacao) {
+    emailEl.textContent = '✉ Aprovador: ' + p.emailAprovacao;
+    emailEl.style.display = 'block';
+  } else {
+    emailEl.style.display = 'none';
+  }
   const mm = document.getElementById('modal-midia');
   if (p.midia) {
     mm.style.display = 'block';
@@ -1683,6 +1697,15 @@ function verPostCal(p, chave) {
   const footer = document.getElementById('modal-footer-cal-btn');
   if (footer) footer.style.display = 'inline-flex';
 
+  // Email do aprovador
+  var emailEl = document.getElementById('modal-email');
+  if (p.emailAprovacao) {
+    emailEl.textContent = '✉ Aprovador: ' + p.emailAprovacao;
+    emailEl.style.display = 'block';
+  } else {
+    emailEl.style.display = 'none';
+  }
+
   document.getElementById('modal-overlay').classList.add('open');
 }
 
@@ -1790,6 +1813,24 @@ function toggleFaq(btn) {
 function baixarGuia() {
   window.open('/api/guia', '_blank');
   mostrarToast('⚠ Para salvar o guia, use Ctrl+S na nova aba.');
+}
+
+// ── LIMPAR GERADOR ───────────────────────────────────────────────────
+function limparGerador() {
+  document.getElementById('input-tema').value = '';
+  document.getElementById('input-tom').value = 'autoridade';
+  document.getElementById('input-data').value = '';
+  document.getElementById('toggle-aprov').checked = false;
+  document.getElementById('input-email').value = '';
+  document.getElementById('field-email').style.display = 'none';
+  removerMidia();
+  // Reset resultado
+  document.getElementById('resultado-vazio').style.display = 'flex';
+  document.getElementById('resultado-texto').style.display = 'none';
+  document.getElementById('resultado-barra').style.display = 'none';
+  document.getElementById('resultado-midia').style.display = 'none';
+  postAtual = null;
+  mostrarToast('Gerador limpo.');
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────────
