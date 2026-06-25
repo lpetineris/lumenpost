@@ -1423,6 +1423,7 @@ async function gerarPost() {
 
     var redesNomes = Array.from(vozSelecionadas).map(k => REDES[k].label).join(', ');
     document.getElementById('resultado-meta').innerHTML = `<strong>${perfil.nome}</strong> · ${redesNomes} · tom ${TOM_MAP[tom]}`;
+    document.getElementById('resultado-vazio').style.display = 'none';
     document.getElementById('resultado-texto').textContent = texto;
     document.getElementById('resultado-texto').style.display = 'block';
     document.getElementById('resultado-barra').style.display = 'flex';
@@ -1434,6 +1435,8 @@ async function gerarPost() {
         : `<img src="${midiaAtual.dataUrl}" style="width:100%;max-height:200px;object-fit:cover;display:block">`;
       document.getElementById('midia-tipo').textContent = midiaAtual.tipo === 'video' ? '▶ VÍDEO' : '📷 IMAGEM';
       document.getElementById('resultado-midia').style.display = 'block';
+    } else {
+      document.getElementById('resultado-midia').style.display = 'none';
     }
 
   } catch(err) {
@@ -2012,10 +2015,23 @@ function abrirModalData(idx, source) {
 
 function abrirModalDataDoModal() {
   // Chamado pelo botão dentro do modal principal (banco ou calendário)
-  var idx = modalPostIdx;
-  if (idx === null || idx === undefined) return;
   fecharModal();
-  setTimeout(function() { abrirModalData(idx, null); }, 150);
+  setTimeout(function() {
+    if (modalPostIdx !== null && modalPostIdx !== undefined) {
+      // Veio do banco
+      abrirModalData(modalPostIdx, null);
+    } else if (window._calPostAtual) {
+      // Veio do calendário — encontrar o post no banco pelo texto
+      var idx = bancoPosts.findIndex(function(p) {
+        return p.texto === window._calPostAtual.texto && p.redeName === window._calPostAtual.redeName;
+      });
+      if (idx !== -1) {
+        abrirModalData(idx, 'calendario');
+      } else {
+        mostrarToast('Post não encontrado no banco.');
+      }
+    }
+  }, 150);
 }
 
 function fecharModalData() {
@@ -2027,16 +2043,15 @@ function confirmarAlterarData() {
   if (_dataPostIdx === null) return;
   var novaData = document.getElementById('input-nova-data').value;
   var post = bancoPosts[_dataPostIdx];
-  var dataAntiga = post.data || null;
 
-  // Remover do calendário na data antiga
-  if (dataAntiga) removerPostDoCal(post);
+  // Remover de TODAS as datas do calendário onde este post aparece
+  removerPostDoCal(post);
 
   // Atualizar data no post
   bancoPosts[_dataPostIdx].data = novaData || '';
   salvarStorage();
 
-  // Adicionar ao calendário na nova data
+  // Adicionar ao calendário na nova data se definida
   if (novaData) adicionarPostAoCal(novaData, bancoPosts[_dataPostIdx]);
 
   // Sync Supabase
