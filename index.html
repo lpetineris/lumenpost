@@ -1400,6 +1400,10 @@ function salvarPost() {
   var post = { ...postAtual, id: Date.now(), criadoEm: new Date().toISOString() };
   bancoPosts.unshift(post);
   salvarStorage();
+  // Auto-add to calendar if date is set
+  if (post.data) {
+    adicionarPostAoCal(post.data, post);
+  }
   // Save to Supabase
   var midiaStr = null;
   try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
@@ -1428,6 +1432,10 @@ function marcarAprovacao() {
   var post = { ...postAtual, id: Date.now(), criadoEm: new Date().toISOString() };
   bancoPosts.unshift(post);
   salvarStorage();
+  // Auto-add to calendar if date is set
+  if (post.data) {
+    adicionarPostAoCal(post.data, post);
+  }
   var midiaStr = null;
   try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
   dbCall('insert', 'posts', {
@@ -1643,18 +1651,60 @@ function verPostCal(p) {
   document.getElementById('modal-overlay').classList.add('open');
 }
 
+// Helper: adiciona post ao calendário por data string (YYYY-MM-DD)
+function adicionarPostAoCal(dataStr, post) {
+  if (!dataStr) return;
+  if (!calPosts[dataStr]) calPosts[dataStr] = [];
+  // Evitar duplicatas
+  var jaExiste = calPosts[dataStr].some(function(p) {
+    return p.texto === post.texto && p.redeName === post.redeName;
+  });
+  if (jaExiste) return;
+  calPosts[dataStr].push({
+    redeName: post.redeName, cal: post.cal,
+    midia: post.midia || null, texto: post.texto, empresa: post.empresa
+  });
+  try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {}
+  dbCall('upsert', 'perfis_post', {
+    id: CURRENT_USER_ID,
+    cal_posts: JSON.stringify(calPosts),
+  });
+}
+
+// Mantém o botão "+" no calendário para adicionar posts manualmente
 function adicionarAoCal(chave) {
   const disponiveis = bancoPosts.filter(p => p.status === 'aprovado' || p.status === 'rascunho');
   if (!disponiveis.length) { mostrarToast('Nenhum post disponível no banco.'); return; }
-  const opcoes = disponiveis.map((p, i) => `${i}: [${p.redeName}] ${p.texto.substring(0,40)}...`).join('\n');
-  const idx = prompt(`Qual post adicionar?\n\n${opcoes}\n\nDigite o número:`);
-  if (idx === null || isNaN(idx)) return;
-  const post = disponiveis[parseInt(idx)];
+
+  // Criar modal de seleção simples ao invés de prompt
+  const nomes = disponiveis.map((p, i) =>
+    `<div onclick="selecionarParaCal('${chave}',${i})" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px" onmouseover="this.style.background='var(--g-l)'" onmouseout="this.style.background=''">`+
+    `<strong>${p.redeName}</strong> · ${p.texto.substring(0,50)}...</div>`
+  ).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'cal-modal-sel';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:16px;border-top:3px solid var(--g);width:480px;max-width:95vw;max-height:70vh;overflow-y:auto;box-shadow:var(--s2)">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <strong style="font-size:14px">Selecionar post para o calendário</strong>
+        <button onclick="document.getElementById('cal-modal-sel').remove()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text3)">×</button>
+      </div>
+      ${nomes}
+    </div>`;
+  document.body.appendChild(modal);
+  window._calChaveAtual = chave;
+  window._calDisponiveisAtual = disponiveis;
+}
+
+function selecionarParaCal(chave, idx) {
+  const post = window._calDisponiveisAtual[idx];
+  document.getElementById('cal-modal-sel')?.remove();
   if (!post) return;
   if (!calPosts[chave]) calPosts[chave] = [];
   calPosts[chave].push({ redeName: post.redeName, cal: post.cal, midia: post.midia || null, texto: post.texto, empresa: post.empresa });
   try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {}
-  // Sync calPosts to Supabase
   dbCall('upsert', 'perfis_post', {
     id: CURRENT_USER_ID,
     cal_posts: JSON.stringify(calPosts),
