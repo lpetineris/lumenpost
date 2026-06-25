@@ -1016,6 +1016,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
     <div class="modal-corpo" id="modal-corpo"></div>
     <div class="modal-footer">
       <button class="btn2" onclick="copiarModal()">Copiar texto</button>
+      <button class="btnd btn2-sm" id="modal-footer-cal-btn" style="display:none" onclick="excluirDoCalendario()">Excluir post</button>
       <button class="btn2" onclick="fecharModal()">Fechar</button>
     </div>
   </div>
@@ -1533,10 +1534,32 @@ function excluirPost(idx) {
   if(post._cloudId) {
     dbCall('delete', 'posts', {id: post._cloudId, user_id: CURRENT_USER_ID});
   }
+  // Remove do calendário também
+  removerPostDoCal(post);
   bancoPosts.splice(idx, 1);
   salvarStorage();
   renderBanco();
-  mostrarToast('Post excluído.');
+  mostrarToast('Post excluído do banco e do calendário.');
+}
+
+// Remove post do calendário pelo texto e rede (identificador único)
+function removerPostDoCal(post) {
+  var alterou = false;
+  Object.keys(calPosts).forEach(function(chave) {
+    var antes = calPosts[chave].length;
+    calPosts[chave] = calPosts[chave].filter(function(p) {
+      return !(p.texto === post.texto && p.redeName === post.redeName);
+    });
+    if (calPosts[chave].length !== antes) alterou = true;
+    if (calPosts[chave].length === 0) delete calPosts[chave];
+  });
+  if (alterou) {
+    try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {}
+    dbCall('upsert', 'perfis_post', {
+      id: CURRENT_USER_ID,
+      cal_posts: JSON.stringify(calPosts),
+    });
+  }
 }
 
 function copiarTexto(idx) {
@@ -1545,6 +1568,9 @@ function copiarTexto(idx) {
 
 function verPost(idx) {
   modalPostIdx = idx;
+  // Esconder botão excluir do calendário no modal do banco
+  const calBtn = document.getElementById('modal-footer-cal-btn');
+  if (calBtn) calBtn.style.display = 'none';
   const p = bancoPosts[idx];
   document.getElementById('modal-titulo').textContent = `${p.redeName || 'Post'} · ${p.empresa || ''}`;
   document.getElementById('modal-corpo').textContent = p.texto;
@@ -1605,7 +1631,7 @@ function renderCal() {
     (calPosts[chave] || []).forEach(p => {
       const item = document.createElement('div');
       item.className = 'cal-post-item';
-      item.onclick = () => verPostCal(p);
+      item.onclick = () => verPostCal(p, chave);
 
       if (p.midia) {
         if (p.midia.tipo === 'video') {
@@ -1638,7 +1664,11 @@ function renderCal() {
   }
 }
 
-function verPostCal(p) {
+function verPostCal(p, chave) {
+  // Guardar referência para excluir se necessário
+  window._calPostAtual = p;
+  window._calChaveAtual = chave;
+
   document.getElementById('modal-titulo').textContent = `${p.redeName || 'Post'} · ${p.empresa || ''}`;
   document.getElementById('modal-corpo').textContent = p.texto || '';
   const mm = document.getElementById('modal-midia');
@@ -1648,7 +1678,35 @@ function verPostCal(p) {
       ? `<video src="${p.midia.dataUrl}" controls style="width:100%;max-height:260px;display:block"></video>`
       : `<img src="${p.midia.dataUrl}" style="width:100%;max-height:260px;object-fit:contain;display:block">`;
   } else { mm.style.display = 'none'; }
+
+  // Mostrar botão excluir do calendário
+  const footer = document.getElementById('modal-footer-cal-btn');
+  if (footer) footer.style.display = 'inline-flex';
+
   document.getElementById('modal-overlay').classList.add('open');
+}
+
+function excluirDoCalendario() {
+  var p = window._calPostAtual;
+  if (!p) return;
+  // Remove do calPosts
+  removerPostDoCal(p);
+  // Remove do banco também
+  var idxBanco = bancoPosts.findIndex(function(b) {
+    return b.texto === p.texto && b.redeName === p.redeName;
+  });
+  if (idxBanco !== -1) {
+    var post = bancoPosts[idxBanco];
+    if (post._cloudId) {
+      dbCall('delete', 'posts', {id: post._cloudId, user_id: CURRENT_USER_ID});
+    }
+    bancoPosts.splice(idxBanco, 1);
+    salvarStorage();
+    renderBanco();
+  }
+  fecharModal();
+  renderCal();
+  mostrarToast('Post excluído do calendário e do banco.');
 }
 
 // Helper: adiciona post ao calendário por data string (YYYY-MM-DD)
