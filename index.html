@@ -1397,8 +1397,7 @@ function regenerar() {
 }
 
 function copiarPost() {
-  navigator.clipboard.writeText(document.getElementById('resultado-texto').textContent)
-    .then(() => mostrarToast('Texto copiado!'));
+  copiarTextoSeguro(document.getElementById('resultado-texto').textContent);
 }
 
 function salvarPost() {
@@ -1569,7 +1568,7 @@ function removerPostDoCal(post) {
 }
 
 function copiarTexto(idx) {
-  navigator.clipboard.writeText(bancoPosts[idx].texto).then(() => mostrarToast('Copiado!'));
+  copiarTextoSeguro(bancoPosts[idx].texto);
 }
 
 function verPost(idx) {
@@ -1602,7 +1601,7 @@ function fecharModal() { document.getElementById('modal-overlay').classList.remo
 
 function copiarModal() {
   if (modalPostIdx === null) return;
-  navigator.clipboard.writeText(bancoPosts[modalPostIdx].texto).then(() => mostrarToast('Copiado!'));
+  copiarTextoSeguro(bancoPosts[modalPostIdx].texto);
 }
 
 // ── CALENDÁRIO ────────────────────────────────────────────────────────
@@ -1813,6 +1812,33 @@ function toggleFaq(btn) {
 function baixarGuia() {
   window.open('/api/guia', '_blank');
   mostrarToast('⚠ Para salvar o guia, use Ctrl+S na nova aba.');
+}
+
+// ── COPIAR COM FALLBACK ───────────────────────────────────────────────
+function copiarTextoSeguro(texto) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(texto)
+      .then(() => mostrarToast('Copiado!'))
+      .catch(() => copiarFallback(texto));
+  } else {
+    copiarFallback(texto);
+  }
+}
+
+function copiarFallback(texto) {
+  var ta = document.createElement('textarea');
+  ta.value = texto;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    mostrarToast('Copiado!');
+  } catch(e) {
+    mostrarToast('Erro ao copiar. Selecione o texto manualmente.');
+  }
+  document.body.removeChild(ta);
 }
 
 // ── LIMPAR GERADOR ───────────────────────────────────────────────────
