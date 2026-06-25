@@ -915,7 +915,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Sim. O perfil da empresa e o banco de posts ficam salvos localmente no navegador. Nenhum dado é enviado para servidores externos, exceto o texto do tema — usado apenas para gerar o rascunho.</p>
+            <p>Sim. Os posts e o perfil ficam salvos na nuvem via Supabase, vinculados ao seu ID de usuário. Nenhum outro usuário tem acesso. O texto do tema é enviado à IA apenas para gerar o rascunho e não é armazenado permanentemente.</p>
           </div>
         </div>
 
@@ -925,17 +925,57 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Sim. O Lumen Post funciona em computador, tablet e celular. Como os dados são salvos localmente, cada dispositivo terá seu próprio banco de posts.</p>
+            <p>Sim. O Lumen Post funciona em computador, tablet e celular. Os dados ficam salvos na nuvem e aparecem em qualquer dispositivo onde você acessar a ferramenta pelo mesmo navegador.</p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">
-            O que acontece se eu fechar o navegador?
+            Posso gerar posts para mais de uma rede ao mesmo tempo?
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Os posts salvos no Banco e o Calendário ficam preservados no navegador. Evite limpar o cache do navegador para não perder os dados.</p>
+            <p>Sim. Na aba Gerar Post, selecione mais de uma rede antes de salvar. Ao clicar em Salvar no banco, o sistema cria automaticamente um post separado para cada rede selecionada — com o mesmo conteúdo e a rede correta em cada um.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Como funciona o fluxo de aprovação?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>No Banco de Posts, clique em "✉ Aprovar por email" no card do post desejado. Insira o email do aprovador e clique em Enviar. O post muda para status "Aguardando aprovação" e o aprovador recebe o texto por email. Quando aprovado, atualize o status manualmente no Banco. É possível enviar para um novo aprovador a qualquer momento.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Como o post vai para o Calendário?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Se você definir uma data de publicação ao gerar o post, ele vai automaticamente para aquela data no Calendário ao ser salvo. Também é possível adicionar manualmente — clique no "+" em qualquer dia do Calendário e selecione o post na lista.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Como excluir um post do Calendário?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Clique no post no Calendário para abrir o modal. No rodapé, clique em "Excluir post" — isso remove o post tanto do Calendário quanto do Banco simultaneamente. Ao excluir pelo Banco, o post também é removido do Calendário automaticamente.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            O rascunho não ficou bom. O que fazer?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Clique em Regenerar — a IA cria uma nova versão do mesmo tema. Se ainda não satisfizer, descreva o tema com mais detalhes ou mude o tom do post. O botão Limpar zera o gerador para começar do zero.</p>
           </div>
         </div>
 
@@ -946,36 +986,6 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
           </button>
           <div class="faq-a">
             <p>Na versão atual, o Lumen Post suporta um perfil por vez. Para trocar de empresa, basta atualizar a aba Perfil e salvar.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">
-            Como funciona o fluxo de aprovação?
-            <span class="faq-ico">+</span>
-          </button>
-          <div class="faq-a">
-            <p>Marque "Requer aprovação" na aba Gerar Post e informe o e-mail do aprovador. O post é salvo com status "Aguardando aprovação". Quando aprovado, atualize o status manualmente no Banco.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">
-            Como adiciono um post ao Calendário?
-            <span class="faq-ico">+</span>
-          </button>
-          <div class="faq-a">
-            <p>Salve o post no Banco primeiro. Depois acesse o Calendário, clique no "+" no dia desejado e selecione o post na lista.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">
-            O rascunho não ficou bom. O que fazer?
-            <span class="faq-ico">+</span>
-          </button>
-          <div class="faq-a">
-            <p>Clique em Regenerar — a IA cria uma nova versão do mesmo tema. Se ainda não satisfizer, descreva o tema com mais detalhes ou mude o tom.</p>
           </div>
         </div>
 
