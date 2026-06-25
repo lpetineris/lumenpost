@@ -1459,7 +1459,26 @@ function marcarAprovacao() {
     }
     renderBanco();
   });
-  mostrarToast('Salvo e marcado para aprovação.');
+  // Enviar email de aprovação se houver endereço
+  if (post.emailAprovacao) {
+    fetch('/api/email', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        para: post.emailAprovacao,
+        empresa: perfil.nome || '',
+        rede: post.redeName || '',
+        texto: post.texto || '',
+      })
+    }).then(function(r) { return r.json(); })
+      .then(function(r) {
+        if (r.success) mostrarToast('Post salvo e email de aprovação enviado!');
+        else mostrarToast('Post salvo. Falha ao enviar email.');
+      })
+      .catch(function() { mostrarToast('Post salvo. Erro ao enviar email.'); });
+  } else {
+    mostrarToast('Salvo e marcado para aprovação.');
+  }
 }
 
 // ── BANCO ─────────────────────────────────────────────────────────────
