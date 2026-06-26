@@ -795,11 +795,6 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
           </div>
         </div>
 
-        <div class="resultado-midia" id="resultado-midia">
-          <div id="resultado-midia-inner"></div>
-          <span class="midia-tipo" id="midia-tipo"></span>
-        </div>
-
         <div class="resultado-vazio" id="resultado-vazio">
           <div class="ico">✦</div>
           <p>Configure o post ao lado<br>e clique em <em>Gerar rascunho</em>.</p>
@@ -808,6 +803,11 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
         <div class="loading" id="loading">
           <div class="dots"><span></span><span></span><span></span></div>
           <p id="loading-msg">Gerando rascunho...</p>
+        </div>
+
+        <div class="resultado-midia" id="resultado-midia">
+          <div id="resultado-midia-inner"></div>
+          <span class="midia-tipo" id="midia-tipo"></span>
         </div>
 
         <div class="resultado-texto" id="resultado-texto"></div>
@@ -1174,6 +1174,8 @@ async function loadFromCloud() {
         };
       });
       renderBanco();
+      // Sincronizar calendário com o banco após carregar
+      sincronizarCal();
     }
   } catch(e) {}
 }
@@ -2127,6 +2129,29 @@ function mostrarToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── SINCRONIZAR CALENDÁRIO ───────────────────────────────────────────
+function sincronizarCal() {
+  // Remove do calendário qualquer post que não existe no banco
+  var alterou = false;
+  Object.keys(calPosts).forEach(function(chave) {
+    var antes = calPosts[chave].length;
+    calPosts[chave] = calPosts[chave].filter(function(calPost) {
+      return bancoPosts.some(function(bancoPost) {
+        return bancoPost.texto === calPost.texto && bancoPost.redeName === calPost.redeName;
+      });
+    });
+    if (calPosts[chave].length !== antes) alterou = true;
+    if (calPosts[chave].length === 0) delete calPosts[chave];
+  });
+  if (alterou) {
+    try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {}
+    dbCall('upsert', 'perfis_post', {
+      id: CURRENT_USER_ID,
+      cal_posts: JSON.stringify(calPosts),
+    });
+  }
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────
