@@ -380,15 +380,16 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 }
 
 .resultado-texto {
-  flex: 1; padding: 24px;
+  padding: 24px;
   font-size: 14px; line-height: 1.8;
   color: var(--text); white-space: pre-wrap; display: none;
 }
 
 .resultado-vazio {
-  flex: 1; display: flex; flex-direction: column;
+  display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   gap: 12px; padding: 40px; text-align: center; color: var(--text3);
+  min-height: 300px;
 }
 .resultado-vazio .ico { font-size: 2.5rem; opacity: .25; }
 .resultado-vazio p { font-size: 13px; line-height: 1.65; }
@@ -1452,14 +1453,10 @@ async function gerarPost() {
       criadoEm: new Date().toISOString(),
     };
 
-    var redesNomes = Array.from(vozSelecionadas).map(k => REDES[k].label).join(', ');
-    document.getElementById('resultado-meta').innerHTML = `<strong>${perfil.nome}</strong> · ${redesNomes} · tom ${TOM_MAP[tom]}`;
+    // Ocultar vazio
     document.getElementById('resultado-vazio').style.display = 'none';
-    document.getElementById('resultado-texto').textContent = texto;
-    document.getElementById('resultado-texto').style.display = 'block';
-    document.getElementById('resultado-barra').style.display = 'flex';
-    document.getElementById('btn-aprov').style.display = aprov ? 'inline-flex' : 'none';
 
+    // Mostrar mídia ANTES do texto
     if (midiaAtual) {
       document.getElementById('resultado-midia-inner').innerHTML = midiaAtual.tipo === 'video'
         ? `<video src="${midiaAtual.dataUrl}" controls style="width:100%;max-height:200px;display:block"></video>`
@@ -1469,6 +1466,14 @@ async function gerarPost() {
     } else {
       document.getElementById('resultado-midia').style.display = 'none';
     }
+
+    // Mostrar texto e barra
+    var redesNomes = Array.from(vozSelecionadas).map(k => REDES[k].label).join(', ');
+    document.getElementById('resultado-meta').innerHTML = `<strong>${perfil.nome}</strong> · ${redesNomes} · tom ${TOM_MAP[tom]}`;
+    document.getElementById('resultado-texto').textContent = texto;
+    document.getElementById('resultado-texto').style.display = 'block';
+    document.getElementById('resultado-barra').style.display = 'flex';
+    document.getElementById('btn-aprov').style.display = aprov ? 'inline-flex' : 'none';
 
   } catch(err) {
     clearInterval(interval);
