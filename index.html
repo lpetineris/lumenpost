@@ -1513,9 +1513,9 @@ function salvarPost() {
   var duplicatas = 0;
   redes.forEach(function(key) {
     var r = REDES[key] || REDES.linkedin;
-    // Verificar duplicata no banco
+    // Verificar duplicata no banco — mesmo texto, mesma rede E mesma data
     var jaExiste = bancoPosts.some(function(p) {
-      return p.texto === postAtual.texto && p.rede === key;
+      return p.texto === postAtual.texto && p.rede === key && (p.data || '') === (dataAtual || '');
     });
     if (jaExiste) { duplicatas++; return; }
 
