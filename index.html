@@ -1515,7 +1515,11 @@ function salvarPost() {
     var r = REDES[key] || REDES.linkedin;
     // Verificar duplicata no banco — mesmo texto, mesma rede E mesma data
     var jaExiste = bancoPosts.some(function(p) {
-      return p.texto === postAtual.texto && p.rede === key && (p.data || '') === (dataAtual || '');
+      var textoIgual = p.texto === postAtual.texto;
+      var redeIgual = p.rede === key;
+      var dataIgual = (p.data || '') === (dataAtual || '');
+      console.log('CHECK:', redeIgual, textoIgual, dataIgual, '|', p.data, 'vs', dataAtual);
+      return textoIgual && redeIgual && dataIgual;
     });
     if (jaExiste) { duplicatas++; return; }
 
