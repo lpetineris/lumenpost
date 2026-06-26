@@ -1483,6 +1483,7 @@ async function gerarPost() {
   } catch(err) {
     clearInterval(interval);
     document.getElementById('loading').style.display = 'none';
+    console.error('ERRO gerarPost:', err, err && err.message, err && err.stack);
     var _vz = document.getElementById('resultado-vazio'); _vz.classList.remove('hidden'); _vz.style.display = 'flex';
     mostrarToast('Erro ao gerar. Tente novamente.');
   }
