@@ -924,7 +924,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Sim. Os posts e o perfil ficam salvos na nuvem via Supabase, vinculados ao seu ID de usuário. Nenhum outro usuário tem acesso. O texto do tema é enviado à IA apenas para gerar o rascunho e não é armazenado permanentemente.</p>
+            <p>Sim. Os posts e o perfil ficam salvos na nuvem via Supabase, vinculados ao seu ID de usuário. Nenhum outro usuário tem acesso. O texto do tema e a imagem são enviados à IA apenas para gerar o rascunho.</p>
           </div>
         </div>
 
@@ -934,7 +934,17 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Sim. O Lumen Post funciona em computador, tablet e celular. Os dados ficam salvos na nuvem e aparecem em qualquer dispositivo onde você acessar a ferramenta pelo mesmo navegador.</p>
+            <p>Sim. O Lumen Post funciona em computador, tablet e celular. Os dados ficam salvos na nuvem e sincronizam automaticamente.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            A IA analisa a imagem que eu enviei?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Sim. Quando você faz upload de uma imagem, ela é enviada para a IA junto com o tema. A IA analisa visualmente e cria um post baseado no que vê, tornando o conteúdo muito mais específico para aquela foto.</p>
           </div>
         </div>
 
@@ -944,7 +954,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Sim. Na aba Gerar Post, selecione mais de uma rede antes de salvar. Ao clicar em Salvar no banco, o sistema cria automaticamente um post separado para cada rede selecionada — com o mesmo conteúdo e a rede correta em cada um.</p>
+            <p>Sim. Selecione mais de uma rede antes de salvar — o sistema cria um post independente para cada rede. Após salvar, as redes voltam a ficar desmarcadas. O mesmo conteúdo pode ser salvo na mesma rede em datas diferentes.</p>
           </div>
         </div>
 
@@ -954,7 +964,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>No Banco de Posts, clique em "✉ Aprovar por email" no card do post desejado. Insira o email do aprovador e clique em Enviar. O post muda para status "Aguardando aprovação" e o aprovador recebe o texto por email. Quando aprovado, atualize o status manualmente no Banco. É possível enviar para um novo aprovador a qualquer momento.</p>
+            <p>No Banco de Posts, clique em "✉ Aprovar por email" no card desejado, insira o email do aprovador e clique em Enviar. O post muda para "Aguardando aprovação" e o aprovador recebe o texto por email. É possível enviar para um novo aprovador a qualquer momento.</p>
           </div>
         </div>
 
@@ -964,17 +974,27 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Se você definir uma data de publicação ao gerar o post, ele vai automaticamente para aquela data no Calendário ao ser salvo. Também é possível adicionar manualmente — clique no "+" em qualquer dia do Calendário e selecione o post na lista.</p>
+            <p>Se você definir uma data ao salvar, o post vai automaticamente para aquela data no Calendário. Também é possível adicionar manualmente clicando no "+" em qualquer dia. O mesmo conteúdo pode ser agendado em datas diferentes.</p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">
-            Como excluir um post do Calendário?
+            Como alterar a data de um post?
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Clique no post no Calendário para abrir o modal. No rodapé, clique em "Excluir post" — isso remove o post tanto do Calendário quanto do Banco simultaneamente. Ao excluir pelo Banco, o post também é removido do Calendário automaticamente.</p>
+            <p>No Banco de Posts, clique em "📅 Alterar data". Também é possível clicar no post no Calendário e usar o botão "📅 Alterar data" no modal. O post é movido automaticamente para a nova data.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Como excluir um post?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Cada post é independente. Excluir pelo Banco remove aquele registro e sua entrada no Calendário naquela data. Excluir pelo Calendário remove apenas daquela data específica, sem afetar outras datas onde o mesmo conteúdo esteja agendado.</p>
           </div>
         </div>
 
@@ -984,7 +1004,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Clique em Regenerar — a IA cria uma nova versão do mesmo tema. Se ainda não satisfizer, descreva o tema com mais detalhes ou mude o tom do post. O botão Limpar zera o gerador para começar do zero.</p>
+            <p>Clique em Regenerar — a IA cria uma nova versão. Se ainda não satisfizer, descreva o tema com mais detalhes, mude o tom ou troque a imagem. O botão Limpar zera o gerador para começar do zero.</p>
           </div>
         </div>
 
@@ -1004,7 +1024,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Durante o período beta, o acesso é livre sem limite. Após o lançamento oficial haverá planos com limites mensais.</p>
+            <p>Durante o período beta, o acesso é livre sem limite. Após o lançamento haverá planos com limites mensais.</p>
           </div>
         </div>
 
