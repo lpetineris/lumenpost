@@ -1478,7 +1478,7 @@ async function gerarPost() {
     document.getElementById('resultado-texto').textContent = texto;
     document.getElementById('resultado-texto').style.display = 'block';
     document.getElementById('resultado-barra').style.display = 'flex';
-    document.getElementById('btn-aprov').style.display = 'none';
+    var _ba = document.getElementById('btn-aprov'); if(_ba) _ba.style.display = 'none';
 
   } catch(err) {
     clearInterval(interval);
