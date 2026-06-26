@@ -1701,18 +1701,24 @@ function excluirPost(idx) {
   if(post._cloudId) {
     dbCall('delete', 'posts', {id: post._cloudId, user_id: CURRENT_USER_ID});
   }
-  // Remove do calendário também
-  removerPostDoCal(post);
+  // Remove do calendário apenas na data específica deste post
+  if (post.data) {
+    removerPostDoCal(post, post.data);
+  }
   bancoPosts.splice(idx, 1);
   salvarStorage();
   renderBanco();
-  mostrarToast('Post excluído do banco e do calendário.');
+  mostrarToast('Post excluído.');
 }
 
-// Remove post do calendário pelo texto e rede (identificador único)
-function removerPostDoCal(post) {
+// Remove post do calendário
+// Se chaveEspecifica for fornecida, remove apenas daquela data
+// Se não, remove de todas as datas (usado ao excluir do banco)
+function removerPostDoCal(post, chaveEspecifica) {
   var alterou = false;
-  Object.keys(calPosts).forEach(function(chave) {
+  var chaves = chaveEspecifica ? [chaveEspecifica] : Object.keys(calPosts);
+  chaves.forEach(function(chave) {
+    if (!calPosts[chave]) return;
     var antes = calPosts[chave].length;
     calPosts[chave] = calPosts[chave].filter(function(p) {
       return !(p.texto === post.texto && p.redeName === post.redeName);
@@ -1845,7 +1851,7 @@ function renderCal() {
 function verPostCal(p, chave) {
   // Guardar referência para excluir se necessário
   window._calPostAtual = p;
-  window._calChaveAtual = chave;
+  window._calChaveAtual = chave; // data específica (YYYY-MM-DD)
 
   document.getElementById('modal-titulo').textContent = `${p.redeName || 'Post'} · ${p.empresa || ''}`;
   document.getElementById('modal-corpo').textContent = p.texto || '';
@@ -1878,25 +1884,52 @@ function verPostCal(p, chave) {
 
 function excluirDoCalendario() {
   var p = window._calPostAtual;
+  var chave = window._calChaveAtual; // data específica onde foi clicado
   if (!p) return;
-  // Remove do calPosts
-  removerPostDoCal(p);
-  // Remove do banco também
-  var idxBanco = bancoPosts.findIndex(function(b) {
-    return b.texto === p.texto && b.redeName === p.redeName;
+
+  // Remove APENAS da data clicada no calendário
+  removerPostDoCal(p, chave);
+
+  // Verificar se ainda existe em outras datas do calendário
+  var aindaNoCalendario = Object.keys(calPosts).some(function(k) {
+    return (calPosts[k] || []).some(function(cp) {
+      return cp.texto === p.texto && cp.redeName === p.redeName;
+    });
   });
-  if (idxBanco !== -1) {
-    var post = bancoPosts[idxBanco];
-    if (post._cloudId) {
-      dbCall('delete', 'posts', {id: post._cloudId, user_id: CURRENT_USER_ID});
+
+  // Só remove do banco se não existir mais em nenhuma data do calendário
+  if (!aindaNoCalendario) {
+    var idxBanco = bancoPosts.findIndex(function(b) {
+      return b.texto === p.texto && b.redeName === p.redeName && (b.data || '') === (chave || '');
+    });
+    if (idxBanco !== -1) {
+      var post = bancoPosts[idxBanco];
+      if (post._cloudId) {
+        dbCall('delete', 'posts', {id: post._cloudId, user_id: CURRENT_USER_ID});
+      }
+      bancoPosts.splice(idxBanco, 1);
+      salvarStorage();
+      renderBanco();
     }
-    bancoPosts.splice(idxBanco, 1);
-    salvarStorage();
-    renderBanco();
+  } else {
+    // Ainda existe em outras datas — apenas remove do banco na data específica
+    var idxBanco = bancoPosts.findIndex(function(b) {
+      return b.texto === p.texto && b.redeName === p.redeName && (b.data || '') === (chave || '');
+    });
+    if (idxBanco !== -1) {
+      var post = bancoPosts[idxBanco];
+      if (post._cloudId) {
+        dbCall('delete', 'posts', {id: post._cloudId, user_id: CURRENT_USER_ID});
+      }
+      bancoPosts.splice(idxBanco, 1);
+      salvarStorage();
+      renderBanco();
+    }
   }
+
   fecharModal();
   renderCal();
-  mostrarToast('Post excluído do calendário e do banco.');
+  mostrarToast('Post removido desta data.');
 }
 
 // Helper: adiciona post ao calendário por data string (YYYY-MM-DD)
