@@ -219,6 +219,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 6px;
+  padding-right: 4px;
 }
 
 .voz-btn {
@@ -228,7 +229,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
   cursor: pointer;
   transition: all .15s;
   background: var(--bg);
-  text-align: left;
+  text-align: center;
   width: 100%;
 }
 
@@ -249,10 +250,12 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
   font-weight: 700;
 }
 
+.voz-tag { text-align: center; }
+
 .voz-btn { position: relative; }
 
-.voz-nome { font-size: 12px; font-weight: 600; color: var(--text); display: block; }
-.voz-rede { font-size: 11px; color: var(--text3); display: block; margin-top: 1px; }
+.voz-nome { font-size: 12px; font-weight: 600; color: var(--text); display: block; text-align: center; }
+.voz-rede { font-size: 11px; color: var(--text3); display: block; margin-top: 1px; text-align: center; }
 .voz-tag {
   display: inline-block; font-size: 10px;
   padding: 1px 6px; border-radius: 10px; margin-top: 5px;
