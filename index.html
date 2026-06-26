@@ -1510,8 +1510,15 @@ function salvarPost() {
   // Lê a data do campo no momento de salvar — não do postAtual
   var dataAtual = document.getElementById('input-data').value || '';
 
+  var duplicatas = 0;
   redes.forEach(function(key) {
     var r = REDES[key] || REDES.linkedin;
+    // Verificar duplicata no banco
+    var jaExiste = bancoPosts.some(function(p) {
+      return p.texto === postAtual.texto && p.rede === key;
+    });
+    if (jaExiste) { duplicatas++; return; }
+
     var post = {
       ...postAtual,
       rede: key,
@@ -1546,7 +1553,12 @@ function salvarPost() {
 
   salvarStorage();
   renderBanco();
-  var qtd = redes.length;
+  var qtd = redes.length - duplicatas;
+  if (duplicatas > 0 && qtd === 0) {
+    mostrarToast('Este post já está salvo para ' + (duplicatas > 1 ? 'essas redes' : 'essa rede') + '.');
+    return;
+  }
+  if (duplicatas > 0) mostrarToast(qtd + ' post(s) salvo(s). ' + duplicatas + ' duplicata(s) ignorada(s).');
   mostrarToast(qtd > 1 ? qtd + ' posts salvos no banco!' : 'Post salvo no banco!');
 }
 
