@@ -229,8 +229,12 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
   cursor: pointer;
   transition: all .15s;
   background: var(--bg);
-  text-align: center;
+  text-align: center !important;
   width: 100%;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center !important;
+  justify-content: center;
 }
 
 .voz-btn:hover { border-color: var(--g-c); background: var(--g-l); box-shadow: var(--s2); }
@@ -254,8 +258,8 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 
 .voz-btn { position: relative; }
 
-.voz-nome { font-size: 12px; font-weight: 600; color: var(--text); display: block; text-align: center; }
-.voz-rede { font-size: 11px; color: var(--text3); display: block; margin-top: 1px; text-align: center; }
+.voz-nome { font-size: 12px; font-weight: 600; color: var(--text); display: block; text-align: center !important; width: 100%; }
+.voz-rede { font-size: 11px; color: var(--text3); display: block; margin-top: 1px; text-align: center !important; width: 100%; }
 .voz-tag {
   display: inline-block; font-size: 10px;
   padding: 1px 6px; border-radius: 10px; margin-top: 5px;
@@ -391,6 +395,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
   gap: 12px; padding: 40px; text-align: center; color: var(--text3);
   min-height: 300px;
 }
+.resultado-vazio.hidden { display: none !important; }
 .resultado-vazio .ico { font-size: 2.5rem; opacity: .25; }
 .resultado-vazio p { font-size: 13px; line-height: 1.65; }
 .resultado-vazio em { color: var(--g-mid); font-style: normal; font-weight: 600; }
@@ -1382,7 +1387,7 @@ async function gerarPost() {
   const btn = document.getElementById('btn-gerar');
   btn.disabled = true;
 
-  document.getElementById('resultado-vazio').style.display = 'none';
+  document.getElementById('resultado-vazio').classList.add('hidden');
   document.getElementById('resultado-texto').style.display = 'none';
   document.getElementById('resultado-barra').style.display = 'none';
   document.getElementById('resultado-midia').style.display = 'none';
@@ -1454,7 +1459,7 @@ async function gerarPost() {
     };
 
     // Ocultar vazio
-    document.getElementById('resultado-vazio').style.display = 'none';
+    document.getElementById('resultado-vazio').classList.add('hidden');
 
     // Mostrar mídia ANTES do texto
     if (midiaAtual) {
@@ -1478,7 +1483,7 @@ async function gerarPost() {
   } catch(err) {
     clearInterval(interval);
     document.getElementById('loading').style.display = 'none';
-    document.getElementById('resultado-vazio').style.display = 'flex';
+    document.getElementById('resultado-vazio').classList.remove('hidden');
     mostrarToast('Erro ao gerar. Tente novamente.');
   }
 
@@ -1501,6 +1506,9 @@ function salvarPost() {
   var redes = Array.from(vozSelecionadas);
   if (redes.length === 0) redes = [vozAtual || 'linkedin'];
 
+  // Lê a data do campo no momento de salvar — não do postAtual
+  var dataAtual = document.getElementById('input-data').value || '';
+
   redes.forEach(function(key) {
     var r = REDES[key] || REDES.linkedin;
     var post = {
@@ -1509,6 +1517,7 @@ function salvarPost() {
       redeName: r.label,
       badge: r.badge,
       cal: r.cal,
+      data: dataAtual,
       id: Date.now() + Math.random(),
       criadoEm: new Date().toISOString()
     };
@@ -2112,7 +2121,7 @@ function limparGerador() {
   document.getElementById('input-data').value = '';
   removerMidia();
   // Reset resultado
-  document.getElementById('resultado-vazio').style.display = 'flex';
+  document.getElementById('resultado-vazio').classList.remove('hidden');
   document.getElementById('resultado-texto').style.display = 'none';
   document.getElementById('resultado-barra').style.display = 'none';
   document.getElementById('resultado-midia').style.display = 'none';
