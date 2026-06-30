@@ -1389,6 +1389,8 @@ async function loadFromCloud() {
       renderBanco();
       // Sincronizar calendário com o banco após carregar
       sincronizarCal();
+      // Expirar imagens de posts com data de postagem há mais de 5 dias
+      expirarImagensAntigas();
     }
   } catch(e) {}
 }
@@ -2237,6 +2239,23 @@ function renderBanco() {
       ? `<div class="post-thumb-video">▶</div>`
       : `<div class="post-thumb"><img src="${p.midia.dataUrl}"></div>`;
 
+    // Indicador de expiração de imagem
+    let expiraHtml = '';
+    if (p.midia && p.data) {
+      const agora = new Date(); agora.setHours(0,0,0,0);
+      const dataPost = new Date(p.data + 'T00:00:00');
+      const diasAteExpirar = 5 - Math.floor((agora - dataPost) / 86400000);
+      if (diasAteExpirar <= 0) {
+        expiraHtml = `<div style="font-size:11px;padding:3px 14px;background:#FEF2F2;color:#DC2626;border-bottom:1px solid #FECACA">🕐 Imagem expirada</div>`;
+      } else if (diasAteExpirar === 1) {
+        expiraHtml = `<div style="font-size:11px;padding:3px 14px;background:#FEF2F2;color:#DC2626;border-bottom:1px solid #FECACA">🕐 Imagem expira hoje</div>`;
+      } else if (diasAteExpirar <= 3) {
+        expiraHtml = `<div style="font-size:11px;padding:3px 14px;background:#FFFBEB;color:#D97706;border-bottom:1px solid #FDE68A">🕐 Imagem expira em ${diasAteExpirar} dias</div>`;
+      } else {
+        expiraHtml = `<div style="font-size:11px;padding:3px 14px;color:var(--text3);border-bottom:1px solid var(--border)">🕐 Imagem expira em ${diasAteExpirar} dias</div>`;
+      }
+    }
+
     return `
     <div class="post-card">
       <div class="post-inner">
@@ -2249,6 +2268,7 @@ function renderBanco() {
             </div>
             <span class="status ${sc[p.status]}">${sl[p.status]}</span>
           </div>
+          ${expiraHtml}
           ${p.emailAprovacao ? `<div style="padding:4px 14px;font-size:11px;color:var(--text3);background:var(--bg2);border-bottom:1px solid var(--border)">✉ Aprovador: <strong style="color:var(--text2)">${p.emailAprovacao}</strong></div>` : ''}
           <div class="post-corpo">${resumo}${p.texto.length > 180 ? '...' : ''}</div>
           <div class="post-footer">
@@ -3145,6 +3165,57 @@ function mostrarToast(msg) {
 }
 
 // ── SINCRONIZAR CALENDÁRIO ───────────────────────────────────────────
+// ── EXPIRAÇÃO DE IMAGENS ──────────────────────────────────────────────
+// Remove a mídia (imagem/vídeo) de posts cuja data de postagem já passou
+// há mais de 5 dias. O texto e os demais dados do post são preservados.
+// Roda automaticamente a cada carregamento da ferramenta.
+function expirarImagensAntigas() {
+  const DIAS_EXPIRACAO = 5;
+  const agora = new Date();
+  agora.setHours(0, 0, 0, 0);
+  let alterou = false;
+
+  bancoPosts.forEach(function(post) {
+    if (!post.midia || !post.data) return; // sem mídia ou sem data — não expira
+
+    const dataPost = new Date(post.data + 'T00:00:00');
+    const diasPassados = Math.floor((agora - dataPost) / 86400000);
+
+    if (diasPassados >= DIAS_EXPIRACAO) {
+      post.midia = null;
+      alterou = true;
+
+      // Atualizar no Supabase — zera o campo midia
+      if (post._cloudId) {
+        dbCall('update', 'posts', {
+          id: post._cloudId,
+          user_id: CURRENT_USER_ID,
+          midia: null,
+        });
+      }
+
+      // Também remover a mídia da entrada correspondente no calPosts
+      if (calPosts[post.data]) {
+        calPosts[post.data].forEach(function(cp) {
+          if (cp.texto === post.texto && cp.redeName === post.redeName) {
+            cp.midia = null;
+          }
+        });
+      }
+    }
+  });
+
+  if (alterou) {
+    salvarStorage();
+    try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {}
+    dbCall('upsert', 'perfis_post', {
+      id: CURRENT_USER_ID,
+      cal_posts: JSON.stringify(calPosts),
+    });
+    console.log('[Lumen Post] Imagens expiradas removidas.');
+  }
+}
+
 function sincronizarCal() {
   // Remove do calendário qualquer post que não existe no banco
   var alterou = false;
