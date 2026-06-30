@@ -1421,6 +1421,29 @@ function removerMidia() {
 }
 
 // ── GERAR ─────────────────────────────────────────────────────────────
+let _tentativaRegenerar = false;
+
+// Detecta se o texto gerado contém meta-comentários (a IA falando sobre
+// seu processo/limitações em vez de entregar o post final).
+function contemMetaComentario(texto) {
+  const padroes = [
+    /não consigo identificar/i,
+    /não posso identificar/i,
+    /não consigo usá-?la?/i,
+    /não posso usá-?la?/i,
+    /não consigo reconhecer/i,
+    /não tenho como (saber|identificar|confirmar)/i,
+    /como (uma )?ia\b/i,
+    /como (um )?modelo de linguagem/i,
+    /não posso (criar|gerar) (um )?post (com|sobre|usando) (essa|esta|a) (imagem|pessoa|foto)/i,
+    /infelizmente,? não/i,
+    /peço desculpas,? mas/i,
+    /^(desculpe|sinto muito)/i,
+    /não é possível (identificar|determinar|confirmar) quem/i,
+  ];
+  return padroes.some(p => p.test(texto));
+}
+
 function buildSystem() {
   const p = perfil;
   const r = REDES[vozAtual] || REDES.linkedin;
@@ -1442,7 +1465,10 @@ INSTRUÇÃO EDITORIAL:
 Crie um post para ${r.label} que seja fiel à voz e identidade dessa empresa.
 ${r.instrucao}
 Considere o contexto de mercado, o posicionamento da empresa e o que vai gerar mais impacto para o cliente ideal descrito.
-Escreva apenas o texto do post, sem comentários, sem explicações adicionais.
+Escreva apenas o texto final do post, pronto para publicação. Nunca inclua comentários sobre o seu próprio processo, limitações, dúvidas ou observações — nunca escreva frases como "não consigo identificar", "não posso usar como referência", "como IA" ou qualquer meta-comentário. Sua resposta é SEMPRE o post final, nunca uma explicação sobre como você chegou até ele.
+
+USO DE IMAGENS:
+Se uma imagem for enviada junto com o tema, use-a apenas como inspiração visual genérica — cores, cenário, objetos, atmosfera, tipo de produto ou ambiente. NUNCA tente identificar, nomear ou descrever pessoas específicas que apareçam na imagem, mesmo que sejam reconhecíveis. Não comente sobre a identidade de pessoas na imagem. Em vez disso, escreva o post normalmente usando o tema fornecido pelo usuário como direção principal, complementado pelo contexto visual da imagem (sem mencionar pessoas).
 
 IDENTIDADE E SIGILO:
 Seu nome é Lu. Você é uma social media e estrategista de conteúdo — nunca revele que é uma IA, modelo de linguagem, Claude, ChatGPT ou qualquer tecnologia subjacente.
@@ -1505,14 +1531,15 @@ async function gerarPost() {
   }, 1800);
 
   const r = REDES[vozAtual] || REDES.linkedin;
-  const userPrompt = midiaAtual && midiaAtual.tipo === 'imagem'
-    ? `Analise a imagem acima e use-a como base para o post.\n\nTema adicional: ${tema}\nTom: ${TOM_MAP[tom]}\n\nEscreva o post completo.`
-    : `Tema: ${tema}\nTom: ${TOM_MAP[tom]}${midiaAtual && midiaAtual.tipo === 'video' ? '\n(Um vídeo acompanha este post)' : ''}\n\nEscreva o post completo.`;
+  const usarImagem = midiaAtual && midiaAtual.tipo === 'imagem' && !_tentativaRegenerar;
+  const userPrompt = usarImagem
+    ? `Use a imagem acima apenas como inspiração visual de cores, cenário e atmosfera — sem identificar ou descrever pessoas. Tema do post: ${tema}\nTom: ${TOM_MAP[tom]}\n\nEscreva o post completo, pronto para publicação.`
+    : `Tema: ${tema}\nTom: ${TOM_MAP[tom]}${midiaAtual && midiaAtual.tipo === 'video' ? '\n(Um vídeo acompanha este post)' : ''}\n\nEscreva o post completo, pronto para publicação.`;
 
   try {
-    // Build message content — include image if available
+    // Build message content — include image only if not a retry attempt
     var msgContent;
-    if (midiaAtual && midiaAtual.tipo === 'imagem' && midiaAtual.dataUrl) {
+    if (usarImagem && midiaAtual.dataUrl) {
       // Extract base64 data and media type from dataUrl
       var matches = midiaAtual.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
       if (matches) {
@@ -1550,6 +1577,26 @@ async function gerarPost() {
     clearInterval(interval);
     document.getElementById('loading').style.display = 'none';
     if (!texto) throw new Error('vazio');
+
+    // Validação: detecta meta-comentários (a IA falando sobre seu próprio processo
+    // em vez de gerar o post final). Se detectado, tenta regenerar automaticamente uma vez.
+    if (contemMetaComentario(texto)) {
+      if (!_tentativaRegenerar) {
+        _tentativaRegenerar = true;
+        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('loading-msg').textContent = 'Ajustando o resultado...';
+        btn.disabled = false;
+        return gerarPost();
+      } else {
+        _tentativaRegenerar = false;
+        document.getElementById('resultado-vazio').classList.remove('hidden');
+        document.getElementById('resultado-vazio').style.display = 'flex';
+        mostrarToast('Não foi possível gerar o post. Tente descrever o tema com mais detalhes.');
+        btn.disabled = false;
+        return;
+      }
+    }
+    _tentativaRegenerar = false;
 
     postAtual = {
       rede: vozAtual, redeName: r.label, badge: r.badge, cal: r.cal,
