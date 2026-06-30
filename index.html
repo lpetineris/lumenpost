@@ -963,6 +963,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
       <div id="programacao-ativa-info" style="font-size:12px;color:var(--text3)"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <select id="select-programacao" onchange="trocarProgramacaoAtiva(this.value)" style="font-family:'Poppins',sans-serif;font-size:12px;padding:7px 10px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--bg);color:var(--text);display:none"></select>
+        <button class="btnd btn2-sm" id="btn-excluir-programacao" onclick="excluirProgramacaoAtiva()" style="display:none">🗑 Excluir</button>
         <button class="btn2 btn2-sm" onclick="abrirModalProgramacao()">📋 Criar programação</button>
       </div>
     </div>
@@ -1216,20 +1217,24 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
         <label>Nome da programação</label>
         <input type="text" id="prog-nome-manual" placeholder="Ex: Lançamento Produto X">
       </div>
-      <p style="font-size:12px;color:var(--text3);margin-bottom:8px">Adicione os espaços um a um — data e rede:</p>
-      <div style="display:flex;gap:6px;margin-bottom:10px">
-        <input type="date" id="prog-manual-data" style="flex:1">
-        <select id="prog-manual-rede" style="flex:1;font-family:'Poppins',sans-serif;font-size:13px;padding:9px 12px;border-radius:var(--rs);border:1px solid var(--border)">
-          <option value="linkedin">💼 LinkedIn</option>
-          <option value="instagram">📸 Instagram</option>
-          <option value="tiktok">🎵 TikTok</option>
-          <option value="facebook">👥 Facebook</option>
-          <option value="youtube">▶️ YouTube</option>
-          <option value="pinterest">📌 Pinterest</option>
-        </select>
-        <button class="btn2 btn2-sm" onclick="adicionarEspacoManual()">+ Adicionar</button>
+
+      <div class="field">
+        <label>Datas — adicione quantas quiser</label>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input type="date" id="prog-manual-data-input" style="flex:1">
+          <button class="btn2 btn2-sm" onclick="adicionarDataManual()">+ Adicionar data</button>
+        </div>
+        <div id="prog-manual-datas-lista" style="display:flex;flex-wrap:wrap;gap:6px"></div>
       </div>
-      <div id="prog-manual-lista" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto"></div>
+
+      <div class="field">
+        <label>Redes sociais — selecione uma ou mais</label>
+        <div id="prog-manual-redes-check" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;margin-top:16px">
+        <p id="prog-manual-resumo" style="font-size:12px;color:var(--text2);margin:0">Adicione datas e redes para ver quantos espaços serão criados.</p>
+      </div>
     </div>
 
     <div class="modal-footer" id="prog-footer-tipo" style="display:none">
@@ -2615,15 +2620,18 @@ function navMes(dir) {
 function atualizarSeletorProgramacao() {
   const sel = document.getElementById('select-programacao');
   const info = document.getElementById('programacao-ativa-info');
+  const btnExcluir = document.getElementById('btn-excluir-programacao');
   if (!sel || !info) return;
 
   if (programacoes.length === 0) {
     sel.style.display = 'none';
+    if (btnExcluir) btnExcluir.style.display = 'none';
     info.textContent = 'Nenhuma programação ativa.';
     return;
   }
 
   sel.style.display = 'inline-block';
+  if (btnExcluir) btnExcluir.style.display = 'inline-flex';
   sel.innerHTML = programacoes.map(p =>
     `<option value="${p.id}"${p.id === programacaoAtivaId ? ' selected' : ''}>${p.nome}</option>`
   ).join('');
@@ -2645,6 +2653,24 @@ function trocarProgramacaoAtiva(id) {
   renderCal();
 }
 
+function excluirProgramacaoAtiva() {
+  const ativa = getProgramacaoAtiva();
+  if (!ativa) return;
+
+  const total = Object.values(ativa.espacos || {}).reduce((acc, arr) => acc + arr.length, 0);
+  const aviso = total > 0
+    ? `Excluir a programação "${ativa.nome}"? Isso vai remover ${total} espaço(s) ainda não preenchido(s). Os posts já salvos no banco não serão afetados.`
+    : `Excluir a programação "${ativa.nome}"?`;
+
+  if (!confirm(aviso)) return;
+
+  programacoes = programacoes.filter(p => p.id !== ativa.id);
+  programacaoAtivaId = programacoes.length > 0 ? programacoes[0].id : null;
+  salvarProgramacoes();
+  renderCal();
+  mostrarToast(`Programação "${ativa.nome}" excluída.`);
+}
+
 // Abre o modal de criação — se já existe uma programação ativa com espaços
 // vazios, pede confirmação antes de permitir criar uma nova (mas não bloqueia,
 // pois agora suportamos múltiplas programações salvas).
@@ -2659,11 +2685,11 @@ function abrirModalProgramacao() {
 
 function fecharModalProgramacao() {
   document.getElementById('modal-prog-overlay').classList.remove('open');
-  _espacosManualTemp = [];
+  _datasManualTemp = [];
 }
 
 let _tipoProgramacaoAtual = null;
-let _espacosManualTemp = [];
+let _datasManualTemp = [];
 
 function iniciarProgramacao(tipo) {
   _tipoProgramacaoAtual = tipo;
@@ -2697,8 +2723,18 @@ function iniciarProgramacao(tipo) {
     document.getElementById('prog-etapa-manual').style.display = 'block';
     document.getElementById('prog-btn-confirmar').textContent = 'Criar programação';
     document.getElementById('prog-nome-manual').value = '';
-    _espacosManualTemp = [];
-    renderEspacosManualTemp();
+    _datasManualTemp = [];
+
+    // Popular checkboxes de redes (multi-seleção)
+    const cont = document.getElementById('prog-manual-redes-check');
+    cont.innerHTML = Object.entries(REDES).map(([key, r]) =>
+      `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);cursor:pointer">
+        <input type="checkbox" value="${key}" class="prog-manual-rede-cb" onchange="atualizarResumoManual()" style="accent-color:var(--g)"> ${r.emoji} ${r.label}
+      </label>`
+    ).join('');
+
+    renderDatasManualTemp();
+    atualizarResumoManual();
   }
 }
 
@@ -2710,37 +2746,60 @@ function voltarEtapaTipo() {
   document.getElementById('modal-prog-titulo').textContent = 'Criar programação';
 }
 
-function adicionarEspacoManual() {
-  const data = document.getElementById('prog-manual-data').value;
-  const rede = document.getElementById('prog-manual-rede').value;
+function adicionarDataManual() {
+  const data = document.getElementById('prog-manual-data-input').value;
   if (!data) { mostrarToast('Escolha uma data.'); return; }
+  if (_datasManualTemp.includes(data)) { mostrarToast('Essa data já foi adicionada.'); return; }
 
-  const jaExiste = _espacosManualTemp.some(e => e.data === data && e.rede === rede);
-  if (jaExiste) { mostrarToast('Esse espaço já foi adicionado.'); return; }
-
-  _espacosManualTemp.push({ data, rede });
-  renderEspacosManualTemp();
+  _datasManualTemp.push(data);
+  _datasManualTemp.sort();
+  document.getElementById('prog-manual-data-input').value = '';
+  renderDatasManualTemp();
+  atualizarResumoManual();
 }
 
-function removerEspacoManual(idx) {
-  _espacosManualTemp.splice(idx, 1);
-  renderEspacosManualTemp();
+function removerDataManual(data) {
+  _datasManualTemp = _datasManualTemp.filter(d => d !== data);
+  renderDatasManualTemp();
+  atualizarResumoManual();
 }
 
-function renderEspacosManualTemp() {
-  const cont = document.getElementById('prog-manual-lista');
-  if (_espacosManualTemp.length === 0) {
-    cont.innerHTML = '<p style="font-size:12px;color:var(--text3);text-align:center;padding:12px">Nenhum espaço adicionado ainda.</p>';
+function renderDatasManualTemp() {
+  const cont = document.getElementById('prog-manual-datas-lista');
+  if (_datasManualTemp.length === 0) {
+    cont.innerHTML = '<p style="font-size:12px;color:var(--text3)">Nenhuma data adicionada ainda.</p>';
     return;
   }
-  cont.innerHTML = _espacosManualTemp.map((e, i) => {
-    const r = REDES[e.rede];
-    const dataFmt = new Date(e.data + 'T12:00:00').toLocaleDateString('pt-BR');
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg2);border-radius:var(--rs);font-size:12px">
-      <span>${r.emoji} ${r.label} · ${dataFmt}</span>
-      <button onclick="removerEspacoManual(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">×</button>
-    </div>`;
+  cont.innerHTML = _datasManualTemp.map(data => {
+    const dataFmt = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR');
+    return `<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 10px;background:var(--g-l);color:var(--g);border-radius:20px;font-weight:600">
+      ${dataFmt}
+      <button onclick="removerDataManual('${data}')" style="background:none;border:none;color:var(--g);cursor:pointer;font-size:13px;line-height:1;padding:0">×</button>
+    </span>`;
   }).join('');
+}
+
+function atualizarResumoManual() {
+  const redes = Array.from(document.querySelectorAll('.prog-manual-rede-cb:checked')).map(c => c.value);
+  const totalDatas = _datasManualTemp.length;
+  const totalEspacos = totalDatas * redes.length;
+  const el = document.getElementById('prog-manual-resumo');
+  if (!el) return;
+
+  if (totalDatas === 0 || redes.length === 0) {
+    el.textContent = 'Adicione datas e redes para ver quantos espaços serão criados.';
+  } else {
+    const nomesRedes = redes.map(k => REDES[k].label).join(', ');
+    el.innerHTML = `<strong>${totalEspacos} espaço(s)</strong> serão criados: ${totalDatas} data(s) × ${redes.length} rede(s) — <span style="color:var(--text3)">${nomesRedes}</span>`;
+  }
+}
+
+function voltarEtapaTipo() {
+  document.getElementById('prog-etapa-tipo').style.display = 'block';
+  document.getElementById('prog-etapa-auto').style.display = 'none';
+  document.getElementById('prog-etapa-manual').style.display = 'none';
+  document.getElementById('prog-footer-tipo').style.display = 'none';
+  document.getElementById('modal-prog-titulo').textContent = 'Criar programação';
 }
 
 async function confirmarProgramacao() {
@@ -2753,13 +2812,16 @@ async function confirmarProgramacao() {
 
 function confirmarProgramacaoManual() {
   const nome = document.getElementById('prog-nome-manual').value.trim();
-  if (!nome) { mostrarToast('Dê um nome para a programação.'); return; }
-  if (_espacosManualTemp.length === 0) { mostrarToast('Adicione pelo menos um espaço.'); return; }
+  const redes = Array.from(document.querySelectorAll('.prog-manual-rede-cb:checked')).map(c => c.value);
 
+  if (!nome) { mostrarToast('Dê um nome para a programação.'); return; }
+  if (_datasManualTemp.length === 0) { mostrarToast('Adicione pelo menos uma data.'); return; }
+  if (redes.length === 0) { mostrarToast('Selecione pelo menos uma rede social.'); return; }
+
+  // Produto cartesiano: cada data recebe todas as redes selecionadas
   const espacos = {};
-  _espacosManualTemp.forEach(e => {
-    if (!espacos[e.data]) espacos[e.data] = [];
-    espacos[e.data].push(e.rede);
+  _datasManualTemp.forEach(data => {
+    espacos[data] = [...redes];
   });
 
   const nova = { id: 'prog_' + Date.now(), nome, espacos };
@@ -2767,9 +2829,10 @@ function confirmarProgramacaoManual() {
   programacaoAtivaId = nova.id;
   salvarProgramacoes();
 
+  const totalEspacos = _datasManualTemp.length * redes.length;
   fecharModalProgramacao();
   renderCal();
-  mostrarToast(`Programação "${nome}" criada com ${_espacosManualTemp.length} espaço(s)!`);
+  mostrarToast(`Programação "${nome}" criada com ${totalEspacos} espaço(s)!`);
 }
 
 async function confirmarProgramacaoAutomatica() {
