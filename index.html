@@ -964,7 +964,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <select id="select-programacao" onchange="trocarProgramacaoAtiva(this.value)" style="font-family:'Poppins',sans-serif;font-size:12px;padding:7px 10px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--bg);color:var(--text);display:none"></select>
         <button class="btnd btn2-sm" id="btn-excluir-programacao" onclick="excluirProgramacaoAtiva()" style="display:none">🗑 Excluir</button>
-        <button class="btn2 btn2-sm" onclick="abrirModalProgramacao()">📋 Criar programação</button>
+        <button class="btn2 btn2-sm" onclick="abrirModalProgramacao()">✦ Criar programação com IA</button>
       </div>
     </div>
 
@@ -1168,29 +1168,14 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 <div class="modal-overlay" id="modal-prog-overlay">
   <div class="modal" style="max-width:460px">
     <div class="modal-hdr">
-      <h3 id="modal-prog-titulo">Criar programação</h3>
+      <h3>✦ Criar programação com IA</h3>
       <button class="modal-close" onclick="fecharModalProgramacao()">×</button>
     </div>
 
-    <!-- Etapa 1: escolher tipo -->
-    <div id="prog-etapa-tipo" style="padding:24px">
+    <div style="padding:24px">
       <p style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6">
-        Como você quer montar a programação de posts?
+        A IA vai decidir quantos posts criar, em quais redes e em quais datas, com base no perfil da sua empresa.
       </p>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <button class="btn2" style="text-align:left;padding:16px;justify-content:flex-start" onclick="iniciarProgramacao('automatica')">
-          <div style="font-weight:700;font-size:13px;margin-bottom:3px">✦ Automática</div>
-          <div style="font-size:12px;color:var(--text3);font-weight:400">A IA decide quantos posts, quais redes e em quais datas, com base no perfil da empresa.</div>
-        </button>
-        <button class="btn2" style="text-align:left;padding:16px;justify-content:flex-start" onclick="iniciarProgramacao('manual')">
-          <div style="font-weight:700;font-size:13px;margin-bottom:3px">✎ Manual</div>
-          <div style="font-size:12px;color:var(--text3);font-weight:400">Você define você mesmo as datas e redes de cada espaço.</div>
-        </button>
-      </div>
-    </div>
-
-    <!-- Etapa 2: formulário automática -->
-    <div id="prog-etapa-auto" style="padding:24px;display:none">
       <div class="field">
         <label>Nome da programação</label>
         <input type="text" id="prog-nome-auto" placeholder="Ex: Julho 2026">
@@ -1211,35 +1196,9 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
       </div>
     </div>
 
-    <!-- Etapa 2: formulário manual -->
-    <div id="prog-etapa-manual" style="padding:24px;display:none">
-      <div class="field">
-        <label>Nome da programação</label>
-        <input type="text" id="prog-nome-manual" placeholder="Ex: Lançamento Produto X">
-      </div>
-
-      <div class="field">
-        <label>Datas — adicione quantas quiser</label>
-        <div style="display:flex;gap:6px;margin-bottom:8px">
-          <input type="date" id="prog-manual-data-input" style="flex:1">
-          <button class="btn2 btn2-sm" onclick="adicionarDataManual()">+ Adicionar data</button>
-        </div>
-        <div id="prog-manual-datas-lista" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-      </div>
-
-      <div class="field">
-        <label>Redes sociais — selecione uma ou mais</label>
-        <div id="prog-manual-redes-check" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-      </div>
-
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;margin-top:16px">
-        <p id="prog-manual-resumo" style="font-size:12px;color:var(--text2);margin:0">Adicione datas e redes para ver quantos espaços serão criados.</p>
-      </div>
-    </div>
-
-    <div class="modal-footer" id="prog-footer-tipo" style="display:none">
-      <button class="btn2" onclick="voltarEtapaTipo()">Voltar</button>
-      <button class="btn" id="prog-btn-confirmar" onclick="confirmarProgramacao()">Criar programação</button>
+    <div class="modal-footer">
+      <button class="btn2" onclick="fecharModalProgramacao()">Cancelar</button>
+      <button class="btn" id="prog-btn-confirmar" onclick="confirmarProgramacaoAutomatica()">Gerar programação</button>
     </div>
   </div>
 </div>
@@ -2719,168 +2678,27 @@ function excluirProgramacaoAtiva() {
   mostrarToast(`Programação "${ativa.nome}" excluída.`);
 }
 
-// Abre o modal de criação — se já existe uma programação ativa com espaços
-// vazios, pede confirmação antes de permitir criar uma nova (mas não bloqueia,
-// pois agora suportamos múltiplas programações salvas).
 function abrirModalProgramacao() {
-  document.getElementById('prog-etapa-tipo').style.display = 'block';
-  document.getElementById('prog-etapa-auto').style.display = 'none';
-  document.getElementById('prog-etapa-manual').style.display = 'none';
-  document.getElementById('prog-footer-tipo').style.display = 'none';
-  document.getElementById('modal-prog-titulo').textContent = 'Criar programação';
+  // Popular checkboxes de redes
+  const cont = document.getElementById('prog-redes-check');
+  cont.innerHTML = Object.entries(REDES).map(([key, r]) =>
+    `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);cursor:pointer">
+      <input type="checkbox" value="${key}" checked style="accent-color:var(--g)"> ${r.emoji} ${r.label}
+    </label>`
+  ).join('');
+
+  // Datas padrão: hoje até +30 dias
+  const hoje = new Date();
+  const em30 = new Date(); em30.setDate(em30.getDate() + 30);
+  document.getElementById('prog-data-inicio').value = hoje.toISOString().split('T')[0];
+  document.getElementById('prog-data-fim').value = em30.toISOString().split('T')[0];
+  document.getElementById('prog-nome-auto').value = `Programação ${MESES[mesAtual]} ${anoAtual}`;
+
   document.getElementById('modal-prog-overlay').classList.add('open');
 }
 
 function fecharModalProgramacao() {
   document.getElementById('modal-prog-overlay').classList.remove('open');
-  _datasManualTemp = [];
-}
-
-let _tipoProgramacaoAtual = null;
-let _datasManualTemp = [];
-
-function iniciarProgramacao(tipo) {
-  _tipoProgramacaoAtual = tipo;
-  document.getElementById('prog-etapa-tipo').style.display = 'none';
-  document.getElementById('prog-footer-tipo').style.display = 'flex';
-
-  if (tipo === 'automatica') {
-    document.getElementById('modal-prog-titulo').textContent = 'Programação automática';
-    document.getElementById('prog-etapa-auto').style.display = 'block';
-    document.getElementById('prog-etapa-manual').style.display = 'none';
-    document.getElementById('prog-btn-confirmar').textContent = 'Gerar programação';
-
-    // Popular checkboxes de redes
-    const cont = document.getElementById('prog-redes-check');
-    cont.innerHTML = Object.entries(REDES).map(([key, r]) =>
-      `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);cursor:pointer">
-        <input type="checkbox" value="${key}" checked style="accent-color:var(--g)"> ${r.emoji} ${r.label}
-      </label>`
-    ).join('');
-
-    // Datas padrão: hoje até +30 dias
-    const hoje = new Date();
-    const em30 = new Date(); em30.setDate(em30.getDate() + 30);
-    document.getElementById('prog-data-inicio').value = hoje.toISOString().split('T')[0];
-    document.getElementById('prog-data-fim').value = em30.toISOString().split('T')[0];
-    document.getElementById('prog-nome-auto').value = `Programação ${MESES[mesAtual]} ${anoAtual}`;
-
-  } else {
-    document.getElementById('modal-prog-titulo').textContent = 'Programação manual';
-    document.getElementById('prog-etapa-auto').style.display = 'none';
-    document.getElementById('prog-etapa-manual').style.display = 'block';
-    document.getElementById('prog-btn-confirmar').textContent = 'Criar programação';
-    document.getElementById('prog-nome-manual').value = '';
-    _datasManualTemp = [];
-
-    // Popular checkboxes de redes (multi-seleção)
-    const cont = document.getElementById('prog-manual-redes-check');
-    cont.innerHTML = Object.entries(REDES).map(([key, r]) =>
-      `<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);cursor:pointer">
-        <input type="checkbox" value="${key}" class="prog-manual-rede-cb" onchange="atualizarResumoManual()" style="accent-color:var(--g)"> ${r.emoji} ${r.label}
-      </label>`
-    ).join('');
-
-    renderDatasManualTemp();
-    atualizarResumoManual();
-  }
-}
-
-function voltarEtapaTipo() {
-  document.getElementById('prog-etapa-tipo').style.display = 'block';
-  document.getElementById('prog-etapa-auto').style.display = 'none';
-  document.getElementById('prog-etapa-manual').style.display = 'none';
-  document.getElementById('prog-footer-tipo').style.display = 'none';
-  document.getElementById('modal-prog-titulo').textContent = 'Criar programação';
-}
-
-function adicionarDataManual() {
-  const data = document.getElementById('prog-manual-data-input').value;
-  if (!data) { mostrarToast('Escolha uma data.'); return; }
-  if (_datasManualTemp.includes(data)) { mostrarToast('Essa data já foi adicionada.'); return; }
-
-  _datasManualTemp.push(data);
-  _datasManualTemp.sort();
-  document.getElementById('prog-manual-data-input').value = '';
-  renderDatasManualTemp();
-  atualizarResumoManual();
-}
-
-function removerDataManual(data) {
-  _datasManualTemp = _datasManualTemp.filter(d => d !== data);
-  renderDatasManualTemp();
-  atualizarResumoManual();
-}
-
-function renderDatasManualTemp() {
-  const cont = document.getElementById('prog-manual-datas-lista');
-  if (_datasManualTemp.length === 0) {
-    cont.innerHTML = '<p style="font-size:12px;color:var(--text3)">Nenhuma data adicionada ainda.</p>';
-    return;
-  }
-  cont.innerHTML = _datasManualTemp.map(data => {
-    const dataFmt = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR');
-    return `<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 10px;background:var(--g-l);color:var(--g);border-radius:20px;font-weight:600">
-      ${dataFmt}
-      <button onclick="removerDataManual('${data}')" style="background:none;border:none;color:var(--g);cursor:pointer;font-size:13px;line-height:1;padding:0">×</button>
-    </span>`;
-  }).join('');
-}
-
-function atualizarResumoManual() {
-  const redes = Array.from(document.querySelectorAll('.prog-manual-rede-cb:checked')).map(c => c.value);
-  const totalDatas = _datasManualTemp.length;
-  const totalEspacos = totalDatas * redes.length;
-  const el = document.getElementById('prog-manual-resumo');
-  if (!el) return;
-
-  if (totalDatas === 0 || redes.length === 0) {
-    el.textContent = 'Adicione datas e redes para ver quantos espaços serão criados.';
-  } else {
-    const nomesRedes = redes.map(k => REDES[k].label).join(', ');
-    el.innerHTML = `<strong>${totalEspacos} espaço(s)</strong> serão criados: ${totalDatas} data(s) × ${redes.length} rede(s) — <span style="color:var(--text3)">${nomesRedes}</span>`;
-  }
-}
-
-function voltarEtapaTipo() {
-  document.getElementById('prog-etapa-tipo').style.display = 'block';
-  document.getElementById('prog-etapa-auto').style.display = 'none';
-  document.getElementById('prog-etapa-manual').style.display = 'none';
-  document.getElementById('prog-footer-tipo').style.display = 'none';
-  document.getElementById('modal-prog-titulo').textContent = 'Criar programação';
-}
-
-async function confirmarProgramacao() {
-  if (_tipoProgramacaoAtual === 'automatica') {
-    await confirmarProgramacaoAutomatica();
-  } else {
-    confirmarProgramacaoManual();
-  }
-}
-
-function confirmarProgramacaoManual() {
-  const nome = document.getElementById('prog-nome-manual').value.trim();
-  const redes = Array.from(document.querySelectorAll('.prog-manual-rede-cb:checked')).map(c => c.value);
-
-  if (!nome) { mostrarToast('Dê um nome para a programação.'); return; }
-  if (_datasManualTemp.length === 0) { mostrarToast('Adicione pelo menos uma data.'); return; }
-  if (redes.length === 0) { mostrarToast('Selecione pelo menos uma rede social.'); return; }
-
-  // Produto cartesiano: cada data recebe todas as redes selecionadas
-  const espacos = {};
-  _datasManualTemp.forEach(data => {
-    espacos[data] = [...redes];
-  });
-
-  const nova = { id: 'prog_' + Date.now(), nome, espacos };
-  programacoes.push(nova);
-  programacaoAtivaId = nova.id;
-  salvarProgramacoes();
-
-  const totalEspacos = _datasManualTemp.length * redes.length;
-  fecharModalProgramacao();
-  renderCal();
-  mostrarToast(`Programação "${nome}" criada com ${totalEspacos} espaço(s)!`);
 }
 
 async function confirmarProgramacaoAutomatica() {
