@@ -2652,7 +2652,8 @@ function adicionarPostAoCal(dataStr, post) {
   if (jaExiste) return;
   calPosts[dataStr].push({
     redeName: post.redeName, cal: post.cal,
-    midia: post.midia || null, texto: post.texto, empresa: post.empresa
+    midia: post.midia || null, texto: post.texto, empresa: post.empresa,
+    programacaoId: post.programacaoId || ID_PROGRAMACAO_FIXA
   });
   try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {}
   dbCall('upsert', 'perfis_post', {
@@ -2693,7 +2694,11 @@ function selecionarParaCal(chave, idx) {
   document.getElementById('cal-modal-sel')?.remove();
   if (!post) return;
   if (!calPosts[chave]) calPosts[chave] = [];
-  calPosts[chave].push({ redeName: post.redeName, cal: post.cal, midia: post.midia || null, texto: post.texto, empresa: post.empresa });
+  calPosts[chave].push({
+    redeName: post.redeName, cal: post.cal, midia: post.midia || null,
+    texto: post.texto, empresa: post.empresa,
+    programacaoId: post.programacaoId || ID_PROGRAMACAO_FIXA
+  });
   try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {}
   dbCall('upsert', 'perfis_post', {
     id: CURRENT_USER_ID,
