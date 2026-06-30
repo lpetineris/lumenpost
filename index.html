@@ -2785,7 +2785,10 @@ Use apenas estas chaves de rede: ${redesEscolhidas.join(', ')}. Todas as datas d
 function preencherEspacoProgramacao(data, redeKey) {
   goTab('gerar');
   setTimeout(() => {
-    // Seleciona apenas essa rede
+    // Limpa qualquer configuração anterior do gerador (tema, mídia, resultado, etc.)
+    limparGeradorSilencioso();
+
+    // Pré-configura com a rede e a data do espaço clicado
     vozSelecionadas = new Set([redeKey]);
     vozAtual = redeKey;
     document.querySelectorAll('.voz-btn').forEach(b => {
@@ -2967,7 +2970,8 @@ function confirmarAlterarData() {
 }
 
 // ── LIMPAR GERADOR ───────────────────────────────────────────────────
-function limparGerador() {
+// Versão silenciosa — usada internamente antes de pré-configurar o gerador
+function limparGeradorSilencioso() {
   document.getElementById('input-tema').value = '';
   document.getElementById('input-tom').value = 'autoridade';
   document.getElementById('input-data').value = '';
@@ -2987,6 +2991,10 @@ function limparGerador() {
   vozSelecionadas = new Set();
   vozAtual = null;
   document.querySelectorAll('.voz-btn').forEach(b => b.classList.remove('on'));
+}
+
+function limparGerador() {
+  limparGeradorSilencioso();
   mostrarToast('Gerador limpo.');
 }
 
