@@ -1169,6 +1169,25 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 
 </main>
 
+<!-- Modal Adicionar Espaços numa Data (modo edição de programação) -->
+<div class="modal-overlay" id="modal-espacos-data-overlay">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hdr">
+      <h3 id="modal-espacos-data-titulo">Adicionar espaços</h3>
+      <button class="modal-close" onclick="fecharModalEspacosData()">×</button>
+    </div>
+    <div style="padding:24px">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+        Escolha as redes para esta data. Clique mais de uma vez na mesma rede para criar vários espaços dela.
+      </p>
+      <div id="espacos-data-redes-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn2" onclick="fecharModalEspacosData()">Concluir</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Criar Programação -->
 <div class="modal-overlay" id="modal-prog-overlay">
   <div class="modal" style="max-width:460px">
@@ -1351,6 +1370,7 @@ async function loadFromCloud() {
       }
     }
   } catch(e) {}
+  migrarEstruturaEspacos();
   garantirProgramacaoFixa();
   renderCal();
 
@@ -1391,7 +1411,9 @@ let modalPostIdx = null;
 let perfil = {};
 
 // ── PROGRAMAÇÕES ──────────────────────────────────────────────────────
-// Lista de programações salvas. Cada uma: { id, nome, espacos: { 'YYYY-MM-DD': ['linkedin','instagram'] } }
+// Lista de programações salvas. Cada uma:
+// { id, nome, espacos: { 'YYYY-MM-DD': [{ id: 'esp_123', rede: 'instagram' }, ...] } }
+// Cada espaço tem ID próprio — permite múltiplos espaços da mesma rede no mesmo dia.
 let programacoes = [];
 let programacaoAtivaId = null;
 let modoEdicaoProgramacao = false;
@@ -1400,6 +1422,23 @@ const ID_PROGRAMACAO_FIXA = 'prog_posts_gerais';
 
 function getProgramacaoAtiva() {
   return programacoes.find(p => p.id === programacaoAtivaId) || null;
+}
+
+// Migra estruturas antigas (array de strings) para o novo formato (array de objetos com ID).
+// Roda automaticamente sobre todas as programações sempre que são carregadas/usadas.
+function migrarEstruturaEspacos() {
+  programacoes.forEach(prog => {
+    if (!prog.espacos) { prog.espacos = {}; return; }
+    Object.keys(prog.espacos).forEach(data => {
+      prog.espacos[data] = (prog.espacos[data] || []).map(item => {
+        if (typeof item === 'string') {
+          // Formato antigo: era só a string da rede. Converte para objeto com ID.
+          return { id: 'esp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), rede: item };
+        }
+        return item; // já está no formato novo
+      });
+    });
+  });
 }
 
 // Garante que a programação padrão "Posts gerais" sempre exista.
@@ -1413,44 +1452,40 @@ function garantirProgramacaoFixa() {
   }
 }
 
-// Registra um espaço já preenchido na programação "Posts gerais" para a
-// data/rede informadas — chamado sempre que um post é salvo fora do fluxo
-// de clique em espaço vazio de outra programação.
+function gerarIdEspaco() {
+  return 'esp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+// Adiciona UM espaço vazio (sempre cria um novo, mesmo que já exista a mesma rede naquele dia).
+function adicionarEspacoNaProgramacao(progId, data, rede) {
+  if (!data || !rede) return null;
+  const prog = programacoes.find(p => p.id === progId);
+  if (!prog) return null;
+  if (!prog.espacos) prog.espacos = {};
+  if (!prog.espacos[data]) prog.espacos[data] = [];
+  const novoEspaco = { id: gerarIdEspaco(), rede };
+  prog.espacos[data].push(novoEspaco);
+  salvarProgramacoes();
+  return novoEspaco;
+}
+
+// Registra um espaço já preenchido na programação "Posts gerais" — chamado
+// sempre que um post é salvo fora do fluxo de espaço pré-criado.
 function registrarEmProgramacaoFixa(data, rede) {
   if (!data || !rede) return;
   garantirProgramacaoFixa();
-  const fixa = programacoes.find(p => p.id === ID_PROGRAMACAO_FIXA);
-  if (!fixa) return;
-  if (!fixa.espacos[data]) fixa.espacos[data] = [];
-  if (!fixa.espacos[data].includes(rede)) {
-    fixa.espacos[data].push(rede);
-    salvarProgramacoes();
-  }
+  adicionarEspacoNaProgramacao(ID_PROGRAMACAO_FIXA, data, rede);
 }
 
-// Registra um espaço numa programação específica (usado pelo modo edição).
-function registrarEmProgramacao(progId, data, rede) {
-  if (!data || !rede) return;
-  const prog = programacoes.find(p => p.id === progId);
-  if (!prog) return;
-  if (!prog.espacos) prog.espacos = {};
-  if (!prog.espacos[data]) prog.espacos[data] = [];
-  if (!prog.espacos[data].includes(rede)) {
-    prog.espacos[data].push(rede);
-    salvarProgramacoes();
-  }
-}
-
-// Decide onde registrar um post recém-salvo: se o modo edição está ativo
-// e há uma programação ativa, registra nela; senão usa a lógica padrão
-// (registra na fixa "Posts gerais" se não pertencer a nenhuma programação).
+// Decide onde registrar um post recém-salvo: se ele veio de um espaço
+// específico (passamos o ID), apenas remove aquele espaço (o post real
+// toma o lugar dele). Caso contrário, registra como novo espaço já
+// preenchido na fixa "Posts gerais".
 function registrarPostNaProgramacaoCorreta(data, rede) {
   if (!data || !rede) return;
-  if (modoEdicaoProgramacao && programacaoAtivaId) {
-    registrarEmProgramacao(programacaoAtivaId, data, rede);
-    return;
-  }
-  const pertenceAProgramacao = programacoes.some(p => p.espacos && p.espacos[data] && p.espacos[data].includes(rede));
+  const pertenceAProgramacao = programacoes.some(p =>
+    p.espacos && p.espacos[data] && p.espacos[data].some(e => e.rede === rede)
+  );
   if (!pertenceAProgramacao) registrarEmProgramacaoFixa(data, rede);
 }
 
@@ -1469,6 +1504,7 @@ try { calPosts = JSON.parse(localStorage.getItem('lp_cal') || '{}'); } catch(e) 
 try { perfil = JSON.parse(localStorage.getItem('lp_perfil') || '{}'); } catch(e) { perfil = {}; }
 try { programacoes = JSON.parse(localStorage.getItem('lp_programacoes') || '[]'); } catch(e) { programacoes = []; }
 try { programacaoAtivaId = localStorage.getItem('lp_programacao_ativa') || null; } catch(e) { programacaoAtivaId = null; }
+migrarEstruturaEspacos();
 // Load from cloud when user_id arrives via postMessage
 // (triggered in loadFromCloud called from message listener)
 
@@ -2457,23 +2493,34 @@ function renderCal() {
       el.appendChild(item);
     });
 
-    // Espaços vazios da programação ativa — só mostra se ainda não há post real naquela rede+data
+    // Espaços vazios da programação ativa — mostra apenas os que ainda não têm post real correspondente.
+    // Como pode haver múltiplos espaços da mesma rede no mesmo dia, comparamos por contagem:
+    // se há 2 espaços de Instagram e 1 post real de Instagram, mostra 1 espaço vazio.
     const prog = getProgramacaoAtiva();
     if (prog && prog.espacos && prog.espacos[chave]) {
-      const redesJaPreenchidas = (calPosts[chave] || []).map(p => {
+      const contagemPreenchidos = {};
+      (calPosts[chave] || []).forEach(p => {
         const entry = Object.entries(REDES).find(([k,v]) => v.label === p.redeName);
-        return entry ? entry[0] : null;
+        const k = entry ? entry[0] : null;
+        if (k) contagemPreenchidos[k] = (contagemPreenchidos[k] || 0) + 1;
       });
-      prog.espacos[chave].forEach(redeKey => {
-        if (redesJaPreenchidas.includes(redeKey)) return; // já foi preenchido — não mostra espaço vazio
+
+      const contagemMostrados = {};
+      prog.espacos[chave].forEach(esp => {
+        const redeKey = esp.rede;
         const r = REDES[redeKey];
         if (!r) return;
-        const espaco = document.createElement('div');
-        espaco.className = `cal-espaco ${r.cal || 'generico'}`;
-        espaco.textContent = r.emoji + ' ' + r.label;
-        espaco.title = 'Clique para criar o post de ' + r.label;
-        espaco.onclick = () => preencherEspacoProgramacao(chave, redeKey);
-        el.appendChild(espaco);
+
+        contagemMostrados[redeKey] = (contagemMostrados[redeKey] || 0) + 1;
+        const jaPreenchidos = contagemPreenchidos[redeKey] || 0;
+        if (contagemMostrados[redeKey] <= jaPreenchidos) return; // este espaço já foi preenchido — pula
+
+        const espacoEl = document.createElement('div');
+        espacoEl.className = `cal-espaco ${r.cal || 'generico'}`;
+        espacoEl.textContent = r.emoji + ' ' + r.label;
+        espacoEl.title = 'Clique para criar o post de ' + r.label;
+        espacoEl.onclick = () => preencherEspacoProgramacao(chave, redeKey);
+        el.appendChild(espacoEl);
       });
     }
 
@@ -2762,6 +2809,8 @@ Redes sociais disponíveis: ${redesEscolhidas.map(k => REDES[k].label).join(', '
 
 Decida quantos posts fazem sentido nesse período e como distribuí-los entre as redes e datas, considerando uma frequência saudável e realista (não exagere — geralmente 2-4 posts por semana por rede é adequado para uma pequena/média empresa).
 
+Se fizer sentido estrategicamente (ex: uma data muito importante, um lançamento, uma campanha especial), você pode sugerir mais de um post na mesma rede e mesma data — isso é permitido, mas use com moderação.
+
 Responda APENAS em JSON válido, sem texto antes ou depois, no formato exato:
 {"espacos": [{"data": "YYYY-MM-DD", "rede": "linkedin"}, {"data": "YYYY-MM-DD", "rede": "instagram"}]}
 
@@ -2794,7 +2843,7 @@ Use apenas estas chaves de rede: ${redesEscolhidas.join(', ')}. Todas as datas d
     parsed.espacos.forEach(e => {
       if (!e.data || !e.rede || !REDES[e.rede]) return;
       if (!espacos[e.data]) espacos[e.data] = [];
-      if (!espacos[e.data].includes(e.rede)) espacos[e.data].push(e.rede);
+      espacos[e.data].push({ id: gerarIdEspaco(), rede: e.rede });
     });
 
     const nova = { id: 'prog_' + Date.now(), nome, espacos };
@@ -2847,21 +2896,77 @@ function toggleModoEdicaoPrograacao() {
     btn.classList.toggle('btng', modoEdicaoProgramacao);
   }
   if (modoEdicaoProgramacao) {
-    mostrarToast('Modo edição ativo — clique em qualquer data para criar um post.');
+    mostrarToast('Modo edição ativo — clique em qualquer data para escolher as redes.');
   }
   renderCal();
 }
 
-// Chamado ao clicar numa data qualquer durante o modo edição — leva ao
-// Gerador com a data travada, mas sem rede pré-selecionada (usuário escolhe).
+// Chamado ao clicar numa data qualquer durante o modo edição — abre o modal
+// para escolher quais redes terão espaço naquela data (sem ir ao Gerador ainda).
+let _dataEspacosAtual = null;
+
 function adicionarPostNaoPlanejado(data) {
-  goTab('gerar');
-  setTimeout(() => {
-    limparGeradorSilencioso();
-    document.getElementById('input-data').value = data;
-    document.getElementById('input-tema').focus();
-    mostrarToast(`Data ${new Date(data+'T12:00:00').toLocaleDateString('pt-BR')} selecionada. Escolha a rede, descreva o tema e gere o post!`);
-  }, 150);
+  _dataEspacosAtual = data;
+  const dataFmt = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR');
+  document.getElementById('modal-espacos-data-titulo').textContent = `Adicionar espaços — ${dataFmt}`;
+  renderListaEspacosData();
+  document.getElementById('modal-espacos-data-overlay').classList.add('open');
+}
+
+function fecharModalEspacosData() {
+  document.getElementById('modal-espacos-data-overlay').classList.remove('open');
+  _dataEspacosAtual = null;
+  renderCal();
+}
+
+function renderListaEspacosData() {
+  const cont = document.getElementById('espacos-data-redes-lista');
+  if (!cont || !_dataEspacosAtual || !programacaoAtivaId) return;
+
+  const prog = programacoes.find(p => p.id === programacaoAtivaId);
+  const espacosNaData = (prog && prog.espacos && prog.espacos[_dataEspacosAtual]) || [];
+
+  cont.innerHTML = Object.entries(REDES).map(([key, r]) => {
+    const qtd = espacosNaData.filter(e => e.rede === key).length;
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:var(--rs);background:var(--bg)">
+        <span style="font-size:13px;font-weight:500">${r.emoji} ${r.label}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${qtd > 0 ? `<button onclick="removerUmEspacoData('${key}')" style="width:24px;height:24px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;font-size:14px;line-height:1">−</button>` : ''}
+          ${qtd > 0 ? `<span style="font-size:13px;font-weight:700;color:var(--g);min-width:14px;text-align:center">${qtd}</span>` : ''}
+          <button onclick="adicionarUmEspacoData('${key}')" class="btng" style="width:28px;height:28px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;font-size:15px">+</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function adicionarUmEspacoData(redeKey) {
+  if (!_dataEspacosAtual || !programacaoAtivaId) return;
+  adicionarEspacoNaProgramacao(programacaoAtivaId, _dataEspacosAtual, redeKey);
+  renderListaEspacosData();
+}
+
+function removerUmEspacoData(redeKey) {
+  if (!_dataEspacosAtual || !programacaoAtivaId) return;
+  const prog = programacoes.find(p => p.id === programacaoAtivaId);
+  if (!prog || !prog.espacos || !prog.espacos[_dataEspacosAtual]) return;
+
+  // Conta quantos posts reais já existem para esta rede/data — nunca remove um espaço "preenchido"
+  const jaPreenchidos = (calPosts[_dataEspacosAtual] || []).filter(p => p.redeName === REDES[redeKey].label).length;
+  const lista = prog.espacos[_dataEspacosAtual];
+  const todosDaRede = lista.map((e, i) => ({ e, i })).filter(x => x.e.rede === redeKey);
+
+  if (todosDaRede.length <= jaPreenchidos) {
+    mostrarToast('Este espaço já foi preenchido e não pode ser removido por aqui.');
+    return;
+  }
+
+  // Remove o último espaço vazio (não preenchido) daquela rede
+  const idxParaRemover = todosDaRede[todosDaRede.length - 1].i;
+  lista.splice(idxParaRemover, 1);
+  if (lista.length === 0) delete prog.espacos[_dataEspacosAtual];
+  salvarProgramacoes();
+  renderListaEspacosData();
 }
 
 // ── AJUDA ─────────────────────────────────────────────────────────────
