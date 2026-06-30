@@ -1553,6 +1553,12 @@ function renderVozes() {
 }
 
 function toggleVoz(key) {
+  // Trava a seleção de rede depois de gerar — trocar de rede exige Limpar e gerar de novo
+  if (postAtual || Object.keys(resultadosPorRede).length > 0) {
+    mostrarToast('Para trocar de rede, clique em Limpar e gere novamente.');
+    return;
+  }
+
   if (vozSelecionadas.has(key)) {
     vozSelecionadas.delete(key);
     document.getElementById('voz-' + key).classList.remove('on');
@@ -1561,12 +1567,6 @@ function toggleVoz(key) {
     document.getElementById('voz-' + key).classList.add('on');
   }
   vozAtual = Array.from(vozSelecionadas)[0];
-  // Atualizar meta
-  if (postAtual) {
-    var nomes = Array.from(vozSelecionadas).map(k => REDES[k].label).join(', ');
-    document.getElementById('resultado-meta').innerHTML =
-      `<strong>${perfil.nome}</strong> · ${nomes} · tom ${TOM_MAP[postAtual.tom]}`;
-  }
 }
 
 function selecionarVoz(key) { toggleVoz(key); } // compatibilidade
@@ -2034,62 +2034,58 @@ function copiarPost() {
 
 function salvarPost() {
   if (!postAtual) return;
-  var redes = Array.from(vozSelecionadas);
-  if (redes.length === 0) redes = [vozAtual || 'linkedin'];
 
   // Lê a data do campo no momento de salvar — não do postAtual
   var dataAtual = document.getElementById('input-data').value || '';
+  var key = postAtual.rede;
+  var r = REDES[key] || REDES.linkedin;
 
-  var duplicatas = 0;
-  redes.forEach(function(key) {
-    var r = REDES[key] || REDES.linkedin;
-    // Verificar duplicata no banco — mesmo texto, mesma rede E mesma data
-    var jaExiste = bancoPosts.some(function(p) {
-      var textoIgual = p.texto === postAtual.texto;
-      var redeIgual = p.rede === key;
-      var dataIgual = (p.data || '') === (dataAtual || '');
-      return textoIgual && redeIgual && dataIgual;
+  // Verificar duplicata no banco — mesmo texto, mesma rede E mesma data
+  var jaExiste = bancoPosts.some(function(p) {
+    return p.texto === postAtual.texto && p.rede === key && (p.data || '') === (dataAtual || '');
+  });
+  if (jaExiste) {
+    mostrarToast('Este post já está salvo para essa rede e data.');
+    return;
+  }
+
+  var post = {
+    ...postAtual,
+    rede: key,
+    redeName: r.label,
+    badge: r.badge,
+    cal: r.cal,
+    data: dataAtual,
+    id: Date.now() + Math.random(),
+    criadoEm: new Date().toISOString()
+  };
+  bancoPosts.unshift(post);
+  if (post.data) {
+    adicionarPostAoCal(post.data, post);
+    // Se este espaço não pertence a nenhuma programação, registra na fixa "Posts gerais"
+    var pertenceAProgramacao = programacoes.some(function(p) {
+      return p.espacos && p.espacos[post.data] && p.espacos[post.data].includes(key);
     });
-    if (jaExiste) { duplicatas++; return; }
-
-    var post = {
-      ...postAtual,
-      rede: key,
-      redeName: r.label,
-      badge: r.badge,
-      cal: r.cal,
-      data: dataAtual,
-      id: Date.now() + Math.random(),
-      criadoEm: new Date().toISOString()
-    };
-    bancoPosts.unshift(post);
-    if (post.data) {
-      adicionarPostAoCal(post.data, post);
-      // Se este espaço não pertence a nenhuma programação, registra na fixa "Posts gerais"
-      var pertenceAProgramacao = programacoes.some(function(p) {
-        return p.espacos && p.espacos[post.data] && p.espacos[post.data].includes(key);
-      });
-      if (!pertenceAProgramacao) registrarEmProgramacaoFixa(post.data, key);
+    if (!pertenceAProgramacao) registrarEmProgramacaoFixa(post.data, key);
+  }
+  // Save to Supabase
+  var midiaStr = null;
+  try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
+  dbCall('insert', 'posts', {
+    user_id: CURRENT_USER_ID,
+    conteudo: post.texto || '',
+    rede: post.rede || '',
+    status: post.status || 'rascunho',
+    empresa: perfil.nome || '',
+    badge: post.badge || 'badge-green',
+    midia: midiaStr,
+    data_publicacao: post.data || null,
+  }).then(function(r) {
+    if(r && Array.isArray(r) && r[0]) {
+      post._cloudId = r[0].id;
+      post.id = 'cloud_' + r[0].id;
     }
-    // Save to Supabase
-    var midiaStr = null;
-    try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
-    dbCall('insert', 'posts', {
-      user_id: CURRENT_USER_ID,
-      conteudo: post.texto || '',
-      rede: post.rede || '',
-      status: post.status || 'rascunho',
-      empresa: perfil.nome || '',
-      badge: post.badge || 'badge-green',
-      midia: midiaStr,
-      data_publicacao: post.data || null,
-    }).then(function(r) {
-      if(r && Array.isArray(r) && r[0]) {
-        post._cloudId = r[0].id;
-        post.id = 'cloud_' + r[0].id;
-      }
-    });
-  }); // end forEach
+  });
 
   salvarStorage();
   renderBanco();
@@ -2099,13 +2095,7 @@ function salvarPost() {
   vozAtual = null;
   document.querySelectorAll('.voz-btn').forEach(function(b) { b.classList.remove('on'); });
 
-  var qtd = redes.length - duplicatas;
-  if (duplicatas > 0 && qtd === 0) {
-    mostrarToast('Este post já está salvo para ' + (duplicatas > 1 ? 'essas redes' : 'essa rede') + '.');
-    return;
-  }
-  if (duplicatas > 0) mostrarToast(qtd + ' post(s) salvo(s). ' + duplicatas + ' duplicata(s) ignorada(s).');
-  mostrarToast(qtd > 1 ? qtd + ' posts salvos no banco!' : 'Post salvo no banco!');
+  mostrarToast('Post salvo no banco!');
 }
 
 function marcarAprovacao() {
