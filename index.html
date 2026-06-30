@@ -1387,6 +1387,8 @@ async function loadFromCloud() {
       }
     }
   } catch(e) {}
+  garantirProgramacaoFixa();
+  renderCal();
 
   // Load posts
   try {
@@ -1429,8 +1431,36 @@ let perfil = {};
 let programacoes = [];
 let programacaoAtivaId = null;
 
+const ID_PROGRAMACAO_FIXA = 'prog_posts_gerais';
+
 function getProgramacaoAtiva() {
   return programacoes.find(p => p.id === programacaoAtivaId) || null;
+}
+
+// Garante que a programação padrão "Posts gerais" sempre exista.
+// É criada apenas uma vez — nunca duplicada, nunca excluída.
+function garantirProgramacaoFixa() {
+  const existe = programacoes.some(p => p.id === ID_PROGRAMACAO_FIXA);
+  if (!existe) {
+    programacoes.unshift({ id: ID_PROGRAMACAO_FIXA, nome: 'Posts gerais', espacos: {}, fixa: true });
+    if (!programacaoAtivaId) programacaoAtivaId = ID_PROGRAMACAO_FIXA;
+    salvarProgramacoes();
+  }
+}
+
+// Registra um espaço já preenchido na programação "Posts gerais" para a
+// data/rede informadas — chamado sempre que um post é salvo fora do fluxo
+// de clique em espaço vazio de outra programação.
+function registrarEmProgramacaoFixa(data, rede) {
+  if (!data || !rede) return;
+  garantirProgramacaoFixa();
+  const fixa = programacoes.find(p => p.id === ID_PROGRAMACAO_FIXA);
+  if (!fixa) return;
+  if (!fixa.espacos[data]) fixa.espacos[data] = [];
+  if (!fixa.espacos[data].includes(rede)) {
+    fixa.espacos[data].push(rede);
+    salvarProgramacoes();
+  }
 }
 
 function salvarProgramacoes() {
@@ -1992,7 +2022,12 @@ function salvarAba(key) {
   };
 
   bancoPosts.unshift(post);
-  if (post.data) adicionarPostAoCal(post.data, post);
+  if (post.data) {
+    adicionarPostAoCal(post.data, post);
+    // Se este espaço não pertence a nenhuma programação, registra na fixa "Posts gerais"
+    const pertenceAProgramacao = programacoes.some(p => p.espacos && p.espacos[post.data] && p.espacos[post.data].includes(key));
+    if (!pertenceAProgramacao) registrarEmProgramacaoFixa(post.data, key);
+  }
 
   var midiaStr = null;
   try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
@@ -2069,7 +2104,14 @@ function salvarPost() {
       criadoEm: new Date().toISOString()
     };
     bancoPosts.unshift(post);
-    if (post.data) adicionarPostAoCal(post.data, post);
+    if (post.data) {
+      adicionarPostAoCal(post.data, post);
+      // Se este espaço não pertence a nenhuma programação, registra na fixa "Posts gerais"
+      var pertenceAProgramacao = programacoes.some(function(p) {
+        return p.espacos && p.espacos[post.data] && p.espacos[post.data].includes(key);
+      });
+      if (!pertenceAProgramacao) registrarEmProgramacaoFixa(post.data, key);
+    }
     // Save to Supabase
     var midiaStr = null;
     try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
@@ -2631,12 +2673,17 @@ function atualizarSeletorProgramacao() {
   }
 
   sel.style.display = 'inline-block';
-  if (btnExcluir) btnExcluir.style.display = 'inline-flex';
   sel.innerHTML = programacoes.map(p =>
-    `<option value="${p.id}"${p.id === programacaoAtivaId ? ' selected' : ''}>${p.nome}</option>`
+    `<option value="${p.id}"${p.id === programacaoAtivaId ? ' selected' : ''}>${p.fixa ? '📌 ' : ''}${p.nome}</option>`
   ).join('');
 
   const ativa = getProgramacaoAtiva();
+
+  // Botão excluir: oculto quando a programação ativa é a fixa
+  if (btnExcluir) {
+    btnExcluir.style.display = (ativa && ativa.fixa) ? 'none' : 'inline-flex';
+  }
+
   if (ativa) {
     const total = Object.values(ativa.espacos || {}).reduce((acc, arr) => acc + arr.length, 0);
     info.textContent = total > 0
@@ -2656,6 +2703,7 @@ function trocarProgramacaoAtiva(id) {
 function excluirProgramacaoAtiva() {
   const ativa = getProgramacaoAtiva();
   if (!ativa) return;
+  if (ativa.fixa) { mostrarToast('"Posts gerais" é uma programação fixa e não pode ser excluída.'); return; }
 
   const total = Object.values(ativa.espacos || {}).reduce((acc, arr) => acc + arr.length, 0);
   const aviso = total > 0
@@ -3163,6 +3211,7 @@ function sincronizarCal() {
 carregarPerfil();
 renderVozes();
 verificarPerfil();
+garantirProgramacaoFixa();
 // Load from Supabase on startup
 loadFromCloud();
 </script>
