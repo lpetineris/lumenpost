@@ -1100,6 +1100,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
     <div class="modal-corpo" id="modal-corpo"></div>
     <div class="modal-footer">
       <button class="btn2" onclick="copiarModal()">Copiar texto</button>
+      <button class="btn2 btn2-sm" id="modal-footer-download-btn" style="display:none" onclick="baixarMidiaModal()">⬇ Baixar mídia</button>
       <button class="btn2 btn2-sm" id="modal-footer-data-btn" style="display:none" onclick="abrirModalDataDoModal()">📅 Alterar data</button>
       <button class="btnd btn2-sm" id="modal-footer-cal-btn" style="display:none" onclick="excluirDoCalendario()">Excluir post</button>
       <button class="btn2" onclick="fecharModal()">Fechar</button>
@@ -1764,6 +1765,7 @@ function renderBanco() {
           <div class="post-footer">
             <button class="btn2 btn2-sm" onclick="verPost(${idx})">Ver completo</button>
             <button class="btn2 btn2-sm" onclick="copiarTexto(${idx})">Copiar</button>
+            ${p.midia ? `<button class="btn2 btn2-sm" onclick="baixarMidia(${idx})">⬇ Baixar mídia</button>` : ''}
             <button class="btn2 btn2-sm" onclick="abrirModalData(${idx}, null)">📅 Alterar data</button>
             <button class="btng" onclick="abrirModalEmail(${idx})">✉ Aprovar por email</button>
             ${(p.status==='rascunho'||p.status==='aguardando')?`<button class="btng" onclick="mudarStatus(${idx},'aprovado')">Aprovado ✓</button>`:''}
@@ -1842,6 +1844,24 @@ function copiarTexto(idx) {
   copiarTextoSeguro(bancoPosts[idx].texto);
 }
 
+function baixarMidia(idx) {
+  const post = bancoPosts[idx];
+  if (!post || !post.midia || !post.midia.dataUrl) {
+    mostrarToast('Mídia não encontrada.');
+    return;
+  }
+  const ext = post.midia.tipo === 'video' ? 'mp4' : 'jpg';
+  const nomeArquivo = (post.midia.nome || `lumen-post-${post.rede || 'midia'}`).replace(/\.[^/.]+$/, '') + '.' + ext;
+
+  const a = document.createElement('a');
+  a.href = post.midia.dataUrl;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  mostrarToast('Download iniciado!');
+}
+
 function verPost(idx) {
   modalPostIdx = idx;
   // Esconder botão excluir do calendário no modal do banco
@@ -1862,16 +1882,39 @@ function verPost(idx) {
     emailEl.style.display = 'none';
   }
   const mm = document.getElementById('modal-midia');
+  const dlBtn = document.getElementById('modal-footer-download-btn');
   if (p.midia) {
     mm.style.display = 'block';
     mm.innerHTML = p.midia.tipo === 'video'
       ? `<video src="${p.midia.dataUrl}" controls style="width:100%;max-height:260px;display:block"></video>`
       : `<img src="${p.midia.dataUrl}" style="width:100%;max-height:260px;object-fit:contain;display:block">`;
-  } else { mm.style.display = 'none'; }
+    if (dlBtn) { dlBtn.style.display = 'inline-flex'; window._modalMidiaAtual = p.midia; window._modalMidiaRede = p.rede; }
+  } else {
+    mm.style.display = 'none';
+    if (dlBtn) dlBtn.style.display = 'none';
+  }
   document.getElementById('modal-overlay').classList.add('open');
 }
 
 function fecharModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function baixarMidiaModal() {
+  const midia = window._modalMidiaAtual;
+  if (!midia || !midia.dataUrl) {
+    mostrarToast('Mídia não encontrada.');
+    return;
+  }
+  const ext = midia.tipo === 'video' ? 'mp4' : 'jpg';
+  const nomeArquivo = (midia.nome || `lumen-post-${window._modalMidiaRede || 'midia'}`).replace(/\.[^/.]+$/, '') + '.' + ext;
+
+  const a = document.createElement('a');
+  a.href = midia.dataUrl;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  mostrarToast('Download iniciado!');
+}
 
 function copiarModal() {
   if (modalPostIdx === null) return;
@@ -1959,12 +2002,17 @@ function verPostCal(p, chave) {
   document.getElementById('modal-titulo').textContent = `${p.redeName || 'Post'} · ${p.empresa || ''}`;
   document.getElementById('modal-corpo').textContent = p.texto || '';
   const mm = document.getElementById('modal-midia');
+  const dlBtn = document.getElementById('modal-footer-download-btn');
   if (p.midia) {
     mm.style.display = 'block';
     mm.innerHTML = p.midia.tipo === 'video'
       ? `<video src="${p.midia.dataUrl}" controls style="width:100%;max-height:260px;display:block"></video>`
       : `<img src="${p.midia.dataUrl}" style="width:100%;max-height:260px;object-fit:contain;display:block">`;
-  } else { mm.style.display = 'none'; }
+    if (dlBtn) { dlBtn.style.display = 'inline-flex'; window._modalMidiaAtual = p.midia; window._modalMidiaRede = p.redeName; }
+  } else {
+    mm.style.display = 'none';
+    if (dlBtn) dlBtn.style.display = 'none';
+  }
 
   // Mostrar botão excluir do calendário
   const footer = document.getElementById('modal-footer-cal-btn');
