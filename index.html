@@ -1353,17 +1353,58 @@ function toggleVoz(key) {
 function selecionarVoz(key) { toggleVoz(key); } // compatibilidade
 
 // ── MÍDIA ─────────────────────────────────────────────────────────────
+// Redimensiona uma imagem para no máximo `maxLado` px no lado maior, mantendo proporção.
+// Retorna uma Promise com o dataURL da imagem já redimensionada (JPEG, qualidade 0.88).
+function redimensionarImagem(dataUrl, maxLado) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+
+      if (width <= maxLado && height <= maxLado) {
+        // Já está dentro do limite — não precisa redimensionar
+        resolve(dataUrl);
+        return;
+      }
+
+      if (width > height) {
+        height = Math.round(height * (maxLado / width));
+        width = maxLado;
+      } else {
+        width = Math.round(width * (maxLado / height));
+        height = maxLado;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', 0.88));
+    };
+    img.onerror = () => resolve(dataUrl); // fallback: usa original se der erro
+    img.src = dataUrl;
+  });
+}
+
 function carregarMidia(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     const isVideo = file.type.startsWith('video/');
-    midiaAtual = { tipo: isVideo ? 'video' : 'imagem', dataUrl: e.target.result, nome: file.name };
+    let dataUrl = e.target.result;
+
+    if (!isVideo) {
+      // Redimensiona imagens para no máximo 1080px no lado maior
+      dataUrl = await redimensionarImagem(dataUrl, 1080);
+    }
+
+    midiaAtual = { tipo: isVideo ? 'video' : 'imagem', dataUrl, nome: file.name };
     const inner = document.getElementById('midia-inner');
     inner.innerHTML = isVideo
-      ? `<video src="${e.target.result}" style="width:100%;max-height:130px;border-radius:10px;border:1px solid var(--border)" controls></video>`
-      : `<img src="${e.target.result}" style="width:100%;max-height:130px;object-fit:cover;border-radius:10px;border:1px solid var(--border)">`;
+      ? `<video src="${dataUrl}" style="width:100%;max-height:130px;border-radius:10px;border:1px solid var(--border)" controls></video>`
+      : `<img src="${dataUrl}" style="width:100%;max-height:130px;object-fit:cover;border-radius:10px;border:1px solid var(--border)">`;
     document.getElementById('midia-nome').textContent = file.name;
     document.getElementById('midia-preview').style.display = 'block';
     document.getElementById('dropzone').style.display = 'none';
