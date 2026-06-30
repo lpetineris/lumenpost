@@ -1417,6 +1417,10 @@ let perfil = {};
 let programacoes = [];
 let programacaoAtivaId = null;
 let modoEdicaoProgramacao = false;
+// Programação à qual o post sendo criado no Gerador pertence.
+// Definida ao clicar num espaço (preencherEspacoProgramacao) — caso o usuário
+// gere livremente sem vir de um espaço, assume a programação "Posts gerais".
+let programacaoContextoAtual = null;
 
 const ID_PROGRAMACAO_FIXA = 'prog_posts_gerais';
 
@@ -2881,11 +2885,6 @@ Use apenas estas chaves de rede: ${redesEscolhidas.join(', ')}. Todas as datas d
 
 // Chamado ao clicar num espaço vazio do calendário — abre o gerador
 // já configurado com a rede e a data daquele espaço.
-// Programação à qual o post sendo criado no Gerador pertence.
-// Definida ao clicar num espaço (preencherEspacoProgramacao) — caso o usuário
-// gere livremente sem vir de um espaço, assume a programação "Posts gerais".
-let programacaoContextoAtual = null;
-
 function preencherEspacoProgramacao(data, redeKey) {
   goTab('gerar');
   setTimeout(() => {
