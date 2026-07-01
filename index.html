@@ -3447,32 +3447,21 @@ function exportarPosts() {
   });
 
   const json = JSON.stringify(dados, null, 2);
+  const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+  const nome = 'lumen-post-backup-' + new Date().toISOString().split('T')[0] + '.json';
 
-  // Tenta download direto primeiro
-  try {
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lumen-post-backup-${new Date().toISOString().split('T')[0]}.json`;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function() {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 1000);
-    mostrarToast(dados.length + ' post(s) exportados com sucesso.');
-  } catch(e) {
-    // Fallback: abre numa nova aba para o usuário copiar/salvar manualmente
-    var win = window.open('', '_blank');
-    if (win) {
-      win.document.write('<pre style="font-family:monospace;font-size:12px;padding:20px">' + json.replace(/</g,'&lt;') + '</pre>');
-      win.document.title = 'Lumen Post — Backup';
-      mostrarToast('Aberto em nova aba — copie e salve como .json');
-    } else {
-      mostrarToast('Não foi possível exportar. Tente em aba anônima.');
-    }
+  // Abre em nova aba com link de download — contorna restrição do iframe
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(`<!DOCTYPE html><html><head><title>Lumen Post — Backup</title></head><body style="font-family:sans-serif;padding:32px;max-width:600px;margin:0 auto">
+      <h2 style="margin-bottom:8px">Backup Lumen Post</h2>
+      <p style="color:#666;margin-bottom:20px">${dados.length} post(s) exportados em ${new Date().toLocaleDateString('pt-BR')}</p>
+      <a href="${dataUri}" download="${nome}" style="display:inline-block;padding:12px 24px;background:#2D6A4F;color:white;border-radius:8px;text-decoration:none;font-weight:600;margin-bottom:24px">⬇ Baixar arquivo JSON</a>
+      <pre style="background:#F8F7F4;border:1px solid #E5E5E0;border-radius:8px;padding:16px;font-size:12px;overflow:auto;max-height:400px">${json.replace(/</g,'&lt;')}</pre>
+    </body></html>`);
+    win.document.close();
+  } else {
+    mostrarToast('Permita pop-ups para exportar, ou acesse diretamente em lumenpost.vercel.app');
   }
 }
 
