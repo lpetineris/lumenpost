@@ -1013,6 +1013,16 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
           </div>
 
           <div class="field">
+            <label>Postura em relação ao comentário</label>
+            <select id="com-postura" style="font-family:'Poppins',sans-serif;font-size:13px;padding:10px 12px;border-radius:var(--rs);border:1.5px solid var(--border);width:100%;background:var(--bg);color:var(--text)">
+              <option value="concordar">Concordar — reforçar e agradecer</option>
+              <option value="discordar">Discordar — rebater com respeito e firmeza</option>
+              <option value="neutro">Neutro — responder sem tomar partido</option>
+              <option value="contornar">Contornar — transformar crítica em oportunidade</option>
+            </select>
+          </div>
+
+          <div class="field">
             <label>Comentário recebido <span style="color:var(--red)">*</span></label>
             <textarea id="com-comentario" rows="4" placeholder="Cole aqui o comentário que você recebeu..." style="width:100%;padding:10px 12px;border-radius:var(--rs);border:1.5px solid var(--border);font-family:'Poppins',sans-serif;font-size:13px;resize:vertical;background:var(--bg);color:var(--text)"></textarea>
           </div>
@@ -1020,6 +1030,11 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
           <div class="field">
             <label>Legenda do post <span style="font-size:11px;color:var(--text3)">(opcional — dá mais contexto à IA)</span></label>
             <textarea id="com-legenda" rows="3" placeholder="Cole aqui a legenda do post que recebeu o comentário..." style="width:100%;padding:10px 12px;border-radius:var(--rs);border:1.5px solid var(--border);font-family:'Poppins',sans-serif;font-size:13px;resize:vertical;background:var(--bg);color:var(--text)"></textarea>
+          </div>
+
+          <div class="field">
+            <label>Argumento ou explicação <span style="font-size:11px;color:var(--text3)">(opcional — a IA incorpora na resposta)</span></label>
+            <textarea id="com-argumento" rows="3" placeholder="Ex: O atraso foi causado por problema no fornecedor. Já resolvemos e estamos compensando os clientes afetados..." style="width:100%;padding:10px 12px;border-radius:var(--rs);border:1.5px solid var(--border);font-family:'Poppins',sans-serif;font-size:13px;resize:vertical;background:var(--bg);color:var(--text)"></textarea>
           </div>
 
           <button class="btn btn-full" id="btn-gerar-resposta" onclick="gerarRespostaComentario()">
@@ -3039,8 +3054,14 @@ function removerUmEspacoData(redeKey) {
 // ── COMENTÁRIOS ───────────────────────────────────────────────────────
 let _ultimoComentario = null;
 
-function buildSystemComentario(rede, tom) {
+function buildSystemComentario(rede, tom, postura) {
   const p = perfil;
+  const POSTURA_MAP = {
+    concordar: 'concordar com o comentário — agradecer, reforçar e valorizar o engajamento positivo',
+    discordar: 'discordar com respeito e firmeza — rebater o ponto sem ser agressivo, mantendo a postura da marca',
+    neutro: 'responder de forma neutra — sem concordar nem discordar explicitamente, apenas reconhecer e responder',
+    contornar: 'transformar a crítica em oportunidade — reconhecer o ponto levantado e mostrar como a marca está evoluindo ou se diferencia',
+  };
   const TOM_MAP_COM = {
     autoridade: 'autoridade e visão de mercado',
     emocional: 'emocional e próximo',
@@ -3060,6 +3081,7 @@ Diferenciais: ${p.diferenciais || ''}
 
 INSTRUÇÃO:
 Escreva UMA resposta para o comentário recebido na rede ${rede}, no tom: ${TOM_MAP_COM[tom] || tom}.
+Postura em relação ao comentário: ${POSTURA_MAP[postura] || postura}.
 A resposta deve ser genuína, humana e representar bem a marca. Não seja robótico nem use frases genéricas.
 Escreva apenas o texto da resposta, sem aspas, sem explicações adicionais.
 
@@ -3074,6 +3096,8 @@ async function gerarRespostaComentario() {
   const legenda = document.getElementById('com-legenda').value.trim();
   const rede = document.getElementById('com-rede').value;
   const tom = document.getElementById('com-tom').value;
+  const postura = document.getElementById('com-postura').value;
+  const argumento = document.getElementById('com-argumento').value.trim();
 
   if (!comentario) { mostrarToast('Cole o comentário recebido antes de gerar.'); return; }
   if (!perfil.nome) { mostrarToast('Configure o Perfil da Empresa primeiro.'); return; }
@@ -3088,18 +3112,19 @@ async function gerarRespostaComentario() {
 
   const userPrompt = `Comentário recebido no ${rede}:
 "${comentario}"
-${legenda ? `\nContexto (legenda do post que gerou o comentário):\n"${legenda}"` : ''}
+${legenda ? `\nLegenda do post que gerou o comentário:\n"${legenda}"` : ''}
+${argumento ? `\nArgumento ou explicação que deve ser incorporado na resposta:\n"${argumento}"` : ''}
 
 Escreva uma resposta adequada para este comentário.`;
 
-  _ultimoComentario = { comentario, legenda, rede, tom };
+  _ultimoComentario = { comentario, legenda, argumento, rede, tom, postura };
 
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system: buildSystemComentario(rede, tom),
+        system: buildSystemComentario(rede, tom, postura),
         max_tokens: 500,
         messages: [{ role: 'user', content: userPrompt }]
       })
@@ -3133,6 +3158,8 @@ function regenerarResposta() {
   document.getElementById('com-legenda').value = _ultimoComentario.legenda || '';
   document.getElementById('com-rede').value = _ultimoComentario.rede;
   document.getElementById('com-tom').value = _ultimoComentario.tom;
+  document.getElementById('com-postura').value = _ultimoComentario.postura || 'neutro';
+  document.getElementById('com-argumento').value = _ultimoComentario.argumento || '';
   gerarRespostaComentario();
 }
 
@@ -3144,6 +3171,7 @@ function copiarResposta() {
 function limparComentario() {
   document.getElementById('com-comentario').value = '';
   document.getElementById('com-legenda').value = '';
+  document.getElementById('com-argumento').value = '';
   document.getElementById('resultado-comentario-vazio').style.display = 'flex';
   document.getElementById('resultado-comentario-texto').style.display = 'none';
   document.getElementById('resultado-comentario-barra').style.display = 'none';
