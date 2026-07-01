@@ -1474,17 +1474,22 @@ async function loadFromCloud() {
       bancoPosts = posts.map(function(p) {
         var midia = null;
         try { midia = p.midia ? JSON.parse(p.midia) : null; } catch(e) {}
+        var redeKey = p.rede || '';
+        var redeInfo = REDES[redeKey] || {};
         return {
           id: 'cloud_' + p.id,
           _cloudId: p.id,
           texto: p.conteudo || '',
-          rede: p.rede || '',
-          redeName: p.rede || '',
+          rede: redeKey,
+          redeName: redeInfo.label || redeKey,
+          badge: redeInfo.badge || p.badge || 'badge-green',
+          cal: redeInfo.cal || 'generico',
           status: p.status || 'rascunho',
           empresa: p.empresa || '',
           criadoEm: p.criado_em,
           data: p.data_publicacao || '',
-          badge: p.badge || 'badge-green',
+          hora: p.hora || '',
+          programacaoId: p.programacao_id || null,
           midia: midia,
         };
       });
@@ -3568,7 +3573,8 @@ function sincronizarCal() {
     var antes = calPosts[chave].length;
     calPosts[chave] = calPosts[chave].filter(function(calPost) {
       return bancoPosts.some(function(bancoPost) {
-        return bancoPost.texto === calPost.texto && bancoPost.redeName === calPost.redeName;
+        // Compara pelo texto — identificador mais confiável
+        return bancoPost.texto === calPost.texto;
       });
     });
     if (calPosts[chave].length !== antes) alterou = true;
