@@ -2649,14 +2649,13 @@ function renderCal() {
           img.src = p.midia.dataUrl;
           item.appendChild(img);
         } else {
-          // Referência sem base64 — mostra ícone de imagem
+          // Referência sem base64 — mostra ícone discreto
           const vt = document.createElement('div');
           vt.className = 'cal-thumb-video';
-          vt.textContent = '🖼';
-          vt.style.fontSize = '14px';
+          vt.textContent = '📷';
+          vt.style.cssText = 'font-size:16px;background:var(--bg2)';
           item.appendChild(vt);
-        }
-      }
+        }      }
 
       const lbl = document.createElement('div');
       lbl.className = `cal-lbl ${p.cal || 'generico'}${!p.midia ? ' sem-thumb' : ''}`;
@@ -2799,25 +2798,40 @@ function adicionarPostAoCal(dataStr, post) {
   });
   if (jaExiste) return;
 
-  // Salva apenas referência da mídia (tipo e nome), sem o base64
+  // Salva miniatura 80x80px da mídia para o calendário (não o base64 completo)
   // para não estourar o quota do localStorage e do Supabase.
-  // A imagem completa fica no bancoPosts.
-  var midiaRef = null;
-  if (post.midia) {
-    midiaRef = { tipo: post.midia.tipo, nome: post.midia.nome || '' };
+  function adicionarComMiniatura(midiaMin) {
+    calPosts[dataStr].push({
+      redeName: post.redeName, cal: post.cal,
+      midia: midiaMin, texto: post.texto, empresa: post.empresa,
+      hora: post.hora || null,
+      programacaoId: post.programacaoId || ID_PROGRAMACAO_FIXA
+    });
+    try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {
+      // Se ainda estoura, salva sem a miniatura
+      calPosts[dataStr][calPosts[dataStr].length - 1].midia = post.midia
+        ? { tipo: post.midia.tipo, nome: post.midia.nome || '' }
+        : null;
+      try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e2) {}
+    }
+    dbCall('upsert', 'perfis_post', {
+      id: CURRENT_USER_ID,
+      cal_posts: JSON.stringify(calPosts),
+    });
   }
 
-  calPosts[dataStr].push({
-    redeName: post.redeName, cal: post.cal,
-    midia: midiaRef, texto: post.texto, empresa: post.empresa,
-    hora: post.hora || null,
-    programacaoId: post.programacaoId || ID_PROGRAMACAO_FIXA
-  });
-  try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {}
-  dbCall('upsert', 'perfis_post', {
-    id: CURRENT_USER_ID,
-    cal_posts: JSON.stringify(calPosts),
-  });
+  if (post.midia && post.midia.tipo === 'imagem' && post.midia.dataUrl) {
+    // Gera miniatura 80x80px
+    redimensionarImagem(post.midia.dataUrl, 80).then(function(thumb) {
+      adicionarComMiniatura({ tipo: 'imagem', nome: post.midia.nome || '', dataUrl: thumb });
+    }).catch(function() {
+      adicionarComMiniatura({ tipo: 'imagem', nome: post.midia.nome || '' });
+    });
+  } else if (post.midia && post.midia.tipo === 'video') {
+    adicionarComMiniatura({ tipo: 'video', nome: post.midia.nome || '' });
+  } else {
+    adicionarComMiniatura(null);
+  }
 }
 
 // Mantém o botão "+" no calendário para adicionar posts manualmente
