@@ -1463,7 +1463,7 @@ async function loadFromCloud() {
     }
   } catch(e) {}
   migrarEstruturaEspacos();
-  migrarCalPostsSemProgramacao();
+  migrarCalPostsSemProgramacao(true); // true = salvar no Supabase também
   garantirProgramacaoFixa();
   renderCal();
 
@@ -1541,7 +1541,8 @@ function migrarEstruturaEspacos() {
 
 // Migra posts do calPosts que não têm programacaoId — atribui à "Posts gerais".
 // Roda automaticamente ao carregar para compatibilidade com dados antigos.
-function migrarCalPostsSemProgramacao() {
+// salvarSupabase=true: persiste a migração no Supabase também (necessário após carregar do cloud).
+function migrarCalPostsSemProgramacao(salvarSupabase) {
   var alterou = false;
   Object.keys(calPosts).forEach(function(data) {
     (calPosts[data] || []).forEach(function(p) {
@@ -1553,7 +1554,12 @@ function migrarCalPostsSemProgramacao() {
   });
   if (alterou) {
     try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {}
-    // Supabase será atualizado na próxima vez que calPosts for salvo normalmente
+    if (salvarSupabase) {
+      dbCall('upsert', 'perfis_post', {
+        id: CURRENT_USER_ID,
+        cal_posts: JSON.stringify(calPosts),
+      });
+    }
   }
 }
 
