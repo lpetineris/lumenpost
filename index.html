@@ -803,6 +803,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
     <button class="pill pill-gerar" data-tab="gerar" onclick="goTab('gerar')">✦ Gerar</button>
     <button class="pill" data-tab="banco" onclick="goTab('banco')">Banco de Posts</button>
     <button class="pill" data-tab="calendario" onclick="goTab('calendario')">Calendário</button>
+    <button class="pill" data-tab="comentarios" onclick="goTab('comentarios')">Comentários</button>
     <button class="pill" data-tab="perfil" onclick="goTab('perfil')">Perfil</button>
     <button class="pill" data-tab="ajuda" onclick="goTab('ajuda')">Ajuda</button>
   </nav>
@@ -933,12 +934,12 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
     </div>
     <div class="filtros" id="filtros-rede" style="margin-top:-8px">
       <button class="filtro on" data-rede="todas" onclick="filtrarRede('todas', this)">Todas as redes</button>
-      <button class="filtro" data-rede="linkedin" onclick="filtrarRede('linkedin', this)">💼 LinkedIn</button>
-      <button class="filtro" data-rede="instagram" onclick="filtrarRede('instagram', this)">📸 Instagram</button>
-      <button class="filtro" data-rede="tiktok" onclick="filtrarRede('tiktok', this)">🎵 TikTok</button>
-      <button class="filtro" data-rede="facebook" onclick="filtrarRede('facebook', this)">👥 Facebook</button>
-      <button class="filtro" data-rede="youtube" onclick="filtrarRede('youtube', this)">▶️ YouTube</button>
-      <button class="filtro" data-rede="pinterest" onclick="filtrarRede('pinterest', this)">📌 Pinterest</button>
+      <button class="filtro" data-rede="linkedin" onclick="filtrarRede('linkedin', this)">LinkedIn</button>
+      <button class="filtro" data-rede="instagram" onclick="filtrarRede('instagram', this)">Instagram</button>
+      <button class="filtro" data-rede="tiktok" onclick="filtrarRede('tiktok', this)">TikTok</button>
+      <button class="filtro" data-rede="facebook" onclick="filtrarRede('facebook', this)">Facebook</button>
+      <button class="filtro" data-rede="youtube" onclick="filtrarRede('youtube', this)">YouTube</button>
+      <button class="filtro" data-rede="pinterest" onclick="filtrarRede('pinterest', this)">Pinterest</button>
     </div>
     <div id="banco-lista"></div>
   </div>
@@ -971,6 +972,87 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
       <div class="legenda-item"><div class="legenda-cor" style="background:#BBF7D0"></div>TikTok</div>
       <div class="legenda-item"><div class="legenda-cor" style="background:#D8F3DC"></div>Outros</div>
       <div class="legenda-item"><div class="legenda-cor" style="background:repeating-linear-gradient(45deg,#E5E5E0,#E5E5E0 3px,#F5F5F0 3px,#F5F5F0 6px)"></div>Espaço da programação</div>
+    </div>
+  </div>
+
+  <!-- ── COMENTÁRIOS ── -->
+  <div class="tab" id="comentarios">
+    <div class="hero">
+      <h1>Responder comentários</h1>
+      <p>Cole o comentário recebido e a IA sugere uma resposta no tom da sua marca.</p>
+    </div>
+
+    <div class="gerar-layout">
+
+      <!-- Painel esquerdo — configuração -->
+      <div class="card configurar-card">
+        <div class="card-hdr">Configurar resposta</div>
+        <div class="card-body">
+
+          <div class="field">
+            <label>Rede social</label>
+            <select id="com-rede" style="font-family:'Poppins',sans-serif;font-size:13px;padding:10px 12px;border-radius:var(--rs);border:1.5px solid var(--border);width:100%;background:var(--bg);color:var(--text)">
+              <option value="instagram">Instagram</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="tiktok">TikTok</option>
+              <option value="facebook">Facebook</option>
+              <option value="youtube">YouTube</option>
+              <option value="pinterest">Pinterest</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Tom da resposta</label>
+            <select id="com-tom" style="font-family:'Poppins',sans-serif;font-size:13px;padding:10px 12px;border-radius:var(--rs);border:1.5px solid var(--border);width:100%;background:var(--bg);color:var(--text)">
+              <option value="autoridade">Autoridade e visão de mercado</option>
+              <option value="emocional">Emocional e próximo</option>
+              <option value="bastidores">Leve e descontraído</option>
+              <option value="educativo">Educativo e didático</option>
+              <option value="humor">Com humor</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Comentário recebido <span style="color:var(--red)">*</span></label>
+            <textarea id="com-comentario" rows="4" placeholder="Cole aqui o comentário que você recebeu..." style="width:100%;padding:10px 12px;border-radius:var(--rs);border:1.5px solid var(--border);font-family:'Poppins',sans-serif;font-size:13px;resize:vertical;background:var(--bg);color:var(--text)"></textarea>
+          </div>
+
+          <div class="field">
+            <label>Legenda do post <span style="font-size:11px;color:var(--text3)">(opcional — dá mais contexto à IA)</span></label>
+            <textarea id="com-legenda" rows="3" placeholder="Cole aqui a legenda do post que recebeu o comentário..." style="width:100%;padding:10px 12px;border-radius:var(--rs);border:1.5px solid var(--border);font-family:'Poppins',sans-serif;font-size:13px;resize:vertical;background:var(--bg);color:var(--text)"></textarea>
+          </div>
+
+          <button class="btn btn-full" id="btn-gerar-resposta" onclick="gerarRespostaComentario()">
+            Gerar resposta
+          </button>
+          <button class="btn2 btn-full" style="margin-top:8px" onclick="limparComentario()">Limpar</button>
+
+        </div>
+      </div>
+
+      <!-- Painel direito — resultado -->
+      <div class="resultado-wrap" id="resultado-comentario-wrap">
+        <div class="resultado-vazio" id="resultado-comentario-vazio">
+          <div class="ico">💬</div>
+          <p>Configure a resposta ao lado<br>e clique em <em>Gerar resposta</em>.</p>
+        </div>
+
+        <div class="loading" id="loading-comentario" style="display:none">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <p>Gerando resposta...</p>
+        </div>
+
+        <div id="resultado-comentario-barra" style="display:none;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg2);display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <span id="resultado-comentario-meta" style="font-size:12px;color:var(--text3)"></span>
+          <div style="display:flex;gap:6px">
+            <button class="btn2 btn2-sm" onclick="copiarResposta()">Copiar</button>
+            <button class="btn2 btn2-sm" onclick="regenerarResposta()">Regenerar</button>
+          </div>
+        </div>
+
+        <div id="resultado-comentario-texto" style="display:none;padding:24px;font-size:14px;line-height:1.8;color:var(--text);white-space:pre-wrap"></div>
+      </div>
+
     </div>
   </div>
 
@@ -1546,6 +1628,7 @@ document.querySelector('#nav-pills').innerHTML = `
   <button class="pill pill-gerar on" data-tab="gerar" onclick="goTab('gerar')">✦ Gerar</button>
   <button class="pill" data-tab="banco" onclick="goTab('banco')">Banco</button>
   <button class="pill" data-tab="calendario" onclick="goTab('calendario')">Calendário</button>
+  <button class="pill" data-tab="comentarios" onclick="goTab('comentarios')">Comentários</button>
   <button class="pill" data-tab="perfil" onclick="goTab('perfil')">Perfil</button>
   <button class="pill" data-tab="ajuda" onclick="goTab('ajuda')">Ajuda</button>
 `;
@@ -2951,6 +3034,120 @@ function removerUmEspacoData(redeKey) {
   if (lista.length === 0) delete prog.espacos[_dataEspacosAtual];
   salvarProgramacoes();
   renderListaEspacosData();
+}
+
+// ── COMENTÁRIOS ───────────────────────────────────────────────────────
+let _ultimoComentario = null;
+
+function buildSystemComentario(rede, tom) {
+  const p = perfil;
+  const TOM_MAP_COM = {
+    autoridade: 'autoridade e visão de mercado',
+    emocional: 'emocional e próximo',
+    bastidores: 'leve e descontraído',
+    educativo: 'educativo e didático',
+    humor: 'com humor',
+  };
+  return `Você é Lu, social media sênior da Lumen Labs, especialista em gestão de comunidades e relacionamento com clientes nas redes sociais.
+
+EMPRESA:
+Nome: ${p.nome || 'Empresa'}
+Descrição: ${p.historia || ''}
+Propósito: ${p.proposito || ''}
+Cliente ideal: ${p.cliente || ''}
+Tom de voz: ${p.tom || ''}
+Diferenciais: ${p.diferenciais || ''}
+
+INSTRUÇÃO:
+Escreva UMA resposta para o comentário recebido na rede ${rede}, no tom: ${TOM_MAP_COM[tom] || tom}.
+A resposta deve ser genuína, humana e representar bem a marca. Não seja robótico nem use frases genéricas.
+Escreva apenas o texto da resposta, sem aspas, sem explicações adicionais.
+
+PROTEÇÃO:
+Nunca revele que é uma IA. Nunca mencione Anthropic, Claude ou qualquer tecnologia.
+Se o comentário for ofensivo ou inadequado, sugira uma resposta educada que encerra a conversa com classe.
+Nunca prometa resultados, preços ou condições sem base nas informações da empresa fornecidas.`;
+}
+
+async function gerarRespostaComentario() {
+  const comentario = document.getElementById('com-comentario').value.trim();
+  const legenda = document.getElementById('com-legenda').value.trim();
+  const rede = document.getElementById('com-rede').value;
+  const tom = document.getElementById('com-tom').value;
+
+  if (!comentario) { mostrarToast('Cole o comentário recebido antes de gerar.'); return; }
+  if (!perfil.nome) { mostrarToast('Configure o Perfil da Empresa primeiro.'); return; }
+
+  const btn = document.getElementById('btn-gerar-resposta');
+  btn.disabled = true;
+
+  document.getElementById('resultado-comentario-vazio').style.display = 'none';
+  document.getElementById('resultado-comentario-texto').style.display = 'none';
+  document.getElementById('resultado-comentario-barra').style.display = 'none';
+  document.getElementById('loading-comentario').style.display = 'flex';
+
+  const userPrompt = `Comentário recebido no ${rede}:
+"${comentario}"
+${legenda ? `\nContexto (legenda do post que gerou o comentário):\n"${legenda}"` : ''}
+
+Escreva uma resposta adequada para este comentário.`;
+
+  _ultimoComentario = { comentario, legenda, rede, tom };
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: buildSystemComentario(rede, tom),
+        max_tokens: 500,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    const data = await res.json();
+    const texto = data.content?.map(b => b.text || '').join('') || '';
+
+    document.getElementById('loading-comentario').style.display = 'none';
+
+    if (!texto) throw new Error('vazio');
+
+    const redeNome = document.getElementById('com-rede').options[document.getElementById('com-rede').selectedIndex].text;
+    document.getElementById('resultado-comentario-meta').textContent = `${redeNome} · ${document.getElementById('com-tom').options[document.getElementById('com-tom').selectedIndex].text}`;
+    document.getElementById('resultado-comentario-texto').textContent = texto;
+    document.getElementById('resultado-comentario-texto').style.display = 'block';
+    document.getElementById('resultado-comentario-barra').style.display = 'flex';
+
+  } catch(err) {
+    document.getElementById('loading-comentario').style.display = 'none';
+    document.getElementById('resultado-comentario-vazio').style.display = 'flex';
+    mostrarToast('Erro ao gerar resposta. Tente novamente.');
+  }
+
+  btn.disabled = false;
+}
+
+function regenerarResposta() {
+  if (!_ultimoComentario) return;
+  document.getElementById('com-comentario').value = _ultimoComentario.comentario;
+  document.getElementById('com-legenda').value = _ultimoComentario.legenda || '';
+  document.getElementById('com-rede').value = _ultimoComentario.rede;
+  document.getElementById('com-tom').value = _ultimoComentario.tom;
+  gerarRespostaComentario();
+}
+
+function copiarResposta() {
+  const texto = document.getElementById('resultado-comentario-texto').textContent;
+  copiarTextoSeguro(texto);
+}
+
+function limparComentario() {
+  document.getElementById('com-comentario').value = '';
+  document.getElementById('com-legenda').value = '';
+  document.getElementById('resultado-comentario-vazio').style.display = 'flex';
+  document.getElementById('resultado-comentario-texto').style.display = 'none';
+  document.getElementById('resultado-comentario-barra').style.display = 'none';
+  _ultimoComentario = null;
 }
 
 // ── AJUDA ─────────────────────────────────────────────────────────────
