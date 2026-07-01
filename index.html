@@ -1331,6 +1331,24 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
   </div>
 </div>
 
+<!-- Modal Exportar Posts -->
+<div class="modal-overlay" id="modal-exportar-overlay">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-hdr">
+      <h3>Exportar posts</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-exportar-overlay').classList.remove('open')">×</button>
+    </div>
+    <div style="padding:20px 24px">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Copie o conteúdo abaixo e salve num arquivo <strong>.json</strong> no seu computador.</p>
+      <textarea id="exportar-conteudo" readonly style="width:100%;height:260px;font-family:monospace;font-size:11px;padding:12px;border:1px solid var(--border);border-radius:var(--rs);background:var(--bg2);color:var(--text);resize:none"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn2" onclick="document.getElementById('modal-exportar-overlay').classList.remove('open')">Fechar</button>
+      <button class="btn" onclick="copiarExportacao()">Copiar tudo</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Alterar Data -->
 <div class="modal-overlay" id="modal-data-overlay">
   <div class="modal" style="max-width:380px">
@@ -3447,22 +3465,14 @@ function exportarPosts() {
   });
 
   const json = JSON.stringify(dados, null, 2);
-  const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-  const nome = 'lumen-post-backup-' + new Date().toISOString().split('T')[0] + '.json';
+  document.getElementById('exportar-conteudo').value = json;
+  document.getElementById('modal-exportar-overlay').classList.add('open');
+}
 
-  // Abre em nova aba com link de download — contorna restrição do iframe
-  const win = window.open('', '_blank');
-  if (win) {
-    win.document.write(`<!DOCTYPE html><html><head><title>Lumen Post — Backup</title></head><body style="font-family:sans-serif;padding:32px;max-width:600px;margin:0 auto">
-      <h2 style="margin-bottom:8px">Backup Lumen Post</h2>
-      <p style="color:#666;margin-bottom:20px">${dados.length} post(s) exportados em ${new Date().toLocaleDateString('pt-BR')}</p>
-      <a href="${dataUri}" download="${nome}" style="display:inline-block;padding:12px 24px;background:#2D6A4F;color:white;border-radius:8px;text-decoration:none;font-weight:600;margin-bottom:24px">⬇ Baixar arquivo JSON</a>
-      <pre style="background:#F8F7F4;border:1px solid #E5E5E0;border-radius:8px;padding:16px;font-size:12px;overflow:auto;max-height:400px">${json.replace(/</g,'&lt;')}</pre>
-    </body></html>`);
-    win.document.close();
-  } else {
-    mostrarToast('Permita pop-ups para exportar, ou acesse diretamente em lumenpost.vercel.app');
-  }
+function copiarExportacao() {
+  const textarea = document.getElementById('exportar-conteudo');
+  textarea.select();
+  copiarTextoSeguro(textarea.value);
 }
 
 // ── AJUDA ─────────────────────────────────────────────────────────────
