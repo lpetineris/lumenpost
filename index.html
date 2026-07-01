@@ -925,12 +925,12 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 
   <!-- ── BANCO ── -->
   <div class="tab" id="banco">
-    <div class="hero" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
-      <div>
-        <h1>Banco de Posts</h1>
-        <p>Todos os rascunhos gerados, organizados por status.</p>
-      </div>
-      <button class="btn2 btn2-sm" style="margin-top:8px" onclick="exportarPosts()">⬇ Exportar posts</button>
+    <div class="hero">
+      <h1>Banco de Posts</h1>
+      <p>Todos os rascunhos gerados, organizados por status.</p>
+    </div>
+    <div style="text-align:right;margin-bottom:16px">
+      <button class="btn2 btn2-sm" onclick="exportarPosts()">⬇ Exportar posts</button>
     </div>
     <div class="filtros">
       <button class="filtro on" onclick="filtrar('todos', this)">Todos</button>
