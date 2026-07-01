@@ -2638,11 +2638,18 @@ function renderCal() {
           vt.className = 'cal-thumb-video';
           vt.textContent = '▶';
           item.appendChild(vt);
-        } else {
+        } else if (p.midia.dataUrl) {
           const img = document.createElement('img');
           img.className = 'cal-thumb';
           img.src = p.midia.dataUrl;
           item.appendChild(img);
+        } else {
+          // Referência sem base64 — mostra ícone de imagem
+          const vt = document.createElement('div');
+          vt.className = 'cal-thumb-video';
+          vt.textContent = '🖼';
+          vt.style.fontSize = '14px';
+          item.appendChild(vt);
         }
       }
 
@@ -2786,9 +2793,18 @@ function adicionarPostAoCal(dataStr, post) {
     return p.texto === post.texto && p.redeName === post.redeName;
   });
   if (jaExiste) return;
+
+  // Salva apenas referência da mídia (tipo e nome), sem o base64
+  // para não estourar o quota do localStorage e do Supabase.
+  // A imagem completa fica no bancoPosts.
+  var midiaRef = null;
+  if (post.midia) {
+    midiaRef = { tipo: post.midia.tipo, nome: post.midia.nome || '' };
+  }
+
   calPosts[dataStr].push({
     redeName: post.redeName, cal: post.cal,
-    midia: post.midia || null, texto: post.texto, empresa: post.empresa,
+    midia: midiaRef, texto: post.texto, empresa: post.empresa,
     hora: post.hora || null,
     programacaoId: post.programacaoId || ID_PROGRAMACAO_FIXA
   });
