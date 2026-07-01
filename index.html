@@ -1463,6 +1463,7 @@ async function loadFromCloud() {
     }
   } catch(e) {}
   migrarEstruturaEspacos();
+  migrarCalPostsSemProgramacao();
   garantirProgramacaoFixa();
   renderCal();
 
@@ -1530,13 +1531,30 @@ function migrarEstruturaEspacos() {
     Object.keys(prog.espacos).forEach(data => {
       prog.espacos[data] = (prog.espacos[data] || []).map(item => {
         if (typeof item === 'string') {
-          // Formato antigo: era só a string da rede. Converte para objeto com ID.
           return { id: 'esp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), rede: item };
         }
-        return item; // já está no formato novo
+        return item;
       });
     });
   });
+}
+
+// Migra posts do calPosts que não têm programacaoId — atribui à "Posts gerais".
+// Roda automaticamente ao carregar para compatibilidade com dados antigos.
+function migrarCalPostsSemProgramacao() {
+  var alterou = false;
+  Object.keys(calPosts).forEach(function(data) {
+    (calPosts[data] || []).forEach(function(p) {
+      if (!p.programacaoId) {
+        p.programacaoId = ID_PROGRAMACAO_FIXA;
+        alterou = true;
+      }
+    });
+  });
+  if (alterou) {
+    try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {}
+    // Supabase será atualizado na próxima vez que calPosts for salvo normalmente
+  }
 }
 
 // Garante que a programação padrão "Posts gerais" sempre exista.
@@ -1608,6 +1626,7 @@ try { perfil = JSON.parse(localStorage.getItem('lp_perfil') || '{}'); } catch(e)
 try { programacoes = JSON.parse(localStorage.getItem('lp_programacoes') || '[]'); } catch(e) { programacoes = []; }
 try { programacaoAtivaId = localStorage.getItem('lp_programacao_ativa') || null; } catch(e) { programacaoAtivaId = null; }
 migrarEstruturaEspacos();
+migrarCalPostsSemProgramacao();
 // Load from cloud when user_id arrives via postMessage
 // (triggered in loadFromCloud called from message listener)
 
