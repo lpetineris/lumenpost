@@ -867,8 +867,12 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             </div>
 
             <div class="field">
-              <label>Data de publicação (opcional)</label>
-              <input type="date" id="input-data">
+              <label>Data e horário de publicação (opcional)</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="date" id="input-data" style="flex:1" onchange="atualizarSugestaoHorario()">
+                <input type="time" id="input-hora" style="width:100px" placeholder="HH:MM">
+              </div>
+              <div id="sugestao-horario" style="display:none;margin-top:6px;padding:8px 10px;background:var(--g-l);border-radius:var(--rs);font-size:12px;color:var(--g-mid);line-height:1.6"></div>
             </div>
 
             <button class="btn btn-full" id="btn-gerar" onclick="gerarPost()">
@@ -1735,6 +1739,7 @@ function toggleVoz(key) {
     document.getElementById('voz-' + key).classList.add('on');
   }
   vozAtual = Array.from(vozSelecionadas)[0];
+  atualizarSugestaoHorario();
 }
 
 function selecionarVoz(key) { toggleVoz(key); } // compatibilidade
@@ -2141,7 +2146,9 @@ function salvarAba(key) {
     rede: key, redeName: r.redeName, badge: r.badge, cal: r.cal,
     texto: textoFinal,
     midia: midiaAtual ? { ...midiaAtual } : null,
-    data: dataAtual, status: 'rascunho',
+    data: dataAtual,
+    hora: document.getElementById('input-hora').value || '',
+    status: 'rascunho',
     aprovacao: false, emailAprovacao: '',
     empresa: perfil.nome,
     programacaoId: programacaoContextoAtual || ID_PROGRAMACAO_FIXA,
@@ -2223,6 +2230,7 @@ function salvarPost() {
     badge: r.badge,
     cal: r.cal,
     data: dataAtual,
+    hora: document.getElementById('input-hora').value || '',
     programacaoId: programacaoContextoAtual || ID_PROGRAMACAO_FIXA,
     id: Date.now() + Math.random(),
     criadoEm: new Date().toISOString()
@@ -2362,7 +2370,7 @@ function renderBanco() {
           <div class="post-hdr">
             <div class="post-meta">
               <span class="badge ${p.badge || 'badge-green'}">${p.redeName || 'Post'}</span>
-              <span class="post-data">${p.empresa || ''} · ${criado}${p.data ? ' · ' + new Date(p.data+'T12:00:00').toLocaleDateString('pt-BR') : ''}</span>
+              <span class="post-data">${p.empresa || ''} · ${criado}${p.data ? ' · ' + new Date(p.data+'T12:00:00').toLocaleDateString('pt-BR') + (p.hora ? ' às ' + p.hora : '') : ''}</span>
             </div>
             <span class="status ${sc[p.status]}">${sl[p.status]}</span>
           </div>
@@ -2961,8 +2969,19 @@ function preencherEspacoProgramacao(data, redeKey) {
       b.classList.toggle('on', b.id === 'voz-' + redeKey);
     });
     document.getElementById('input-data').value = data;
+    programacaoContextoAtual = programacaoAtivaId;
+
+    // Se é programação automática (não Posts gerais), preenche o horário automaticamente
+    if (programacaoAtivaId && programacaoAtivaId !== ID_PROGRAMACAO_FIXA) {
+      const horario = selecionarMelhorHorario(redeKey);
+      document.getElementById('input-hora').value = horario;
+      document.getElementById('sugestao-horario').style.display = 'none';
+    } else {
+      // Posts gerais — mostra sugestão para o usuário escolher
+      atualizarSugestaoHorario();
+    }
+
     document.getElementById('input-tema').focus();
-    programacaoContextoAtual = programacaoAtivaId; // o espaço pertence à programação que estava ativa
     mostrarToast(`Espaço de ${REDES[redeKey].label} em ${new Date(data+'T12:00:00').toLocaleDateString('pt-BR')} selecionado. Descreva o tema e gere o post!`);
   }, 150);
 }
@@ -3049,6 +3068,63 @@ function removerUmEspacoData(redeKey) {
   if (lista.length === 0) delete prog.espacos[_dataEspacosAtual];
   salvarProgramacoes();
   renderListaEspacosData();
+}
+
+// ── HORÁRIO DE PUBLICAÇÃO ─────────────────────────────────────────────
+
+// Boas práticas de horários por rede social (baseadas em estudos de mercado).
+// Formato: { rede: { padrao: ['HH:MM', ...], dicas: 'texto' } }
+const HORARIOS_REDE = {
+  instagram: {
+    horarios: ['11:00', '13:00', '19:00', '21:00'],
+    dica: 'Melhores horários: 11h–13h (almoço) e 19h–21h (noite). Evite madrugada e início da manhã.'
+  },
+  linkedin: {
+    horarios: ['08:00', '12:00', '17:00'],
+    dica: 'Melhores horários: 8h–10h (manhã), 12h (almoço) ou 17h (saída do trabalho). Dias úteis rendem mais.'
+  },
+  facebook: {
+    horarios: ['13:00', '15:00', '19:00'],
+    dica: 'Melhores horários: 13h–15h e 19h–21h. Quarta e quinta tendem a ter mais engajamento.'
+  },
+  tiktok: {
+    horarios: ['07:00', '19:00', '21:00'],
+    dica: 'Melhores horários: 7h (manhã), 19h–21h (noite). TikTok tem picos à noite e nos finais de semana.'
+  },
+  youtube: {
+    horarios: ['15:00', '17:00', '20:00'],
+    dica: 'Melhores horários: 15h–17h (tarde) e 20h (noite). Sábado e domingo têm alto consumo.'
+  },
+  pinterest: {
+    horarios: ['20:00', '21:00', '22:00'],
+    dica: 'Melhores horários: 20h–22h. Pinterest tem pico à noite, especialmente sextas e sábados.'
+  },
+};
+
+// Mostra sugestão de horário para posts gerais (não programação automática).
+// Para programação automática, o horário já foi preenchido automaticamente.
+function atualizarSugestaoHorario() {
+  const data = document.getElementById('input-data').value;
+  const sugestaoEl = document.getElementById('sugestao-horario');
+  if (!data || !vozAtual || programacaoContextoAtual !== null) {
+    sugestaoEl.style.display = 'none';
+    return;
+  }
+  const info = HORARIOS_REDE[vozAtual];
+  if (!info) { sugestaoEl.style.display = 'none'; return; }
+
+  sugestaoEl.style.display = 'block';
+  sugestaoEl.innerHTML = `💡 <strong>Sugestão para ${REDES[vozAtual].label}:</strong> ${info.dica}`;
+}
+
+// Seleciona o melhor horário para a rede, considerando o segmento da empresa.
+// Usado pela programação automática para preencher o horário automaticamente.
+function selecionarMelhorHorario(redeKey) {
+  const info = HORARIOS_REDE[redeKey];
+  if (!info || !info.horarios.length) return '09:00';
+  // Segmento da empresa pode influenciar — por enquanto retorna o primeiro horário de pico
+  // (melhor horário geral da rede). Futuro: IA pode refinar por segmento.
+  return info.horarios[0];
 }
 
 // ── COMENTÁRIOS ───────────────────────────────────────────────────────
@@ -3353,6 +3429,8 @@ function limparGeradorSilencioso() {
   document.getElementById('input-tema').value = '';
   document.getElementById('input-tom').value = 'autoridade';
   document.getElementById('input-data').value = '';
+  document.getElementById('input-hora').value = '';
+  document.getElementById('sugestao-horario').style.display = 'none';
   removerMidia();
   // Reset resultado
   var _vz = document.getElementById('resultado-vazio'); _vz.classList.remove('hidden'); _vz.style.display = 'flex';
