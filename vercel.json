@@ -3,6 +3,7 @@
   "regions": ["gru1"],
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
+    { "src": "bio.html", "use": "@vercel/static" },
     { "src": "api/*.js", "use": "@vercel/node" }
   ],
   "routes": [
@@ -10,6 +11,8 @@
     { "src": "/api/db", "dest": "/api/db.js" },
     { "src": "/api/guia", "dest": "/api/guia.js" },
     { "src": "/api/email", "dest": "/api/email.js" },
+    { "src": "/api/bio", "dest": "/api/bio.js" },
+    { "src": "/bio/(.*)", "dest": "/bio.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

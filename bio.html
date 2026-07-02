@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Link na Bio</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #F3F4F6;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px 60px;
+    }
+    .container { width: 100%; max-width: 480px; }
+    .header { text-align: center; margin-bottom: 32px; }
+    .avatar {
+      width: 72px; height: 72px;
+      background: #2D6A4F; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 28px; font-weight: 700; color: white;
+    }
+    .titulo { font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+    .descricao { font-size: 14px; color: #6B7280; line-height: 1.5; margin-bottom: 8px; }
+    .links { display: flex; flex-direction: column; gap: 12px; }
+    .link-btn {
+      display: block; width: 100%;
+      padding: 16px 20px; background: white;
+      border: 1.5px solid #E5E7EB; border-radius: 12px;
+      text-decoration: none; color: #111827;
+      font-size: 15px; font-weight: 500; text-align: center;
+      transition: all .15s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .link-btn:hover {
+      border-color: #2D6A4F; color: #2D6A4F;
+      box-shadow: 0 4px 12px rgba(45,106,79,.12);
+      transform: translateY(-1px);
+    }
+    .rodape { text-align: center; margin-top: 40px; font-size: 11px; color: #9CA3AF; }
+    .rodape a { color: #52B788; text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="conteudo">
+      <div class="header">
+        <div class="avatar" id="avatar">...</div>
+        <div class="titulo" id="titulo">Carregando...</div>
+        <div class="descricao" id="descricao"></div>
+      </div>
+      <div class="links" id="links"></div>
+    </div>
+    <div class="rodape">Criado com <a href="https://lumenpost.vercel.app" target="_blank">Lumen Post</a></div>
+  </div>
+  <script>
+    const slug = window.location.pathname.split('/bio/')[1] ||
+                 new URLSearchParams(window.location.search).get('slug');
+
+    if (!slug) {
+      document.getElementById('titulo').textContent = 'Página não encontrada.';
+    } else {
+      fetch('/api/bio?slug=' + encodeURIComponent(slug))
+        .then(r => r.json())
+        .then(bio => {
+          if (bio.error) throw new Error(bio.error);
+          document.title = bio.titulo || 'Link na Bio';
+          document.getElementById('avatar').textContent = (bio.titulo || '?')[0].toUpperCase();
+          document.getElementById('titulo').textContent = bio.titulo || '';
+          document.getElementById('descricao').textContent = bio.descricao || '';
+          document.getElementById('descricao').style.display = bio.descricao ? 'block' : 'none';
+          const links = (bio.links || []).filter(l => l.nome && l.url);
+          document.getElementById('links').innerHTML = links.length
+            ? links.map(l => `<a href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer" class="link-btn">${escHtml(l.nome)}</a>`).join('')
+            : '<p style="text-align:center;color:#9CA3AF;font-size:14px">Nenhum link configurado.</p>';
+        })
+        .catch(() => {
+          document.getElementById('titulo').textContent = 'Página não encontrada.';
+          document.getElementById('avatar').textContent = '?';
+        });
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+  </script>
+</body>
+</html>
