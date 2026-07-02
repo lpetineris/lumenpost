@@ -1,6 +1,5 @@
 {
   "rewrites": [
-    { "source": "/bio/:slug", "destination": "/api/bio" },
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ]
 }
