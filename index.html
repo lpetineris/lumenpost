@@ -1344,6 +1344,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
     </div>
     <div class="modal-footer">
       <button class="btn2" onclick="document.getElementById('modal-exportar-overlay').classList.remove('open')">Fechar</button>
+      <button class="btn2" onclick="imprimirPosts()">🖨 Gerar PDF</button>
       <button class="btn" onclick="copiarExportacao()">Copiar tudo</button>
     </div>
   </div>
@@ -3480,6 +3481,25 @@ function copiarExportacao() {
   const textarea = document.getElementById('exportar-conteudo');
   textarea.select();
   copiarTextoSeguro(textarea.value);
+}
+
+function imprimirPosts() {
+  const conteudo = document.getElementById('exportar-conteudo').value;
+  const win = window.open('', '_blank');
+  if (!win) { mostrarToast('Permita pop-ups para gerar o PDF.'); return; }
+  win.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>Lumen Post — Backup</title>
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 13px; line-height: 1.7; color: #1a1a1a; padding: 32px; max-width: 700px; margin: 0 auto; }
+      pre { white-space: pre-wrap; word-break: break-word; font-family: Arial, sans-serif; font-size: 13px; }
+      @media print { body { padding: 0; } }
+    </style>
+  </head><body>
+    <pre>${conteudo.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+    <script>window.onload = function() { window.print(); }<\/script>
+  </body></html>`);
+  win.document.close();
 }
 
 // ── AJUDA ─────────────────────────────────────────────────────────────
