@@ -2630,6 +2630,22 @@ function mudarStatus(idx, s) {
   mostrarToast('Status atualizado!');
 }
 
+// Remove um espaço da programação ativa quando o post correspondente é excluído.
+// Garante que espaços vazios não fiquem órfãos no calendário.
+function removerEspacoDaProgramacao(data, rede) {
+  if (!data || !rede) return;
+  programacoes.forEach(function(prog) {
+    if (!prog.espacos || !prog.espacos[data]) return;
+    var lista = prog.espacos[data];
+    var idx = lista.findIndex(function(e) { return e.rede === rede; });
+    if (idx !== -1) {
+      lista.splice(idx, 1);
+      if (lista.length === 0) delete prog.espacos[data];
+    }
+  });
+  salvarProgramacoes();
+}
+
 function excluirPost(idx) {
   if (!confirm('Excluir este post? Ele ficará na lixeira por 7 dias e pode ser restaurado.')) return;
   var post = bancoPosts[idx];
@@ -2645,6 +2661,8 @@ function excluirPost(idx) {
   }
   // Remove do calendário em todas as datas
   removerPostDoCal(post, null);
+  // Remove o espaço da programação correspondente
+  if (post.data && post.rede) removerEspacoDaProgramacao(post.data, post.rede);
   bancoPosts.splice(idx, 1);
   salvarStorage();
   renderBanco();
@@ -2947,6 +2965,11 @@ function excluirDoCalendario() {
 
   // Remove do calendário (todas as datas onde este post aparece)
   removerPostDoCal(p, null);
+  // Remove o espaço da programação correspondente
+  if (chave && p.redeName) {
+    var redeKey = Object.entries(REDES).find(function(e) { return e[1].label === p.redeName; });
+    if (redeKey) removerEspacoDaProgramacao(chave, redeKey[0]);
+  }
 
   // Encontra no banco e move para a lixeira
   var idxBanco = bancoPosts.findIndex(function(b) {
