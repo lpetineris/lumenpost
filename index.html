@@ -3789,9 +3789,9 @@ function atualizarPreviewBio() {
   document.getElementById('bio-preview-desc').textContent = desc;
   document.getElementById('bio-preview-desc').style.display = desc ? 'block' : 'none';
 
-  const url = slug ? `lumenpost.vercel.app/bio/${slug}` : '';
+  const url = slug ? `https://lumenpost.vercel.app/api/bio?slug=${slug}` : '';
   const urlEl = document.getElementById('bio-url-display');
-  if (urlEl) urlEl.value = url ? `https://${url}` : '';
+  if (urlEl) urlEl.value = url || '';
 
   // Preview dos links
   const linksEl = document.getElementById('bio-preview-links');
@@ -3842,9 +3842,9 @@ function copiarUrlBio() {
 }
 
 function abrirBio() {
-  const slug = bioData.slug;
+  const slug = document.getElementById('bio-slug')?.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') || bioData.slug;
   if (!slug) { mostrarToast('Salve a página primeiro.'); return; }
-  window.open(`https://lumenpost.vercel.app/bio/${slug}`, '_blank');
+  window.open(`https://lumenpost.vercel.app/api/bio?slug=${slug}`, '_blank');
 }
 
 // ── AJUDA ─────────────────────────────────────────────────────────────
