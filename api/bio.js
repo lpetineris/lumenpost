@@ -1,6 +1,6 @@
 import https from 'https';
 
-function httpsRequest(url, options) {
+function httpsRequest(url, options, body) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
     const reqOptions = {
@@ -13,17 +13,25 @@ function httpsRequest(url, options) {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
-        try { resolve({ status: res.statusCode, body: JSON.parse(data || '[]') }); }
-        catch(e) { resolve({ status: res.statusCode, body: data }); }
+        try {
+          resolve({ status: res.statusCode, body: JSON.parse(data || '[]') });
+        } catch(e) {
+          resolve({ status: res.statusCode, body: data });
+        }
       });
     });
     req.on('error', reject);
+    if (body) req.write(body);
     req.end();
   });
 }
 
 export default async function handler(req, res) {
-  // Lê slug da query string
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   const urlObj = new URL(req.url, 'https://lumenpost.vercel.app');
   const slug = urlObj.searchParams.get('slug');
 
@@ -32,21 +40,20 @@ export default async function handler(req, res) {
     return res.status(404).send(paginaNaoEncontrada());
   }
 
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SECRET_KEY;
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'apikey': supabaseKey,
+    'Authorization': `Bearer ${supabaseKey}`,
+  };
 
   try {
-    // Busca todos os perfis que têm bio preenchida
     const result = await httpsRequest(
-      `${SUPABASE_URL}/rest/v1/perfis_post?select=bio&bio=not.is.null`,
-      {
-        method: 'GET',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-        }
-      }
+      `${supabaseUrl}/rest/v1/perfis_post?select=bio&bio=not.is.null`,
+      { method: 'GET', headers },
+      null
     );
 
     const rows = Array.isArray(result.body) ? result.body : [];
@@ -77,6 +84,8 @@ export default async function handler(req, res) {
   }
 }
 
+export const config = { maxDuration: 30 };
+
 function gerarPagina(bio) {
   const links = (bio.links || [])
     .filter(l => l.nome && l.url)
@@ -105,8 +114,7 @@ function gerarPagina(bio) {
     .header { text-align: center; margin-bottom: 32px; }
     .avatar {
       width: 72px; height: 72px;
-      background: #2D6A4F;
-      border-radius: 50%;
+      background: #2D6A4F; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 16px;
       font-size: 28px; font-weight: 700; color: white;
@@ -116,14 +124,10 @@ function gerarPagina(bio) {
     .links { display: flex; flex-direction: column; gap: 12px; }
     .link-btn {
       display: block; width: 100%;
-      padding: 16px 20px;
-      background: white;
-      border: 1.5px solid #E5E7EB;
-      border-radius: 12px;
-      text-decoration: none;
-      color: #111827;
-      font-size: 15px; font-weight: 500;
-      text-align: center;
+      padding: 16px 20px; background: white;
+      border: 1.5px solid #E5E7EB; border-radius: 12px;
+      text-decoration: none; color: #111827;
+      font-size: 15px; font-weight: 500; text-align: center;
       transition: all .15s ease;
       box-shadow: 0 1px 3px rgba(0,0,0,.06);
     }
