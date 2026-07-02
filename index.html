@@ -805,6 +805,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
     <button class="pill" data-tab="calendario" onclick="goTab('calendario')">Calendário</button>
     <button class="pill" data-tab="comentarios" onclick="goTab('comentarios')">Comentários</button>
     <button class="pill" data-tab="perfil" onclick="goTab('perfil')">Perfil</button>
+    <button class="pill" data-tab="linknabio" onclick="goTab('linknabio')">Link na Bio</button>
     <button class="pill" data-tab="ajuda" onclick="goTab('ajuda')">Ajuda</button>
   </nav>
 </header>
@@ -1130,6 +1131,74 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 
     <button class="btn" onclick="salvarPerfil()">Salvar perfil</button>
     <div class="perfil-ok" id="perfil-ok">✓ Perfil salvo com sucesso!</div>
+  </div>
+
+  <!-- ── LINK NA BIO ── -->
+  <div class="tab" id="linknabio">
+    <div class="hero">
+      <h1>Link na Bio</h1>
+      <p>Crie uma página com seus links e coloque o endereço na bio do Instagram.</p>
+    </div>
+
+    <div class="gerar-layout">
+
+      <!-- Painel esquerdo — configuração -->
+      <div class="card configurar-card">
+        <div class="card-hdr">Configurar página</div>
+        <div class="card-body">
+
+          <div class="field">
+            <label>Endereço da sua página</label>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:12px;color:var(--text3);white-space:nowrap">lumenpost.vercel.app/bio/</span>
+              <input type="text" id="bio-slug" placeholder="seunome" style="flex:1" oninput="atualizarPreviewBio()">
+            </div>
+            <div id="bio-slug-status" style="font-size:11px;margin-top:4px"></div>
+          </div>
+
+          <div class="field">
+            <label>Título da página</label>
+            <input type="text" id="bio-titulo" placeholder="Ex: Estúdio Gastronômico" oninput="atualizarPreviewBio()">
+          </div>
+
+          <div class="field">
+            <label>Descrição curta (opcional)</label>
+            <input type="text" id="bio-descricao" placeholder="Ex: Fotografia e vídeo de alimentos" oninput="atualizarPreviewBio()">
+          </div>
+
+          <div class="field">
+            <label>Links</label>
+            <div id="bio-links-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+            <button class="btn2 btn2-sm" onclick="adicionarLinkBio()">+ Adicionar link</button>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button class="btn btn-full" onclick="salvarBio()">Salvar página</button>
+          </div>
+
+          <div id="bio-ok" style="display:none;margin-top:10px;font-size:12px;color:var(--g);font-weight:600">✓ Página salva com sucesso!</div>
+
+        </div>
+      </div>
+
+      <!-- Painel direito — preview -->
+      <div class="resultado-wrap" style="min-height:400px">
+        <div style="padding:20px;height:100%">
+          <p style="font-size:11px;color:var(--text3);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:600">Prévia</p>
+          <div id="bio-preview" style="background:#F8F7F4;border-radius:16px;padding:32px 24px;text-align:center;min-height:300px">
+            <div id="bio-preview-titulo" style="font-size:18px;font-weight:700;color:#111827;margin-bottom:6px">—</div>
+            <div id="bio-preview-desc" style="font-size:13px;color:#6B7280;margin-bottom:24px"></div>
+            <div id="bio-preview-links" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
+            <input type="text" id="bio-url-display" readonly style="flex:1;font-size:11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;color:var(--text2)">
+            <button class="btn2 btn2-sm" onclick="copiarUrlBio()">Copiar link</button>
+            <button class="btn2 btn2-sm" onclick="abrirBio()">↗ Abrir</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <!-- ── AJUDA ── -->
@@ -1554,6 +1623,9 @@ async function loadFromCloud() {
       if (cp[0].programacao_ativa) {
         programacaoAtivaId = cp[0].programacao_ativa;
       }
+      if (cp[0].bio) {
+        try { bioData = JSON.parse(cp[0].bio); } catch(e) {}
+      }
     }
   } catch(e) {}
   migrarEstruturaEspacos();
@@ -1812,6 +1884,7 @@ function goTab(id) {
   document.querySelectorAll(`[data-tab="${id}"]`).forEach(p => p.classList.add('on'));
   if (id === 'calendario') renderCal();
   if (id === 'banco') renderBanco();
+  if (id === 'linknabio') carregarBio();
 }
 
 // Fix nav — simplify on load
@@ -1821,6 +1894,7 @@ document.querySelector('#nav-pills').innerHTML = `
   <button class="pill" data-tab="calendario" onclick="goTab('calendario')">Calendário</button>
   <button class="pill" data-tab="comentarios" onclick="goTab('comentarios')">Comentários</button>
   <button class="pill" data-tab="perfil" onclick="goTab('perfil')">Perfil</button>
+  <button class="pill" data-tab="linknabio" onclick="goTab('linknabio')">Link na Bio</button>
   <button class="pill" data-tab="ajuda" onclick="goTab('ajuda')">Ajuda</button>
 `;
 
@@ -3659,6 +3733,118 @@ function imprimirPosts() {
     <script>window.onload = function() { window.print(); }<\/script>
   </body></html>`);
   win.document.close();
+}
+
+// ── LINK NA BIO ───────────────────────────────────────────────────────
+
+let bioData = { slug: '', titulo: '', descricao: '', links: [] };
+
+// Carrega bioData do localStorage e Supabase
+try { bioData = JSON.parse(localStorage.getItem('lp_bio') || 'null') || { slug: '', titulo: '', descricao: '', links: [] }; } catch(e) { bioData = { slug: '', titulo: '', descricao: '', links: [] }; }
+
+function carregarBio() {
+  document.getElementById('bio-slug').value = bioData.slug || '';
+  document.getElementById('bio-titulo').value = bioData.titulo || '';
+  document.getElementById('bio-descricao').value = bioData.descricao || '';
+  renderLinksBio();
+  atualizarPreviewBio();
+}
+
+function renderLinksBio() {
+  const cont = document.getElementById('bio-links-lista');
+  if (!cont) return;
+  if (!bioData.links || bioData.links.length === 0) {
+    cont.innerHTML = '<p style="font-size:12px;color:var(--text3)">Nenhum link adicionado ainda.</p>';
+    return;
+  }
+  cont.innerHTML = bioData.links.map((l, i) => `
+    <div style="display:flex;gap:6px;align-items:center">
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+        <input type="text" value="${l.nome || ''}" placeholder="Nome do link" onchange="bioData.links[${i}].nome=this.value;atualizarPreviewBio()" style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--bg)">
+        <input type="url" value="${l.url || ''}" placeholder="https://..." onchange="bioData.links[${i}].url=this.value;atualizarPreviewBio()" style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--bg)">
+      </div>
+      <button onclick="removerLinkBio(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;flex-shrink:0">×</button>
+    </div>`).join('');
+}
+
+function adicionarLinkBio() {
+  if (!bioData.links) bioData.links = [];
+  bioData.links.push({ nome: '', url: '' });
+  renderLinksBio();
+  atualizarPreviewBio();
+}
+
+function removerLinkBio(idx) {
+  bioData.links.splice(idx, 1);
+  renderLinksBio();
+  atualizarPreviewBio();
+}
+
+function atualizarPreviewBio() {
+  const slug = document.getElementById('bio-slug')?.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') || '';
+  const titulo = document.getElementById('bio-titulo')?.value.trim() || '';
+  const desc = document.getElementById('bio-descricao')?.value.trim() || '';
+
+  document.getElementById('bio-preview-titulo').textContent = titulo || '—';
+  document.getElementById('bio-preview-desc').textContent = desc;
+  document.getElementById('bio-preview-desc').style.display = desc ? 'block' : 'none';
+
+  const url = slug ? `lumenpost.vercel.app/bio/${slug}` : '';
+  const urlEl = document.getElementById('bio-url-display');
+  if (urlEl) urlEl.value = url ? `https://${url}` : '';
+
+  // Preview dos links
+  const linksEl = document.getElementById('bio-preview-links');
+  if (linksEl) {
+    const links = bioData.links || [];
+    linksEl.innerHTML = links.filter(l => l.nome).map(l => `
+      <a href="${l.url || '#'}" target="_blank" style="display:block;padding:12px 20px;background:white;border:1px solid #E5E7EB;border-radius:10px;text-decoration:none;color:#111827;font-size:14px;font-weight:500;transition:all .15s">${l.nome}</a>
+    `).join('') || '<p style="font-size:12px;color:#9CA3AF">Seus links aparecerão aqui</p>';
+  }
+}
+
+async function salvarBio() {
+  const slug = document.getElementById('bio-slug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const titulo = document.getElementById('bio-titulo').value.trim();
+
+  if (!slug) { mostrarToast('Defina o endereço da sua página.'); return; }
+  if (!titulo) { mostrarToast('Defina o título da página.'); return; }
+  if (slug.length < 3) { mostrarToast('O endereço deve ter pelo menos 3 caracteres.'); return; }
+
+  bioData.slug = slug;
+  bioData.titulo = titulo;
+  bioData.descricao = document.getElementById('bio-descricao').value.trim();
+
+  // Salvar links lendo os campos atuais do DOM
+  const nomes = document.querySelectorAll('#bio-links-lista input[placeholder="Nome do link"]');
+  const urls = document.querySelectorAll('#bio-links-lista input[placeholder="https://..."]');
+  bioData.links = Array.from(nomes).map((n, i) => ({ nome: n.value.trim(), url: urls[i]?.value.trim() || '' })).filter(l => l.nome);
+
+  try { localStorage.setItem('lp_bio', JSON.stringify(bioData)); } catch(e) {}
+
+  // Salvar no Supabase via perfis_post (campo bio)
+  await dbCall('upsert', 'perfis_post', {
+    id: CURRENT_USER_ID,
+    bio: JSON.stringify(bioData),
+  });
+
+  const okEl = document.getElementById('bio-ok');
+  okEl.style.display = 'block';
+  setTimeout(() => okEl.style.display = 'none', 3000);
+  atualizarPreviewBio();
+  mostrarToast('Página salva! Compartilhe o link na bio do Instagram.');
+}
+
+function copiarUrlBio() {
+  const url = document.getElementById('bio-url-display').value;
+  if (!url) { mostrarToast('Salve a página primeiro.'); return; }
+  copiarTextoSeguro(url);
+}
+
+function abrirBio() {
+  const slug = bioData.slug;
+  if (!slug) { mostrarToast('Salve a página primeiro.'); return; }
+  window.open(`https://lumenpost.vercel.app/bio/${slug}`, '_blank');
 }
 
 // ── AJUDA ─────────────────────────────────────────────────────────────
