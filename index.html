@@ -2643,8 +2643,8 @@ function excluirPost(idx) {
   if (post._cloudId) {
     dbCall('delete', 'posts', {id: post._cloudId, user_id: CURRENT_USER_ID});
   }
-  // Remove do calendário
-  if (post.data) removerPostDoCal(post, post.data);
+  // Remove do calendário em todas as datas
+  removerPostDoCal(post, null);
   bancoPosts.splice(idx, 1);
   salvarStorage();
   renderBanco();
@@ -2940,52 +2940,36 @@ function verPostCal(p, chave) {
 
 function excluirDoCalendario() {
   var p = window._calPostAtual;
-  var chave = window._calChaveAtual; // data específica onde foi clicado
+  var chave = window._calChaveAtual;
   if (!p) return;
 
-  // Remove APENAS da data clicada no calendário
-  removerPostDoCal(p, chave);
+  if (!confirm('Excluir este post? Ele será removido do calendário e do banco, e ficará na lixeira por 7 dias.')) return;
 
-  // Verificar se ainda existe em outras datas do calendário
-  var aindaNoCalendario = Object.keys(calPosts).some(function(k) {
-    return (calPosts[k] || []).some(function(cp) {
-      return cp.texto === p.texto && cp.redeName === p.redeName;
-    });
+  // Remove do calendário (todas as datas onde este post aparece)
+  removerPostDoCal(p, null);
+
+  // Encontra no banco e move para a lixeira
+  var idxBanco = bancoPosts.findIndex(function(b) {
+    return b.texto === p.texto && b.redeName === p.redeName;
   });
 
-  // Só remove do banco se não existir mais em nenhuma data do calendário
-  if (!aindaNoCalendario) {
-    var idxBanco = bancoPosts.findIndex(function(b) {
-      return b.texto === p.texto && b.redeName === p.redeName && (b.data || '') === (chave || '');
-    });
-    if (idxBanco !== -1) {
-      var post = bancoPosts[idxBanco];
-      if (post._cloudId) {
-        dbCall('delete', 'posts', {id: post._cloudId, user_id: CURRENT_USER_ID});
-      }
-      bancoPosts.splice(idxBanco, 1);
-      salvarStorage();
-      renderBanco();
+  if (idxBanco !== -1) {
+    var post = bancoPosts[idxBanco];
+    post.excluidoEm = Date.now();
+    lixeira.push(post);
+    try { localStorage.setItem('lp_lixeira', JSON.stringify(lixeira)); } catch(e) {}
+
+    if (post._cloudId) {
+      dbCall('delete', 'posts', {id: post._cloudId, user_id: CURRENT_USER_ID});
     }
-  } else {
-    // Ainda existe em outras datas — apenas remove do banco na data específica
-    var idxBanco = bancoPosts.findIndex(function(b) {
-      return b.texto === p.texto && b.redeName === p.redeName && (b.data || '') === (chave || '');
-    });
-    if (idxBanco !== -1) {
-      var post = bancoPosts[idxBanco];
-      if (post._cloudId) {
-        dbCall('delete', 'posts', {id: post._cloudId, user_id: CURRENT_USER_ID});
-      }
-      bancoPosts.splice(idxBanco, 1);
-      salvarStorage();
-      renderBanco();
-    }
+    bancoPosts.splice(idxBanco, 1);
+    salvarStorage();
+    renderBanco();
   }
 
   fecharModal();
   renderCal();
-  mostrarToast('Post removido desta data.');
+  mostrarToast('Post movido para a lixeira. Você tem 7 dias para restaurar.');
 }
 
 // Helper: adiciona post ao calendário por data string (YYYY-MM-DD)
