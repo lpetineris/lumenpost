@@ -1137,7 +1137,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 
     <div class="ajuda-dl">
       <div class="ajuda-dl-txt">
-        <h3>Guia do Usuário — Lumen Post v1.0</h3>
+        <h3>Guia do Usuário — Lumen Post v3.0</h3>
         <p>Instruções completas para usar todas as funcionalidades da ferramenta.</p>
       </div>
       <button class="btn-dl" onclick="baixarGuia()">↓ Baixar PDF</button>
@@ -1150,41 +1150,121 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">
-            Meus dados estão seguros?
+            Como gerar um post?
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Sim. Os posts e o perfil ficam salvos na nuvem via Supabase, vinculados ao seu ID de usuário. Nenhum outro usuário tem acesso. O texto do tema e a imagem são enviados à IA apenas para gerar o rascunho.</p>
+            <p>Na aba Gerar, selecione uma ou mais redes sociais, escolha o tom, descreva o tema e clique em "✦ Gerar". Se selecionar mais de uma rede, cada uma recebe um texto adaptado e aparece em abas separadas. Cada aba tem botões próprios de Copiar, Editar e Salvar, e há um botão "Salvar todas" para salvar de uma vez.</p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">
-            Posso usar em qualquer dispositivo?
+            Posso incluir uma imagem ou vídeo no post?
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Sim. O Lumen Post funciona em computador, tablet e celular. Os dados ficam salvos na nuvem e sincronizam automaticamente.</p>
+            <p>Sim. Faça upload de uma imagem ou vídeo antes de gerar — a IA analisa visualmente e cria um post baseado no que vê. Imagens são redimensionadas automaticamente para 1080px. Após 5 dias da data de publicação, o post é removido automaticamente do banco para economizar espaço.</p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">
-            A IA analisa a imagem que eu enviei?
+            Como funciona a data e o horário de publicação?
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Sim. Quando você faz upload de uma imagem, ela é enviada para a IA junto com o tema. A IA analisa visualmente e cria um post baseado no que vê, tornando o conteúdo muito mais específico para aquela foto.</p>
+            <p>No Gerador, preencha a data e o horário antes de salvar. Para posts gerais, a ferramenta sugere automaticamente os melhores horários para a rede selecionada. Para posts criados a partir de uma programação automática, o horário é preenchido automaticamente pela IA.</p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">
-            Posso gerar posts para mais de uma rede ao mesmo tempo?
+            O que é o Banco de Posts?
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Sim. Selecione mais de uma rede antes de salvar — o sistema cria um post independente para cada rede. Após salvar, as redes voltam a ficar desmarcadas. O mesmo conteúdo pode ser salvo na mesma rede em datas diferentes.</p>
+            <p>O Banco reúne todos os posts gerados. Você pode filtrar por status (Rascunho, Aguardando aprovação, Aprovado, Publicado) e por rede social. Cada post tem ações de Copiar, Baixar mídia, Alterar data, Aprovar por email, mudar status e Excluir. Posts excluídos vão para a Lixeira (aparecem no final do Banco) e ficam disponíveis por 7 dias para restauração.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Como funciona a Lixeira?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Ao excluir um post, ele vai para a Lixeira no final da aba Banco — não é apagado imediatamente. Você tem 7 dias para restaurá-lo. Após esse prazo, é removido permanentemente. Também é possível esvaziar a lixeira manualmente.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Quando um post é excluído automaticamente?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Posts com status "Publicado" são removidos automaticamente 5 dias após a data de publicação. Posts com status Rascunho ou Aprovado nunca são removidos automaticamente, mesmo que a data já tenha passado. O Banco exibe um aviso de contagem regressiva nos cards próximos de expirar.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Como funciona o Calendário Editorial?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>O Calendário exibe apenas os posts e espaços da programação selecionada no momento. Use o seletor de programações para alternar entre elas. Posts criados livremente no Gerador aparecem na programação "📌 Posts gerais". Posts criados a partir de espaços de uma programação automática aparecem somente nessa programação.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            O que são Programações?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Programações são grades editoriais com espaços pré-definidos por data e rede social. A programação "📌 Posts gerais" é criada automaticamente e não pode ser excluída — ela recebe todos os posts criados livremente. Você pode criar novas programações com IA clicando em "✦ Criar programação com IA" no Calendário.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Como criar uma programação automática com IA?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>No Calendário, clique em "✦ Criar programação com IA". Defina o nome, o período e as redes sociais. A IA decide quantos posts criar, em quais datas e horários, considerando uma frequência saudável para o perfil da empresa. Pode haver mais de um post da mesma rede no mesmo dia quando fizer sentido estratégico.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Como editar uma programação existente?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>No Calendário, clique em "✎ Editar programação". No modo edição, qualquer dia fica clicável — clique numa data para adicionar espaços usando os botões + e − por rede. Você pode adicionar vários espaços da mesma rede no mesmo dia. Clique em "✓ Concluir edição" quando terminar.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Como preencher um espaço vazio da programação?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Clique no espaço tracejado no calendário. O Gerador abre automaticamente com a data e a rede já configuradas (e o horário preenchido pela IA para programações automáticas). Descreva o tema e gere o post normalmente. Ao salvar, o espaço é preenchido e desaparece do calendário.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Como funciona a aba Comentários?
+            <span class="faq-ico">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Cole o comentário recebido, escolha a rede, o tom e a postura (Concordar, Discordar, Neutro ou Contornar). Opcionalmente, cole a legenda do post que recebeu o comentário e inclua um argumento ou explicação para a IA incorporar na resposta. Clique em "Gerar resposta" — a IA responde no tom da sua marca. Use "Regenerar" para uma nova versão.</p>
           </div>
         </div>
 
@@ -1194,57 +1274,37 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>No Banco de Posts, clique em "✉ Aprovar por email" no card desejado, insira o email do aprovador e clique em Enviar. O post muda para "Aguardando aprovação" e o aprovador recebe o texto por email. É possível enviar para um novo aprovador a qualquer momento.</p>
+            <p>No Banco de Posts, clique em "✉ Aprovar por email", insira o email do aprovador e clique em Enviar. O post muda para "Aguardando aprovação" e o aprovador recebe o texto por email. Quando aprovado, mude o status para "Aprovado" e depois "Publicado" manualmente.</p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">
-            Como o post vai para o Calendário?
+            Como exportar meus posts?
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Se você definir uma data ao salvar, o post vai automaticamente para aquela data no Calendário. Também é possível adicionar manualmente clicando no "+" em qualquer dia. O mesmo conteúdo pode ser agendado em datas diferentes.</p>
+            <p>No Banco de Posts, clique em "⬇ Exportar posts". Um modal abre com todos os posts formatados em texto legível, com rede, status, data, horário e conteúdo. Use "Copiar tudo" para copiar e colar num documento, ou "🖨 Gerar PDF" para imprimir ou salvar como PDF pelo navegador.</p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">
-            Como alterar a data de um post?
+            Meus dados estão seguros?
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>No Banco de Posts, clique em "📅 Alterar data". Também é possível clicar no post no Calendário e usar o botão "📅 Alterar data" no modal. O post é movido automaticamente para a nova data.</p>
+            <p>Sim. Posts e perfil ficam salvos na nuvem via Supabase, vinculados ao seu ID de usuário. Nenhum outro usuário tem acesso. O tema e a imagem são enviados à IA apenas no momento de gerar o post.</p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">
-            Como excluir um post?
+            Posso usar em qualquer dispositivo?
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>Cada post é independente. Excluir pelo Banco remove aquele registro e sua entrada no Calendário naquela data. Excluir pelo Calendário remove apenas daquela data específica, sem afetar outras datas onde o mesmo conteúdo esteja agendado.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">
-            O rascunho não ficou bom. O que fazer?
-            <span class="faq-ico">+</span>
-          </button>
-          <div class="faq-a">
-            <p>Clique em Regenerar — a IA cria uma nova versão. Se ainda não satisfizer, descreva o tema com mais detalhes, mude o tom ou troque a imagem. O botão Limpar zera o gerador para começar do zero.</p>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" onclick="toggleFaq(this)">
-            Posso gerar posts para mais de uma empresa?
-            <span class="faq-ico">+</span>
-          </button>
-          <div class="faq-a">
-            <p>Na versão atual, o Lumen Post suporta um perfil por vez. Para trocar de empresa, basta atualizar a aba Perfil e salvar.</p>
+            <p>Sim. O Lumen Post funciona em computador, tablet e celular. Os dados ficam salvos na nuvem e sincronizam automaticamente entre dispositivos.</p>
           </div>
         </div>
 
