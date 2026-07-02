@@ -1,11 +1,15 @@
 {
-  "functions": {
-    "api/*.js": {
-      "runtime": "nodejs20.x"
-    }
-  },
-  "rewrites": [
-    { "source": "/bio/:slug", "destination": "/bio.html" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  "version": 2,
+  "regions": ["gru1"],
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "api/*.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/chat", "dest": "/api/chat.js" },
+    { "src": "/api/db", "dest": "/api/db.js" },
+    { "src": "/api/guia", "dest": "/api/guia.js" },
+    { "src": "/api/email", "dest": "/api/email.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
