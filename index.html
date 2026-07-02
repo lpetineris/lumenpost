@@ -1398,7 +1398,10 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
     <div class="modal-hdr">
-      <h3 id="modal-titulo">Post completo</h3>
+      <div>
+        <h3 id="modal-titulo">Post completo</h3>
+        <div id="modal-data-hora" style="display:none;font-size:11px;color:var(--text3);margin-top:2px"></div>
+      </div>
       <button class="modal-close" onclick="fecharModal()">×</button>
     </div>
     <div class="modal-midia" id="modal-midia"></div>
@@ -2567,6 +2570,12 @@ function verPost(idx) {
   if (dataBtn) { dataBtn.style.display = 'inline-flex'; dataBtn._source = 'banco'; }
   const p = bancoPosts[idx];
   document.getElementById('modal-titulo').textContent = `${p.redeName || 'Post'} · ${p.empresa || ''}`;
+  var dhEl = document.getElementById('modal-data-hora');
+  if (p.data) {
+    var dataFmt = new Date(p.data + 'T12:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+    dhEl.textContent = '📅 ' + dataFmt + (p.hora ? '  ·  🕐 ' + p.hora : '');
+    dhEl.style.display = 'block';
+  } else { dhEl.style.display = 'none'; }
   document.getElementById('modal-corpo').textContent = p.texto;
   // Show email if present
   var emailEl = document.getElementById('modal-email');
@@ -2753,6 +2762,12 @@ function verPostCal(p, chave) {
   const midiaCompleta = (postNoBanco && postNoBanco.midia) ? postNoBanco.midia : p.midia;
 
   document.getElementById('modal-titulo').textContent = `${p.redeName || 'Post'} · ${p.empresa || ''}`;
+  var dhEl2 = document.getElementById('modal-data-hora');
+  if (chave) {
+    var dataFmt2 = new Date(chave + 'T12:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+    dhEl2.textContent = '📅 ' + dataFmt2 + (p.hora ? '  ·  🕐 ' + p.hora : '');
+    dhEl2.style.display = 'block';
+  } else { dhEl2.style.display = 'none'; }
   document.getElementById('modal-corpo').textContent = p.texto || '';
   const mm = document.getElementById('modal-midia');
   const dlBtn = document.getElementById('modal-footer-download-btn');
