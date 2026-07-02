@@ -1,5 +1,4 @@
 import https from 'https';
-
 function httpsRequest(url, options, body) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
@@ -25,14 +24,12 @@ function httpsRequest(url, options, body) {
     req.end();
   });
 }
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SECRET_KEY;
   if (!supabaseUrl || !supabaseKey) {
@@ -42,21 +39,17 @@ export default async function handler(req, res) {
       hasKey: !!supabaseKey
     });
   }
-
   const keyInfo = `len:${supabaseKey.length} start:${supabaseKey.slice(0,10)} end:${supabaseKey.slice(-5)}`;
   const { action, table, data } = req.body;
-
   const headers = {
     'Content-Type': 'application/json',
     'apikey': supabaseKey,
     'Authorization': `Bearer ${supabaseKey}`,
     'Prefer': 'return=representation',
   };
-
   try {
     const testUrl = `${supabaseUrl}/rest/v1/`;
     const testResult = await httpsRequest(testUrl, { method: 'GET', headers }, null);
-    
     if (testResult.status === 401) {
       return res.status(401).json({ 
         error: 'Invalid Supabase key',
@@ -64,9 +57,7 @@ export default async function handler(req, res) {
         supabaseResponse: testResult.body
       });
     }
-
     let url, method, body;
-
     if (action === 'select') {
       url = `${supabaseUrl}/rest/v1/${table}?user_id=eq.${data?.user_id}&order=criado_em.desc`;
       method = 'GET';
@@ -92,32 +83,13 @@ export default async function handler(req, res) {
       method = 'DELETE';
       await httpsRequest(url, { method, headers }, null);
       return res.status(200).json({ success: true });
-    } else if (action === 'bio_page') {
-      // Busca dados da página de bio pelo slug
-      const slug = data?.slug;
-      if (!slug) return res.status(404).json({ error: 'slug required' });
-      const bioUrl = `${supabaseUrl}/rest/v1/perfis_post?select=bio&bio=not.is.null`;
-      const bioResult = await httpsRequest(bioUrl, { method: 'GET', headers }, null);
-      const rows = Array.isArray(bioResult.body) ? bioResult.body : [];
-      let bioData = null;
-      for (const row of rows) {
-        try {
-          const parsed = typeof row.bio === 'string' ? JSON.parse(row.bio) : row.bio;
-          if (parsed && parsed.slug === slug) { bioData = parsed; break; }
-        } catch(e) {}
-      }
-      if (!bioData) return res.status(404).json({ error: 'not found' });
-      return res.status(200).json(bioData);
     } else {
       return res.status(400).json({ error: 'Invalid action: ' + action });
     }
-
     const result = await httpsRequest(url, { method, headers }, body);
     return res.status(result.status).json(result.body);
-
   } catch (error) {
     return res.status(500).json({ error: error.message, type: error.constructor.name });
   }
 }
-
 export const config = { maxDuration: 30 };
