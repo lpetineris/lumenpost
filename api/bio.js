@@ -6,7 +6,10 @@ const supabase = createClient(
 );
 
 module.exports = async function handler(req, res) {
-  const slug = req.url.split('/bio/')[1]?.split('?')[0]?.trim();
+  // Lê slug da query string (?slug=xxx) ou da URL (/bio/xxx)
+  const url = new URL(req.url, 'https://lumenpost.vercel.app');
+  const slug = url.searchParams.get('slug') ||
+    req.url.split('/bio/')[1]?.split('?')[0]?.trim();
 
   if (!slug) {
     return res.status(404).send(paginaNaoEncontrada());
