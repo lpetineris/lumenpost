@@ -30,13 +30,11 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SECRET_KEY;
-
   if (!supabaseUrl || !supabaseKey) {
     return res.status(500).json({ 
       error: 'Missing env vars',
@@ -45,9 +43,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // Debug: show key length and first/last chars
   const keyInfo = `len:${supabaseKey.length} start:${supabaseKey.slice(0,10)} end:${supabaseKey.slice(-5)}`;
-
   const { action, table, data } = req.body;
 
   const headers = {
@@ -58,7 +54,6 @@ export default async function handler(req, res) {
   };
 
   try {
-    // Test connection first
     const testUrl = `${supabaseUrl}/rest/v1/`;
     const testResult = await httpsRequest(testUrl, { method: 'GET', headers }, null);
     
@@ -97,6 +92,22 @@ export default async function handler(req, res) {
       method = 'DELETE';
       await httpsRequest(url, { method, headers }, null);
       return res.status(200).json({ success: true });
+    } else if (action === 'bio_page') {
+      // Busca dados da página de bio pelo slug
+      const slug = data?.slug;
+      if (!slug) return res.status(404).json({ error: 'slug required' });
+      const bioUrl = `${supabaseUrl}/rest/v1/perfis_post?select=bio&bio=not.is.null`;
+      const bioResult = await httpsRequest(bioUrl, { method: 'GET', headers }, null);
+      const rows = Array.isArray(bioResult.body) ? bioResult.body : [];
+      let bioData = null;
+      for (const row of rows) {
+        try {
+          const parsed = typeof row.bio === 'string' ? JSON.parse(row.bio) : row.bio;
+          if (parsed && parsed.slug === slug) { bioData = parsed; break; }
+        } catch(e) {}
+      }
+      if (!bioData) return res.status(404).json({ error: 'not found' });
+      return res.status(200).json(bioData);
     } else {
       return res.status(400).json({ error: 'Invalid action: ' + action });
     }
