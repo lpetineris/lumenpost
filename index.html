@@ -1119,6 +1119,25 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
           <textarea id="p-cliente" rows="3" placeholder="Ex: Diretores de marketing de indústrias alimentícias e gestores de agências em São Paulo."></textarea>
         </div>
         <div class="field">
+          <label>Segmento de atuação</label>
+          <select id="p-segmento" style="font-family:'Poppins',sans-serif;font-size:13px;padding:10px 12px;border-radius:var(--rs);border:1.5px solid var(--border);width:100%;background:var(--bg);color:var(--text)">
+            <option value="">Selecione o segmento...</option>
+            <option value="alimentacao">Alimentação e gastronomia</option>
+            <option value="saude">Saúde e bem-estar</option>
+            <option value="moda">Moda e varejo</option>
+            <option value="beleza">Beleza e estética</option>
+            <option value="educacao">Educação e cursos</option>
+            <option value="tecnologia">Tecnologia e software</option>
+            <option value="b2b">B2B e consultoria</option>
+            <option value="imobiliario">Imobiliário</option>
+            <option value="fitness">Fitness e esportes</option>
+            <option value="turismo">Turismo e hotelaria</option>
+            <option value="juridico">Jurídico e contabilidade</option>
+            <option value="entretenimento">Entretenimento e cultura</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <div class="field">
           <label>Tom de voz e personalidade</label>
           <textarea id="p-tom" rows="3" placeholder="Ex: Profissional e confiante, mas próximo. Valorizamos a arte e a conexão emocional."></textarea>
         </div>
@@ -1905,6 +1924,7 @@ function carregarPerfil() {
   document.getElementById('p-historia').value = perfil.historia || '';
   document.getElementById('p-proposito').value = perfil.proposito || '';
   document.getElementById('p-cliente').value = perfil.cliente || '';
+  document.getElementById('p-segmento').value = perfil.segmento || '';
   document.getElementById('p-tom').value = perfil.tom || '';
   document.getElementById('p-diferenciais').value = perfil.diferenciais || '';
 }
@@ -1915,6 +1935,7 @@ function salvarPerfil() {
     historia: document.getElementById('p-historia').value,
     proposito: document.getElementById('p-proposito').value,
     cliente: document.getElementById('p-cliente').value,
+    segmento: document.getElementById('p-segmento').value,
     tom: document.getElementById('p-tom').value,
     diferenciais: document.getElementById('p-diferenciais').value,
   };
@@ -1927,6 +1948,7 @@ function salvarPerfil() {
     historia: perfil.historia,
     proposito: perfil.proposito,
     cliente: perfil.cliente,
+    segmento: perfil.segmento,
     tom: perfil.tom,
     diferenciais: perfil.diferenciais,
   }).then(function(r) {
@@ -2099,6 +2121,7 @@ Você escreve com precisão cirúrgica. Cada palavra tem propósito. Você nunca
 PERFIL DA EMPRESA
 ═══════════════════════════════════════
 Nome: ${p.nome || 'Empresa'}
+Segmento: ${p.segmento || 'não informado'}
 Descrição: ${p.historia || ''}
 Propósito: ${p.proposito || ''}
 Cliente ideal: ${p.cliente || ''}
@@ -3233,7 +3256,7 @@ async function confirmarProgramacaoAutomatica() {
   try {
     const diasTotais = Math.max(1, Math.round((new Date(dataFim) - new Date(dataInicio)) / 86400000) + 1);
 
-    const prompt = `Você é uma estrategista de conteúdo. Crie um calendário editorial para a empresa "${perfil.nome}" (${perfil.historia || ''}).
+    const prompt = `Você é uma estrategista de conteúdo. Crie um calendário editorial para a empresa "${perfil.nome}" (${perfil.historia || ''}). Segmento: ${perfil.segmento || 'não informado'}.
 
 Período: de ${dataInicio} a ${dataFim} (${diasTotais} dias).
 Redes sociais disponíveis: ${redesEscolhidas.map(k => REDES[k].label).join(', ')}.
@@ -3416,35 +3439,62 @@ function removerUmEspacoData(redeKey) {
 
 // Boas práticas de horários por rede social (baseadas em estudos de mercado).
 // Formato: { rede: { padrao: ['HH:MM', ...], dicas: 'texto' } }
-const HORARIOS_REDE = {
-  instagram: {
-    horarios: ['11:00', '13:00', '19:00', '21:00'],
-    dica: 'Melhores horários: 11h–13h (almoço) e 19h–21h (noite). Evite madrugada e início da manhã.'
+// Horários base por rede — ajustados por segmento em getHorariosParaRede()
+const HORARIOS_BASE = {
+  instagram: { horarios: ['11:00', '13:00', '19:00', '21:00'], dica: 'Melhores horários: 11h–13h e 19h–21h.' },
+  linkedin:  { horarios: ['08:00', '12:00', '17:00'], dica: 'Melhores horários: 8h–10h, 12h ou 17h. Dias úteis rendem mais.' },
+  facebook:  { horarios: ['13:00', '15:00', '19:00'], dica: 'Melhores horários: 13h–15h e 19h–21h.' },
+  tiktok:    { horarios: ['07:00', '19:00', '21:00'], dica: 'Melhores horários: 7h (manhã) e 19h–21h (noite).' },
+  youtube:   { horarios: ['15:00', '17:00', '20:00'], dica: 'Melhores horários: 15h–17h e 20h.' },
+  pinterest: { horarios: ['20:00', '21:00', '22:00'], dica: 'Melhores horários: 20h–22h, especialmente sextas e sábados.' },
+};
+
+// Ajustes de horário por segmento — sobrepõe os horários base quando há perfil definido
+const HORARIOS_SEGMENTO = {
+  alimentacao: {
+    instagram: { horarios: ['11:30', '13:00', '18:00', '20:00'], dica: 'Para gastronomia: 11h30 (pré-almoço), 13h (almoço) e 18h–20h (jantar). Fotos de comida performam bem perto das refeições.' },
+    facebook:  { horarios: ['11:00', '13:00', '19:00'], dica: 'Para gastronomia: perto do almoço (11h–13h) e jantar (19h). Públicos de alimentação são mais ativos nesses horários.' },
+    tiktok:    { horarios: ['12:00', '18:00', '21:00'], dica: 'Para gastronomia no TikTok: horário de almoço (12h) e pré/pós jantar (18h–21h).' },
   },
-  linkedin: {
-    horarios: ['08:00', '12:00', '17:00'],
-    dica: 'Melhores horários: 8h–10h (manhã), 12h (almoço) ou 17h (saída do trabalho). Dias úteis rendem mais.'
+  saude: {
+    instagram: { horarios: ['07:00', '12:00', '19:00'], dica: 'Para saúde: manhã cedo (7h), hora do almoço (12h) e início da noite (19h). Público de saúde é mais ativo nesses horários.' },
+    linkedin:  { horarios: ['08:00', '12:00', '17:00'], dica: 'Para saúde no LinkedIn: horário comercial — 8h, 12h ou 17h.' },
   },
-  facebook: {
-    horarios: ['13:00', '15:00', '19:00'],
-    dica: 'Melhores horários: 13h–15h e 19h–21h. Quarta e quinta tendem a ter mais engajamento.'
+  moda: {
+    instagram: { horarios: ['12:00', '15:00', '21:00'], dica: 'Para moda: tarde (12h–15h) e noite (21h). Fins de semana também têm alto engajamento.' },
+    pinterest: { horarios: ['21:00', '22:00'], dica: 'Para moda no Pinterest: noite (21h–22h), especialmente sextas e sábados.' },
   },
-  tiktok: {
-    horarios: ['07:00', '19:00', '21:00'],
-    dica: 'Melhores horários: 7h (manhã), 19h–21h (noite). TikTok tem picos à noite e nos finais de semana.'
+  beleza: {
+    instagram: { horarios: ['09:00', '13:00', '20:00'], dica: 'Para beleza: manhã (9h), almoço (13h) e noite (20h). Tutoriais performam bem à noite.' },
+    tiktok:    { horarios: ['19:00', '21:00', '22:00'], dica: 'Para beleza no TikTok: noite (19h–22h). Tutoriais de beleza têm pico após o jantar.' },
   },
-  youtube: {
-    horarios: ['15:00', '17:00', '20:00'],
-    dica: 'Melhores horários: 15h–17h (tarde) e 20h (noite). Sábado e domingo têm alto consumo.'
+  educacao: {
+    instagram: { horarios: ['08:00', '12:00', '19:00'], dica: 'Para educação: manhã (8h), almoço (12h) e início da noite (19h).' },
+    linkedin:  { horarios: ['08:00', '12:00', '18:00'], dica: 'Para educação no LinkedIn: manhã cedo (8h) e horário pós-trabalho (18h). Conteúdo educativo performa bem nesses horários.' },
   },
-  pinterest: {
-    horarios: ['20:00', '21:00', '22:00'],
-    dica: 'Melhores horários: 20h–22h. Pinterest tem pico à noite, especialmente sextas e sábados.'
+  b2b: {
+    linkedin:  { horarios: ['08:00', '10:00', '12:00'], dica: 'Para B2B no LinkedIn: horário comercial — 8h–10h e 12h. Evite fins de semana.' },
+    instagram: { horarios: ['10:00', '12:00', '17:00'], dica: 'Para B2B no Instagram: horário comercial (10h–12h) e saída do trabalho (17h).' },
+  },
+  fitness: {
+    instagram: { horarios: ['06:00', '12:00', '18:00'], dica: 'Para fitness: manhã cedo (6h, pré-treino), almoço (12h) e fim de tarde (18h, pós-treino).' },
+    tiktok:    { horarios: ['06:00', '18:00', '21:00'], dica: 'Para fitness no TikTok: pré-treino (6h), pós-treino (18h) e noite (21h).' },
+  },
+  turismo: {
+    instagram: { horarios: ['09:00', '12:00', '21:00'], dica: 'Para turismo: manhã (9h), almoço (12h) e noite (21h). Fotos de destinos performam bem à noite, quando as pessoas planejam viagens.' },
+    pinterest: { horarios: ['20:00', '21:00'], dica: 'Para turismo no Pinterest: noite (20h–21h), quando as pessoas planejam viagens.' },
   },
 };
 
+// Retorna horários e dica ajustados pelo segmento da empresa
+function getHorariosParaRede(redeKey) {
+  const segmento = perfil.segmento || '';
+  const ajuste = HORARIOS_SEGMENTO[segmento]?.[redeKey];
+  if (ajuste) return ajuste;
+  return HORARIOS_BASE[redeKey] || { horarios: ['09:00'], dica: 'Teste diferentes horários para encontrar o melhor para sua audiência.' };
+}
+
 // Mostra sugestão de horário para posts gerais (não programação automática).
-// Para programação automática, o horário já foi preenchido automaticamente.
 function atualizarSugestaoHorario() {
   const data = document.getElementById('input-data').value;
   const sugestaoEl = document.getElementById('sugestao-horario');
@@ -3452,20 +3502,19 @@ function atualizarSugestaoHorario() {
     sugestaoEl.style.display = 'none';
     return;
   }
-  const info = HORARIOS_REDE[vozAtual];
+  const info = getHorariosParaRede(vozAtual);
   if (!info) { sugestaoEl.style.display = 'none'; return; }
 
+  const segLabel = perfil.segmento ? ` para ${document.getElementById('p-segmento')?.options[document.getElementById('p-segmento')?.selectedIndex]?.text || 'seu segmento'}` : '';
   sugestaoEl.style.display = 'block';
-  sugestaoEl.innerHTML = `💡 <strong>Sugestão para ${REDES[vozAtual].label}:</strong> ${info.dica}`;
+  sugestaoEl.innerHTML = `💡 <strong>Sugestão${segLabel}:</strong> ${info.dica}`;
 }
 
-// Seleciona o melhor horário para a rede, considerando o segmento da empresa.
+// Seleciona o melhor horário para a rede considerando o segmento da empresa.
 // Usado pela programação automática para preencher o horário automaticamente.
 function selecionarMelhorHorario(redeKey) {
-  const info = HORARIOS_REDE[redeKey];
+  const info = getHorariosParaRede(redeKey);
   if (!info || !info.horarios.length) return '09:00';
-  // Segmento da empresa pode influenciar — por enquanto retorna o primeiro horário de pico
-  // (melhor horário geral da rede). Futuro: IA pode refinar por segmento.
   return info.horarios[0];
 }
 
@@ -3491,6 +3540,7 @@ function buildSystemComentario(rede, tom, postura) {
 
 EMPRESA:
 Nome: ${p.nome || 'Empresa'}
+Segmento: ${p.segmento || 'não informado'}
 Descrição: ${p.historia || ''}
 Propósito: ${p.proposito || ''}
 Cliente ideal: ${p.cliente || ''}
