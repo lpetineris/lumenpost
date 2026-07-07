@@ -1093,6 +1093,8 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
     <div class="perfil-titulo">Perfil da <span>empresa</span></div>
     <p class="perfil-sub">Preencha uma vez. A IA usará essas informações em todos os posts gerados.</p>
 
+    <button class="btn2" style="margin-bottom:16px" onclick="importarDoMind()">📥 Importar do Lumen Mind</button>
+
     <div class="card" style="margin-bottom:12px">
       <div class="card-hdr">Sobre a empresa</div>
       <div class="card-body">
@@ -1969,6 +1971,39 @@ function carregarCamposPerfil() {
   document.getElementById('p-cliente').value = perfil.cliente || '';
   document.getElementById('p-tom').value = perfil.tom || '';
   document.getElementById('p-diferenciais').value = perfil.diferenciais || '';
+}
+
+// Busca o perfil já preenchido no Lumen Mind (mesmo banco de dados) e usa
+// para preencher os campos do Post que ainda estiverem vazios.
+// Não sobrescreve o que o usuário já preencheu aqui no Post — apenas completa.
+async function importarDoMind() {
+  try {
+    const result = await dbCall('select_perfil', 'perfis', {user_id: CURRENT_USER_ID});
+    if (!result || !result.length) {
+      mostrarToast('Nenhum perfil encontrado no Lumen Mind ainda.');
+      return;
+    }
+    const m = result[0];
+    const mapa = {
+      'p-nome': m.empresa,
+      'p-proposito': m.missao,
+      'p-cliente': m.visao,
+      'p-diferenciais': m.valores,
+    };
+    let importou = false;
+    Object.entries(mapa).forEach(([id, valor]) => {
+      const el = document.getElementById(id);
+      if (el && valor && !el.value.trim()) { el.value = valor; importou = true; }
+    });
+    if (importou) {
+      mostrarToast('Dados importados do Lumen Mind! Revise e clique em Salvar perfil.');
+    } else {
+      mostrarToast('Seus campos já estão preenchidos — nada para importar.');
+    }
+  } catch(e) {
+    console.error('Erro ao importar do Lumen Mind:', e);
+    mostrarToast('Não foi possível importar do Lumen Mind agora.');
+  }
 }
 
 function verificarPerfil() {
