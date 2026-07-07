@@ -1878,6 +1878,16 @@ async function carregarPerfilCentral() {
         segmento: result[0].segmento || '',
         tom: result[0].tom || '',
         diferenciais: result[0].diferenciais || '',
+        redes: [
+          result[0].site ? `Site: ${result[0].site}` : '',
+          result[0].ig ? `Instagram: ${result[0].ig}` : '',
+          result[0].fb ? `Facebook: ${result[0].fb}` : '',
+          result[0].li ? `LinkedIn: ${result[0].li}` : '',
+          result[0].tt ? `TikTok: ${result[0].tt}` : '',
+          result[0].yt ? `YouTube: ${result[0].yt}` : '',
+          result[0].pin ? `Pinterest: ${result[0].pin}` : '',
+        ].filter(Boolean).join(' | '),
+        restricoes: result[0].restricoes || '',
         resumo_estrategico: result[0].resumo_estrategico || '',
       };
       try { localStorage.setItem('lp_perfil', JSON.stringify(perfil)); } catch(e) {}
@@ -2045,6 +2055,13 @@ Propósito: ${p.proposito || ''}
 Cliente ideal: ${p.cliente || ''}
 Tom de voz: ${p.tom || ''}
 Diferenciais: ${p.diferenciais || ''}
+${p.redes ? `Presença online existente: ${p.redes}` : ''}
+${p.restricoes ? `
+═══════════════════════════════════════
+RESTRIÇÕES DE MARCA — RESPEITE SEMPRE
+═══════════════════════════════════════
+${p.restricoes}
+` : ''}
 ${p.resumo_estrategico ? `
 ═══════════════════════════════════════
 INSIGHTS DA ANÁLISE DE CLIENTES (Lumen Mind)
