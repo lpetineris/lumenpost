@@ -1483,6 +1483,10 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
       <button class="btn2" onclick="fecharModalProgramacao()">Cancelar</button>
       <button class="btn" id="prog-btn-confirmar" onclick="confirmarProgramacaoAutomatica()">Gerar programação</button>
     </div>
+    <div class="loading" id="loading-prog" style="display:none;padding:0 24px 20px">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <p>Gerando programação com IA...</p>
+    </div>
   </div>
 </div>
 
@@ -3325,6 +3329,12 @@ async function confirmarProgramacaoAutomatica() {
   const btn = document.getElementById('prog-btn-confirmar');
   btn.disabled = true;
   btn.textContent = 'Gerando com IA...';
+  document.getElementById('loading-prog').style.display = 'flex';
+
+  // Timeout de segurança: se a IA não responder em 45s, desiste e libera a tela,
+  // em vez de deixar o usuário esperando indefinidamente.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 45000);
 
   try {
     const diasTotais = Math.max(1, Math.round((new Date(dataFim) - new Date(dataInicio)) / 86400000) + 1);
@@ -3347,9 +3357,9 @@ Redes sociais disponíveis: ${redesEscolhidas.map(k => REDES[k].label).join(', '
 Decida quantos posts fazem sentido nesse período e como distribuí-los entre as redes e datas, considerando uma frequência saudável e realista (não exagere — geralmente 2-4 posts por semana por rede é adequado para uma pequena/média empresa).
 
 Para cada post, sugira também:
-- um tema específico (nunca genérico ou vago — algo que já dê para escrever o post a partir dele)
+- um tema específico (nunca genérico ou vago — algo que já dê para escrever o post a partir dele), em até 12 palavras
 - o melhor horário (HH:MM, horário de Brasília) para aquela rede
-- um motivo curto, conectando o tema a um insight real do perfil ou da análise de clientes, quando possível
+- um motivo curto (1 frase, até 20 palavras), conectando o tema a um insight real do perfil ou da análise de clientes, quando possível
 
 Se fizer sentido estrategicamente (ex: uma data muito importante, um lançamento, uma campanha especial), você pode sugerir mais de um post na mesma rede e mesma data — isso é permitido, mas use com moderação.
 
@@ -3363,14 +3373,21 @@ Use apenas estas chaves de rede: ${redesEscolhidas.join(', ')}. Todas as datas d
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         system: 'Você responde apenas com JSON válido, sem nenhum texto adicional, comentário ou explicação.',
-        max_tokens: 2000,
+        max_tokens: 4000,
         messages: [{ role: 'user', content: prompt }]
-      })
+      }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     const data = await res.json();
+    if (!res.ok) throw new Error(data?.error?.message || 'Erro ao falar com a IA. Tente novamente.');
+
     let texto = data.content?.map(b => b.text || '').join('') || '';
     texto = texto.replace(/```json|```/g, '').trim();
+    // Tolerância extra: se vier algum texto antes/depois do JSON, extrai só o objeto.
+    const objMatch = texto.match(/\{[\s\S]*\}/);
+    if (objMatch) texto = objMatch[0];
 
     let parsed;
     try { parsed = JSON.parse(texto); } catch(e) {
@@ -3406,10 +3423,16 @@ Use apenas estas chaves de rede: ${redesEscolhidas.join(', ')}. Todas as datas d
     mostrarToast(`Programação "${nome}" criada com ${totalEspacos} posts sugeridos!`);
 
   } catch(err) {
+    clearTimeout(timeoutId);
     console.error('Erro ao gerar programação automática:', err);
-    mostrarToast(err.message || 'Erro ao gerar programação. Tente novamente.');
+    if (err.name === 'AbortError') {
+      mostrarToast('A IA demorou demais para responder. Tente novamente.');
+    } else {
+      mostrarToast(err.message || 'Erro ao gerar programação. Tente novamente.');
+    }
   }
 
+  document.getElementById('loading-prog').style.display = 'none';
   btn.disabled = false;
   btn.textContent = 'Gerar programação';
 }
