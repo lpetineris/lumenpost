@@ -809,7 +809,6 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
     <button class="pill" data-tab="banco" onclick="goTab('banco')">Banco de Posts</button>
     <button class="pill" data-tab="calendario" onclick="goTab('calendario')">Calendário</button>
     <button class="pill" data-tab="comentarios" onclick="goTab('comentarios')">Comentários</button>
-    <button class="pill" data-tab="perfil" onclick="goTab('perfil')">Perfil</button>
     <button class="pill" data-tab="linknabio" onclick="goTab('linknabio')">Link na Bio</button>
     <button class="pill" data-tab="ajuda" onclick="goTab('ajuda')">Ajuda</button>
   </nav>
@@ -818,7 +817,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 <main>
 
   <div class="aviso" id="aviso">
-    ⚠️ Configure o <strong>Perfil da Empresa</strong> antes de gerar posts.
+    ⚠️ Configure o <strong>Perfil da Empresa</strong> na página <strong>Perfil</strong> do menu do site antes de gerar posts.
   </div>
 
   <!-- ── GERAR POST ── -->
@@ -1094,71 +1093,6 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
   </div>
 
   <!-- ── PERFIL ── -->
-  <div class="tab" id="perfil">
-    <div class="perfil-titulo">Perfil da <span>empresa</span></div>
-    <p class="perfil-sub">Preencha uma vez. A IA usará essas informações em todos os posts gerados.</p>
-
-    <button class="btn2" style="margin-bottom:16px" onclick="importarDoMind()">📥 Importar do Lumen Mind</button>
-
-    <div class="card" style="margin-bottom:12px">
-      <div class="card-hdr">Sobre a empresa</div>
-      <div class="card-body">
-        <div class="field">
-          <label>Nome da empresa</label>
-          <input type="text" id="p-nome" placeholder="Ex: Studio Photo Brasil">
-        </div>
-        <div class="field">
-          <label>História e descrição</label>
-          <textarea id="p-historia" rows="4" placeholder="Ex: Somos uma produtora de fotografia especializada em alimentos, com 10 anos de mercado, atendendo grandes indústrias em São Paulo."></textarea>
-        </div>
-        <div class="field">
-          <label>Propósito</label>
-          <textarea id="p-proposito" rows="3" placeholder="Ex: Transformamos alimentos em imagens que vendem."></textarea>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom:24px">
-      <div class="card-hdr">Público e voz</div>
-      <div class="card-body">
-        <div class="field">
-          <label>Cliente ideal</label>
-          <textarea id="p-cliente" rows="3" placeholder="Ex: Diretores de marketing de indústrias alimentícias e gestores de agências em São Paulo."></textarea>
-        </div>
-        <div class="field">
-          <label>Segmento de atuação</label>
-          <select id="p-segmento" style="font-family:'Poppins',sans-serif;font-size:13px;padding:10px 12px;border-radius:var(--rs);border:1.5px solid var(--border);width:100%;background:var(--bg);color:var(--text)">
-            <option value="">Selecione o segmento...</option>
-            <option value="alimentacao">Alimentação e gastronomia</option>
-            <option value="saude">Saúde e bem-estar</option>
-            <option value="moda">Moda e varejo</option>
-            <option value="beleza">Beleza e estética</option>
-            <option value="educacao">Educação e cursos</option>
-            <option value="tecnologia">Tecnologia e software</option>
-            <option value="b2b">B2B e consultoria</option>
-            <option value="imobiliario">Imobiliário</option>
-            <option value="fitness">Fitness e esportes</option>
-            <option value="turismo">Turismo e hotelaria</option>
-            <option value="juridico">Jurídico e contabilidade</option>
-            <option value="entretenimento">Entretenimento e cultura</option>
-            <option value="outro">Outro</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Tom de voz e personalidade</label>
-          <textarea id="p-tom" rows="3" placeholder="Ex: Profissional e confiante, mas próximo. Valorizamos a arte e a conexão emocional."></textarea>
-        </div>
-        <div class="field">
-          <label>Diferenciais</label>
-          <textarea id="p-diferenciais" rows="2" placeholder="Ex: Equipe fixa especializada, 3 cozinhas-estúdio, 30.000 peças de cenografia."></textarea>
-        </div>
-      </div>
-    </div>
-
-    <button class="btn" onclick="salvarPerfil()">Salvar perfil</button>
-    <div class="perfil-ok" id="perfil-ok">✓ Perfil salvo com sucesso!</div>
-  </div>
-
   <!-- ── LINK NA BIO ── -->
   <div class="tab" id="linknabio">
     <div class="hero">
@@ -1637,32 +1571,8 @@ async function dbCall(action, table, data) {
 }
 
 async function loadFromCloud() {
-  // Load perfil
-  try {
-    const p = await dbCall('select_perfil', 'perfis_post', {user_id: CURRENT_USER_ID});
-    if(p && p.length > 0) {
-      perfil = {
-        nome: p[0].nome || '',
-        historia: p[0].historia || '',
-        proposito: p[0].proposito || '',
-        cliente: p[0].cliente || '',
-        tom: p[0].tom || '',
-        diferenciais: p[0].diferenciais || '',
-      };
-      // Busca também o resumo estratégico gerado no Lumen Mind (mesmo banco,
-      // tabela 'perfis'), para enriquecer a geração de posts com os insights
-      // já produzidos na análise de clientes.
-      try {
-        const m = await dbCall('select_perfil', 'perfis', {user_id: CURRENT_USER_ID});
-        if (m && m.length && m[0].resumo_estrategico) {
-          perfil.resumo_estrategico = m[0].resumo_estrategico;
-        }
-      } catch(e) {}
-      carregarCamposPerfil();
-      renderVozes();
-      verificarPerfil();
-    }
-  } catch(e) {}
+  // Carrega o perfil da tabela central compartilhada (perfil_central)
+  await carregarPerfilCentral();
 
   // Load calPosts + programações
   try {
@@ -1947,98 +1857,36 @@ document.querySelector('#nav-pills').innerHTML = `
   <button class="pill" data-tab="banco" onclick="goTab('banco')">Banco</button>
   <button class="pill" data-tab="calendario" onclick="goTab('calendario')">Calendário</button>
   <button class="pill" data-tab="comentarios" onclick="goTab('comentarios')">Comentários</button>
-  <button class="pill" data-tab="perfil" onclick="goTab('perfil')">Perfil</button>
   <button class="pill" data-tab="linknabio" onclick="goTab('linknabio')">Link na Bio</button>
   <button class="pill" data-tab="ajuda" onclick="goTab('ajuda')">Ajuda</button>
 `;
 
 // ── PERFIL ────────────────────────────────────────────────────────────
-function carregarPerfil() {
-  if (!perfil || !perfil.nome) return;
-  document.getElementById('p-nome').value = perfil.nome || '';
-  document.getElementById('p-historia').value = perfil.historia || '';
-  document.getElementById('p-proposito').value = perfil.proposito || '';
-  document.getElementById('p-cliente').value = perfil.cliente || '';
-  document.getElementById('p-segmento').value = perfil.segmento || '';
-  document.getElementById('p-tom').value = perfil.tom || '';
-  document.getElementById('p-diferenciais').value = perfil.diferenciais || '';
-}
-
-function salvarPerfil() {
-  perfil = {
-    nome: document.getElementById('p-nome').value,
-    historia: document.getElementById('p-historia').value,
-    proposito: document.getElementById('p-proposito').value,
-    cliente: document.getElementById('p-cliente').value,
-    segmento: document.getElementById('p-segmento').value,
-    tom: document.getElementById('p-tom').value,
-    diferenciais: document.getElementById('p-diferenciais').value,
-    resumo_estrategico: perfil.resumo_estrategico || '',
-  };
-  // Save to localStorage as fallback
-  try { localStorage.setItem('lp_perfil', JSON.stringify(perfil)); } catch(e) {}
-  // Save to Supabase
-  dbCall('upsert', 'perfis_post', {
-    id: CURRENT_USER_ID,
-    nome: perfil.nome,
-    historia: perfil.historia,
-    proposito: perfil.proposito,
-    cliente: perfil.cliente,
-    segmento: perfil.segmento,
-    tom: perfil.tom,
-    diferenciais: perfil.diferenciais,
-  }).then(function(r) {
-    if(!r || r.error) console.error('Erro ao salvar perfil:', r);
-  });
-  document.getElementById('perfil-ok').classList.add('show');
-  setTimeout(() => document.getElementById('perfil-ok').classList.remove('show'), 3000);
-  renderVozes();
-  verificarPerfil();
-  mostrarToast('Perfil salvo!');
-}
-
-function carregarCamposPerfil() {
-  if(!perfil || !perfil.nome) return;
-  document.getElementById('p-nome').value = perfil.nome || '';
-  document.getElementById('p-historia').value = perfil.historia || '';
-  document.getElementById('p-proposito').value = perfil.proposito || '';
-  document.getElementById('p-cliente').value = perfil.cliente || '';
-  document.getElementById('p-tom').value = perfil.tom || '';
-  document.getElementById('p-diferenciais').value = perfil.diferenciais || '';
-}
-
-// Busca o perfil já preenchido no Lumen Mind (mesmo banco de dados) e usa
-// para preencher os campos do Post que ainda estiverem vazios.
-// Não sobrescreve o que o usuário já preencheu aqui no Post — apenas completa.
-async function importarDoMind() {
+// O Post não tem mais formulário próprio de perfil — os dados vêm da
+// página central "Perfil" (mesmo banco, tabela perfil_central), compartilhada
+// com o Mind e as próximas ferramentas. Esta função só busca e guarda em
+// memória; quem editar precisa ir até a página Perfil, no menu do site.
+async function carregarPerfilCentral() {
   try {
-    const result = await dbCall('select_perfil', 'perfis', {user_id: CURRENT_USER_ID});
-    if (!result || !result.length) {
-      mostrarToast('Nenhum perfil encontrado no Lumen Mind ainda.');
-      return;
-    }
-    const m = result[0];
-    if (m.resumo_estrategico) perfil.resumo_estrategico = m.resumo_estrategico;
-    const mapa = {
-      'p-nome': m.empresa,
-      'p-proposito': m.missao,
-      'p-cliente': m.visao,
-      'p-diferenciais': m.valores,
-    };
-    let importou = false;
-    Object.entries(mapa).forEach(([id, valor]) => {
-      const el = document.getElementById(id);
-      if (el && valor && !el.value.trim()) { el.value = valor; importou = true; }
-    });
-    if (importou || m.resumo_estrategico) {
-      mostrarToast('Dados e insights importados do Lumen Mind! Revise e clique em Salvar perfil.');
-    } else {
-      mostrarToast('Seus campos já estão preenchidos — nada para importar.');
+    const result = await dbCall('select_perfil', 'perfil_central', {});
+    if (result && result.length) {
+      perfil = {
+        nome: result[0].nome || '',
+        historia: result[0].historia || '',
+        proposito: result[0].proposito || '',
+        cliente: result[0].cliente || '',
+        segmento: result[0].segmento || '',
+        tom: result[0].tom || '',
+        diferenciais: result[0].diferenciais || '',
+        resumo_estrategico: result[0].resumo_estrategico || '',
+      };
+      try { localStorage.setItem('lp_perfil', JSON.stringify(perfil)); } catch(e) {}
     }
   } catch(e) {
-    console.error('Erro ao importar do Lumen Mind:', e);
-    mostrarToast('Não foi possível importar do Lumen Mind agora.');
+    console.error('Erro ao carregar perfil central:', e);
   }
+  renderVozes();
+  verificarPerfil();
 }
 
 function verificarPerfil() {
@@ -3634,6 +3482,13 @@ function getHorariosParaRede(redeKey) {
 }
 
 // Mostra sugestão de horário para posts gerais (não programação automática).
+const SEGMENTOS_LABEL = {
+  alimentacao: 'Alimentação e gastronomia', saude: 'Saúde e bem-estar', moda: 'Moda e varejo',
+  beleza: 'Beleza e estética', educacao: 'Educação e cursos', tecnologia: 'Tecnologia e software',
+  b2b: 'B2B e consultoria', imobiliario: 'Imobiliário', fitness: 'Fitness e esportes',
+  turismo: 'Turismo e hotelaria', juridico: 'Jurídico e contabilidade', entretenimento: 'Entretenimento e cultura', outro: 'Outro',
+};
+
 function atualizarSugestaoHorario() {
   const data = document.getElementById('input-data').value;
   const sugestaoEl = document.getElementById('sugestao-horario');
@@ -3644,7 +3499,7 @@ function atualizarSugestaoHorario() {
   const info = getHorariosParaRede(vozAtual);
   if (!info) { sugestaoEl.style.display = 'none'; return; }
 
-  const segLabel = perfil.segmento ? ` para ${document.getElementById('p-segmento')?.options[document.getElementById('p-segmento')?.selectedIndex]?.text || 'seu segmento'}` : '';
+  const segLabel = perfil.segmento ? ` para ${SEGMENTOS_LABEL[perfil.segmento] || 'seu segmento'}` : '';
   sugestaoEl.style.display = 'block';
   sugestaoEl.innerHTML = `💡 <strong>Sugestão${segLabel}:</strong> ${info.dica}`;
 }
@@ -4327,9 +4182,7 @@ function sincronizarCal() {
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────
-carregarPerfil();
-renderVozes();
-verificarPerfil();
+carregarPerfilCentral();
 garantirProgramacaoFixa();
 // Load from Supabase on startup
 loadFromCloud();
