@@ -792,6 +792,11 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 
 <div id="toast"></div>
 
+<div id="conectando-overlay" style="position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div class="dots"><span></span><span></span><span></span></div>
+  <p style="font-size:13px;color:var(--text3);font-style:italic">Conectando sua conta...</p>
+</div>
+
 <header>
   <div class="logo">
     <div class="logo-icon">✦</div>
@@ -1264,7 +1269,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>No Gerador, preencha a data e o horário antes de salvar. Para posts gerais, a ferramenta sugere automaticamente os melhores horários para a rede selecionada. Para posts criados a partir de uma programação automática, o horário é preenchido automaticamente pela IA.</p>
+            <p>No Gerador, preencha a data e o horário antes de salvar. Para posts gerais, a ferramenta sugere automaticamente os melhores horários para a rede selecionada. Para posts criados a partir de uma programação automática, o horário — e, quando disponível, também o tema — já vêm preenchidos pela sugestão da IA.</p>
           </div>
         </div>
 
@@ -1324,7 +1329,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>No Calendário, clique em "✦ Criar programação com IA". Defina o nome, o período e as redes sociais. A IA decide quantos posts criar, em quais datas e horários, considerando uma frequência saudável para o perfil da empresa. Pode haver mais de um post da mesma rede no mesmo dia quando fizer sentido estratégico.</p>
+            <p>No Calendário, clique em "✦ Criar programação com IA". Defina o nome, o período e as redes sociais. A IA decide quantos posts criar, em quais datas e horários, e já sugere um tema para cada um — considerando o perfil da empresa e, quando disponíveis, os insights de análise de clientes do Lumen Mind. Pode haver mais de um post da mesma rede no mesmo dia quando fizer sentido estratégico.</p>
           </div>
         </div>
 
@@ -1452,7 +1457,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
 
     <div style="padding:24px">
       <p style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6">
-        A IA vai decidir quantos posts criar, em quais redes e em quais datas, com base no perfil da sua empresa.
+        A IA vai decidir quantos posts criar, em quais redes, datas e horários — e já vai sugerir um tema para cada um, com base no perfil da sua empresa e nos insights do Lumen Mind (quando disponíveis).
       </p>
       <div class="field">
         <label>Nome da programação</label>
@@ -1588,9 +1593,24 @@ try {
 window.addEventListener('message', function(e) {
   if(e.data && e.data.type === 'set-user-id' && e.data.userId) {
     CURRENT_USER_ID = e.data.userId;
+    liberarTela();
     loadFromCloud();
   }
 });
+
+// Enquanto essa tela de "Conectando..." está visível, o usuário não consegue
+// clicar em nada — isso evita que qualquer ação seja salva com o ID temporário
+// do navegador antes do Wix confirmar o ID real da conta.
+let telaLiberada = false;
+function liberarTela() {
+  if (telaLiberada) return;
+  telaLiberada = true;
+  const overlay = document.getElementById('conectando-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+// Se depois de um tempo curto o Wix não responder (ex: abrindo fora do Wix,
+// em teste), libera a tela mesmo assim, usando o ID local, para não travar o uso.
+setTimeout(liberarTela, 2500);
 
 window.addEventListener('load', function() {
   if(window.parent !== window) {
@@ -1625,6 +1645,15 @@ async function loadFromCloud() {
         tom: p[0].tom || '',
         diferenciais: p[0].diferenciais || '',
       };
+      // Busca também o resumo estratégico gerado no Lumen Mind (mesmo banco,
+      // tabela 'perfis'), para enriquecer a geração de posts com os insights
+      // já produzidos na análise de clientes.
+      try {
+        const m = await dbCall('select_perfil', 'perfis', {user_id: CURRENT_USER_ID});
+        if (m && m.length && m[0].resumo_estrategico) {
+          perfil.resumo_estrategico = m[0].resumo_estrategico;
+        }
+      } catch(e) {}
       carregarCamposPerfil();
       renderVozes();
       verificarPerfil();
@@ -1940,6 +1969,7 @@ function salvarPerfil() {
     segmento: document.getElementById('p-segmento').value,
     tom: document.getElementById('p-tom').value,
     diferenciais: document.getElementById('p-diferenciais').value,
+    resumo_estrategico: perfil.resumo_estrategico || '',
   };
   // Save to localStorage as fallback
   try { localStorage.setItem('lp_perfil', JSON.stringify(perfil)); } catch(e) {}
@@ -1984,6 +2014,7 @@ async function importarDoMind() {
       return;
     }
     const m = result[0];
+    if (m.resumo_estrategico) perfil.resumo_estrategico = m.resumo_estrategico;
     const mapa = {
       'p-nome': m.empresa,
       'p-proposito': m.missao,
@@ -1995,8 +2026,8 @@ async function importarDoMind() {
       const el = document.getElementById(id);
       if (el && valor && !el.value.trim()) { el.value = valor; importou = true; }
     });
-    if (importou) {
-      mostrarToast('Dados importados do Lumen Mind! Revise e clique em Salvar perfil.');
+    if (importou || m.resumo_estrategico) {
+      mostrarToast('Dados e insights importados do Lumen Mind! Revise e clique em Salvar perfil.');
     } else {
       mostrarToast('Seus campos já estão preenchidos — nada para importar.');
     }
@@ -2162,6 +2193,13 @@ Propósito: ${p.proposito || ''}
 Cliente ideal: ${p.cliente || ''}
 Tom de voz: ${p.tom || ''}
 Diferenciais: ${p.diferenciais || ''}
+${p.resumo_estrategico ? `
+═══════════════════════════════════════
+INSIGHTS DA ANÁLISE DE CLIENTES (Lumen Mind)
+═══════════════════════════════════════
+Use estes insights, quando fizer sentido para o tema, para tornar o post mais relevante e estratégico — conectando o conteúdo a percepções reais sobre os clientes desta empresa:
+${p.resumo_estrategico}
+` : ''}
 
 ═══════════════════════════════════════
 SUA MISSÃO NESTE POST
@@ -3291,17 +3329,32 @@ async function confirmarProgramacaoAutomatica() {
   try {
     const diasTotais = Math.max(1, Math.round((new Date(dataFim) - new Date(dataInicio)) / 86400000) + 1);
 
-    const prompt = `Você é uma estrategista de conteúdo. Crie um calendário editorial para a empresa "${perfil.nome}" (${perfil.historia || ''}). Segmento: ${perfil.segmento || 'não informado'}.
+    const prompt = `Você é uma estrategista de mídias sociais sênior, especializada em pequenos e médios negócios. Crie um calendário editorial completo para a empresa "${perfil.nome}".
+
+PERFIL DA EMPRESA
+Segmento: ${perfil.segmento || 'não informado'}
+Descrição: ${perfil.historia || ''}
+Propósito: ${perfil.proposito || ''}
+Cliente ideal: ${perfil.cliente || ''}
+Diferenciais: ${perfil.diferenciais || ''}
+${perfil.resumo_estrategico
+    ? `\nINSIGHTS DA ANÁLISE DE CLIENTES (Lumen Mind):\n${perfil.resumo_estrategico}`
+    : ''}
 
 Período: de ${dataInicio} a ${dataFim} (${diasTotais} dias).
 Redes sociais disponíveis: ${redesEscolhidas.map(k => REDES[k].label).join(', ')}.
 
 Decida quantos posts fazem sentido nesse período e como distribuí-los entre as redes e datas, considerando uma frequência saudável e realista (não exagere — geralmente 2-4 posts por semana por rede é adequado para uma pequena/média empresa).
 
+Para cada post, sugira também:
+- um tema específico (nunca genérico ou vago — algo que já dê para escrever o post a partir dele)
+- o melhor horário (HH:MM, horário de Brasília) para aquela rede
+- um motivo curto, conectando o tema a um insight real do perfil ou da análise de clientes, quando possível
+
 Se fizer sentido estrategicamente (ex: uma data muito importante, um lançamento, uma campanha especial), você pode sugerir mais de um post na mesma rede e mesma data — isso é permitido, mas use com moderação.
 
 Responda APENAS em JSON válido, sem texto antes ou depois, no formato exato:
-{"espacos": [{"data": "YYYY-MM-DD", "rede": "linkedin"}, {"data": "YYYY-MM-DD", "rede": "instagram"}]}
+{"espacos": [{"data": "YYYY-MM-DD", "rede": "linkedin", "tema": "...", "hora": "HH:MM", "motivo": "..."}]}
 
 Use apenas estas chaves de rede: ${redesEscolhidas.join(', ')}. Todas as datas devem estar dentro do período informado.`;
 
@@ -3329,13 +3382,20 @@ Use apenas estas chaves de rede: ${redesEscolhidas.join(', ')}. Todas as datas d
     }
 
     const espacos = {};
+    const sugestoes = {};
     parsed.espacos.forEach(e => {
       if (!e.data || !e.rede || !REDES[e.rede]) return;
       if (!espacos[e.data]) espacos[e.data] = [];
       espacos[e.data].push({ id: gerarIdEspaco(), rede: e.rede });
+
+      // Guarda o tema/horário/motivo sugeridos numa fila por data+rede — são
+      // consumidos (um de cada vez) quando o usuário clica no espaço no calendário.
+      const chaveSug = e.data + '|' + e.rede;
+      if (!sugestoes[chaveSug]) sugestoes[chaveSug] = [];
+      sugestoes[chaveSug].push({ tema: e.tema || '', hora: e.hora || '', motivo: e.motivo || '' });
     });
 
-    const nova = { id: 'prog_' + Date.now(), nome, espacos };
+    const nova = { id: 'prog_' + Date.now(), nome, espacos, sugestoes };
     programacoes.push(nova);
     programacaoAtivaId = nova.id;
     salvarProgramacoes();
@@ -3371,8 +3431,25 @@ function preencherEspacoProgramacao(data, redeKey) {
     document.getElementById('input-data').value = data;
     programacaoContextoAtual = programacaoAtivaId;
 
-    // Se é programação automática (não Posts gerais), preenche o horário automaticamente
-    if (programacaoAtivaId && programacaoAtivaId !== ID_PROGRAMACAO_FIXA) {
+    // Se essa programação tem uma sugestão de tema/horário/motivo da IA para
+    // esse dia + rede (gerada em "Criar programação com IA"), usa ela.
+    const prog = getProgramacaoAtiva();
+    const chaveSug = data + '|' + redeKey;
+    let sugestao = null;
+    if (prog && prog.sugestoes && prog.sugestoes[chaveSug] && prog.sugestoes[chaveSug].length) {
+      sugestao = prog.sugestoes[chaveSug].shift(); // consome a sugestão, não repete em outro espaço
+      salvarProgramacoes();
+    }
+
+    if (sugestao && sugestao.tema) {
+      document.getElementById('input-tema').value = sugestao.tema;
+    }
+
+    if (sugestao && sugestao.hora) {
+      document.getElementById('input-hora').value = sugestao.hora;
+      document.getElementById('sugestao-horario').style.display = 'none';
+    } else if (programacaoAtivaId && programacaoAtivaId !== ID_PROGRAMACAO_FIXA) {
+      // Sem sugestão específica — mantém o comportamento anterior (melhor horário genérico da rede)
       const horario = selecionarMelhorHorario(redeKey);
       document.getElementById('input-hora').value = horario;
       document.getElementById('sugestao-horario').style.display = 'none';
@@ -3382,7 +3459,11 @@ function preencherEspacoProgramacao(data, redeKey) {
     }
 
     document.getElementById('input-tema').focus();
-    mostrarToast(`Espaço de ${REDES[redeKey].label} em ${new Date(data+'T12:00:00').toLocaleDateString('pt-BR')} selecionado. Descreva o tema e gere o post!`);
+    if (sugestao && sugestao.motivo) {
+      mostrarToast(`💡 ${sugestao.motivo}`);
+    } else {
+      mostrarToast(`Espaço de ${REDES[redeKey].label} em ${new Date(data+'T12:00:00').toLocaleDateString('pt-BR')} selecionado. Descreva o tema e gere o post!`);
+    }
   }, 150);
 }
 
