@@ -1764,7 +1764,6 @@ function salvarProgramacoes() {
 
 try { bancoPosts = JSON.parse(localStorage.getItem('lp_posts') || '[]'); } catch(e) { bancoPosts = []; }
 try { calPosts = JSON.parse(localStorage.getItem('lp_cal') || '{}'); } catch(e) { calPosts = {}; }
-try { perfil = JSON.parse(localStorage.getItem('lp_perfil') || '{}'); } catch(e) { perfil = {}; }
 try { programacoes = JSON.parse(localStorage.getItem('lp_programacoes') || '[]'); } catch(e) { programacoes = []; }
 try { programacaoAtivaId = localStorage.getItem('lp_programacao_ativa') || null; } catch(e) { programacaoAtivaId = null; }
 try { lixeira = JSON.parse(localStorage.getItem('lp_lixeira') || '[]'); } catch(e) { lixeira = []; }
@@ -1868,7 +1867,7 @@ document.querySelector('#nav-pills').innerHTML = `
 // memória; quem editar precisa ir até a página Perfil, no menu do site.
 async function carregarPerfilCentral() {
   try {
-    const result = await dbCall('select_perfil', 'perfil_central', {});
+    const result = await dbCall('select_perfil', 'perfil_central', {user_id: CURRENT_USER_ID});
     if (result && result.length) {
       perfil = {
         nome: result[0].nome || '',
@@ -1891,6 +1890,11 @@ async function carregarPerfilCentral() {
         resumo_estrategico: result[0].resumo_estrategico || '',
       };
       try { localStorage.setItem('lp_perfil', JSON.stringify(perfil)); } catch(e) {}
+    } else {
+      // Nada encontrado na nuvem (perfil apagado ou ainda não preenchido) —
+      // não deixa nenhum dado antigo "fantasma" sobrevivendo em cache local.
+      perfil = {};
+      try { localStorage.removeItem('lp_perfil'); } catch(e) {}
     }
   } catch(e) {
     console.error('Erro ao carregar perfil central:', e);
