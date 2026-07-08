@@ -1868,7 +1868,9 @@ document.querySelector('#nav-pills').innerHTML = `
 async function carregarPerfilCentral() {
   try {
     const result = await dbCall('select_perfil', 'perfil_central', {user_id: CURRENT_USER_ID});
-    if (result && result.length) {
+    if (result && result.error) {
+      mostrarToastLongo('🔴 DIAGNÓSTICO: erro ao buscar perfil — ' + result.error);
+    } else if (result && result.length) {
       perfil = {
         nome: result[0].nome || '',
         historia: result[0].historia || '',
@@ -1890,14 +1892,17 @@ async function carregarPerfilCentral() {
         resumo_estrategico: result[0].resumo_estrategico || '',
       };
       try { localStorage.setItem('lp_perfil', JSON.stringify(perfil)); } catch(e) {}
+      mostrarToastLongo('🟢 DIAGNÓSTICO: perfil encontrado — nome: "' + (perfil.nome || '(vazio)') + '"');
     } else {
       // Nada encontrado na nuvem (perfil apagado ou ainda não preenchido) —
       // não deixa nenhum dado antigo "fantasma" sobrevivendo em cache local.
       perfil = {};
       try { localStorage.removeItem('lp_perfil'); } catch(e) {}
+      mostrarToastLongo('🟡 DIAGNÓSTICO: busca funcionou, mas não achou nenhum perfil para este usuário (user_id: ' + CURRENT_USER_ID + ')');
     }
   } catch(e) {
     console.error('Erro ao carregar perfil central:', e);
+    mostrarToastLongo('🔴 DIAGNÓSTICO: erro de conexão — ' + e.message);
   }
   renderVozes();
   verificarPerfil();
@@ -4123,6 +4128,13 @@ function mostrarToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function mostrarToastLongo(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 20000);
 }
 
 // ── SINCRONIZAR CALENDÁRIO ───────────────────────────────────────────
