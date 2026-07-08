@@ -1419,7 +1419,7 @@ main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
     </div>
     <div class="loading" id="loading-prog" style="display:none;padding:0 24px 20px">
       <div class="dots"><span></span><span></span><span></span></div>
-      <p>Gerando programação com IA...</p>
+      <p id="loading-prog-msg">Gerando programação com IA...</p>
     </div>
   </div>
 </div>
@@ -3189,6 +3189,70 @@ function fecharModalProgramacao() {
   document.getElementById('modal-prog-overlay').classList.remove('open');
 }
 
+async function gerarEspacosParaGrupo(redesGrupo, perfil, dataInicio, dataFim, diasTotais) {
+  const prompt = `Você é uma estrategista de mídias sociais sênior, especializada em pequenos e médios negócios. Crie um calendário editorial para a empresa "${perfil.nome}".
+
+PERFIL DA EMPRESA
+Segmento: ${perfil.segmento || 'não informado'}
+Descrição: ${perfil.historia || ''}
+Propósito: ${perfil.proposito || ''}
+Cliente ideal: ${perfil.cliente || ''}
+Diferenciais: ${perfil.diferenciais || ''}
+${perfil.resumo_estrategico
+    ? `\nINSIGHTS DA ANÁLISE DE CLIENTES (Lumen Mind):\n${perfil.resumo_estrategico}`
+    : ''}
+
+Período: de ${dataInicio} a ${dataFim} (${diasTotais} dias).
+Rede(s) social(is) desta etapa: ${redesGrupo.map(k => REDES[k].label).join(', ')}.
+
+Decida quantos posts fazem sentido nesse período para essa(s) rede(s), considerando uma frequência saudável e realista (geralmente 2-4 posts por semana por rede é adequado para uma pequena/média empresa). Você tem liberdade total para decidir a quantidade certa — não existe um teto artificial, use seu julgamento estratégico.
+
+Para cada post, sugira também:
+- um tema específico (nunca genérico ou vago — algo que já dê para escrever o post a partir dele), em até 12 palavras
+- o melhor horário (HH:MM, horário de Brasília) para aquela rede
+- um motivo curto (1 frase, até 20 palavras), conectando o tema a um insight real do perfil ou da análise de clientes, quando possível
+
+Se fizer sentido estrategicamente (ex: uma data muito importante, um lançamento, uma campanha especial), você pode sugerir mais de um post na mesma rede e mesma data — isso é permitido, mas use com moderação.
+
+Responda APENAS em JSON válido, sem texto antes ou depois, no formato exato:
+{"espacos": [{"data": "YYYY-MM-DD", "rede": "linkedin", "tema": "...", "hora": "HH:MM", "motivo": "..."}]}
+
+Use apenas estas chaves de rede: ${redesGrupo.join(', ')}. Todas as datas devem estar dentro do período informado.`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: 'Você responde apenas com JSON válido, sem nenhum texto adicional, comentário ou explicação.',
+        max_tokens: 8000,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error?.message || 'Erro ao falar com a IA.');
+
+    let texto = data.content?.map(b => b.text || '').join('') || '';
+    texto = texto.replace(/```json|```/g, '').trim();
+    const objMatch = texto.match(/\{[\s\S]*\}/);
+    if (objMatch) texto = objMatch[0];
+
+    const parsed = JSON.parse(texto);
+    if (!parsed.espacos || !Array.isArray(parsed.espacos)) return [];
+    return parsed.espacos;
+  } catch(err) {
+    clearTimeout(timeoutId);
+    console.error(`Erro ao gerar estratégia para ${redesGrupo.join(', ')}:`, err);
+    throw err;
+  }
+}
+
 async function confirmarProgramacaoAutomatica() {
   const nome = document.getElementById('prog-nome-auto').value.trim();
   const dataInicio = document.getElementById('prog-data-inicio').value;
@@ -3204,111 +3268,70 @@ async function confirmarProgramacaoAutomatica() {
   btn.disabled = true;
   btn.textContent = 'Gerando com IA...';
   document.getElementById('loading-prog').style.display = 'flex';
+  const msgEl = document.getElementById('loading-prog-msg');
 
-  // Timeout de segurança: se a IA não responder em 45s, desiste e libera a tela,
-  // em vez de deixar o usuário esperando indefinidamente.
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 45000);
+  const diasTotais = Math.max(1, Math.round((new Date(dataFim) - new Date(dataInicio)) / 86400000) + 1);
 
-  try {
-    const diasTotais = Math.max(1, Math.round((new Date(dataFim) - new Date(dataInicio)) / 86400000) + 1);
+  // Divide as redes em grupos pequenos (no máximo 2 por vez). Cada chamada à
+  // IA fica rápida e cabe com folga no limite de resposta — sem precisar
+  // cortar a quantidade de posts que a IA julga adequada para a estratégia.
+  const TAMANHO_GRUPO = 2;
+  const grupos = [];
+  for (let i = 0; i < redesEscolhidas.length; i += TAMANHO_GRUPO) {
+    grupos.push(redesEscolhidas.slice(i, i + TAMANHO_GRUPO));
+  }
 
-    const prompt = `Você é uma estrategista de mídias sociais sênior, especializada em pequenos e médios negócios. Crie um calendário editorial completo para a empresa "${perfil.nome}".
+  const espacos = {};
+  const sugestoes = {};
+  const falhas = [];
 
-PERFIL DA EMPRESA
-Segmento: ${perfil.segmento || 'não informado'}
-Descrição: ${perfil.historia || ''}
-Propósito: ${perfil.proposito || ''}
-Cliente ideal: ${perfil.cliente || ''}
-Diferenciais: ${perfil.diferenciais || ''}
-${perfil.resumo_estrategico
-    ? `\nINSIGHTS DA ANÁLISE DE CLIENTES (Lumen Mind):\n${perfil.resumo_estrategico}`
-    : ''}
-
-Período: de ${dataInicio} a ${dataFim} (${diasTotais} dias).
-Redes sociais disponíveis: ${redesEscolhidas.map(k => REDES[k].label).join(', ')}.
-
-Decida quantos posts fazem sentido nesse período e como distribuí-los entre as redes e datas, considerando uma frequência saudável e realista (não exagere — geralmente 2-4 posts por semana por rede é adequado para uma pequena/média empresa).
-
-Para cada post, sugira também:
-- um tema específico (nunca genérico ou vago — algo que já dê para escrever o post a partir dele), em até 12 palavras
-- o melhor horário (HH:MM, horário de Brasília) para aquela rede
-- um motivo curto (1 frase, até 20 palavras), conectando o tema a um insight real do perfil ou da análise de clientes, quando possível
-
-Se fizer sentido estrategicamente (ex: uma data muito importante, um lançamento, uma campanha especial), você pode sugerir mais de um post na mesma rede e mesma data — isso é permitido, mas use com moderação.
-
-Responda APENAS em JSON válido, sem texto antes ou depois, no formato exato:
-{"espacos": [{"data": "YYYY-MM-DD", "rede": "linkedin", "tema": "...", "hora": "HH:MM", "motivo": "..."}]}
-
-Use apenas estas chaves de rede: ${redesEscolhidas.join(', ')}. Todas as datas devem estar dentro do período informado.`;
-
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system: 'Você responde apenas com JSON válido, sem nenhum texto adicional, comentário ou explicação.',
-        max_tokens: 4000,
-        messages: [{ role: 'user', content: prompt }]
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error?.message || 'Erro ao falar com a IA. Tente novamente.');
-
-    let texto = data.content?.map(b => b.text || '').join('') || '';
-    texto = texto.replace(/```json|```/g, '').trim();
-    // Tolerância extra: se vier algum texto antes/depois do JSON, extrai só o objeto.
-    const objMatch = texto.match(/\{[\s\S]*\}/);
-    if (objMatch) texto = objMatch[0];
-
-    let parsed;
-    try { parsed = JSON.parse(texto); } catch(e) {
-      throw new Error('A IA retornou um formato inesperado. Tente novamente.');
+  for (let i = 0; i < grupos.length; i++) {
+    const grupo = grupos[i];
+    if (msgEl) {
+      msgEl.textContent = grupos.length > 1
+        ? `Gerando estratégia para ${grupo.map(k => REDES[k].label).join(' e ')}... (${i + 1}/${grupos.length})`
+        : 'Gerando programação com IA...';
     }
+    try {
+      const espacosGrupo = await gerarEspacosParaGrupo(grupo, perfil, dataInicio, dataFim, diasTotais);
+      espacosGrupo.forEach(e => {
+        if (!e.data || !e.rede || !REDES[e.rede]) return;
+        if (!espacos[e.data]) espacos[e.data] = [];
+        espacos[e.data].push({ id: gerarIdEspaco(), rede: e.rede });
 
-    if (!parsed.espacos || !Array.isArray(parsed.espacos) || parsed.espacos.length === 0) {
-      throw new Error('Nenhum espaço foi gerado. Tente novamente ou ajuste o período.');
-    }
-
-    const espacos = {};
-    const sugestoes = {};
-    parsed.espacos.forEach(e => {
-      if (!e.data || !e.rede || !REDES[e.rede]) return;
-      if (!espacos[e.data]) espacos[e.data] = [];
-      espacos[e.data].push({ id: gerarIdEspaco(), rede: e.rede });
-
-      // Guarda o tema/horário/motivo sugeridos numa fila por data+rede — são
-      // consumidos (um de cada vez) quando o usuário clica no espaço no calendário.
-      const chaveSug = e.data + '|' + e.rede;
-      if (!sugestoes[chaveSug]) sugestoes[chaveSug] = [];
-      sugestoes[chaveSug].push({ tema: e.tema || '', hora: e.hora || '', motivo: e.motivo || '' });
-    });
-
-    const nova = { id: 'prog_' + Date.now(), nome, espacos, sugestoes };
-    programacoes.push(nova);
-    programacaoAtivaId = nova.id;
-    salvarProgramacoes();
-
-    const totalEspacos = Object.values(espacos).reduce((acc, arr) => acc + arr.length, 0);
-    fecharModalProgramacao();
-    renderCal();
-    mostrarToast(`Programação "${nome}" criada com ${totalEspacos} posts sugeridos!`);
-
-  } catch(err) {
-    clearTimeout(timeoutId);
-    console.error('Erro ao gerar programação automática:', err);
-    if (err.name === 'AbortError') {
-      mostrarToast('A IA demorou demais para responder. Tente novamente.');
-    } else {
-      mostrarToast(err.message || 'Erro ao gerar programação. Tente novamente.');
+        const chaveSug = e.data + '|' + e.rede;
+        if (!sugestoes[chaveSug]) sugestoes[chaveSug] = [];
+        sugestoes[chaveSug].push({ tema: e.tema || '', hora: e.hora || '', motivo: e.motivo || '' });
+      });
+    } catch(err) {
+      falhas.push(grupo.map(k => REDES[k].label).join('/'));
     }
   }
 
   document.getElementById('loading-prog').style.display = 'none';
   btn.disabled = false;
   btn.textContent = 'Gerar programação';
+
+  const totalEspacos = Object.values(espacos).reduce((acc, arr) => acc + arr.length, 0);
+
+  if (totalEspacos === 0) {
+    mostrarToast('Não foi possível gerar a programação. Tente novamente ou reduza o período.');
+    return;
+  }
+
+  const nova = { id: 'prog_' + Date.now(), nome, espacos, sugestoes };
+  programacoes.push(nova);
+  programacaoAtivaId = nova.id;
+  salvarProgramacoes();
+
+  fecharModalProgramacao();
+  renderCal();
+
+  let msg = `Programação "${nome}" criada com ${totalEspacos} posts sugeridos!`;
+  if (falhas.length) {
+    msg += ` (não foi possível gerar para: ${falhas.join(', ')} — pode tentar adicionar essas redes numa nova programação)`;
+  }
+  mostrarToast(msg);
 }
 
 // Chamado ao clicar num espaço vazio do calendário — abre o gerador
