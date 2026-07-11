@@ -3888,9 +3888,18 @@ function atualizarPreviewBio() {
   if (linksEl) {
     const links = bioData.links || [];
     linksEl.innerHTML = links.filter(l => l.nome).map(l => `
-      <a href="${l.url || '#'}" target="_blank" style="display:block;padding:12px 20px;background:white;border:1px solid #E5E7EB;border-radius:10px;text-decoration:none;color:#111827;font-size:14px;font-weight:500;transition:all .15s">${l.nome}</a>
+      <a href="${normalizarUrlBio(l.url) || '#'}" target="_blank" style="display:block;padding:12px 20px;background:white;border:1px solid #E5E7EB;border-radius:10px;text-decoration:none;color:#111827;font-size:14px;font-weight:500;transition:all .15s">${l.nome}</a>
     `).join('') || '<p style="font-size:12px;color:#9CA3AF">Seus links aparecerão aqui</p>';
   }
+}
+
+// Garante que o link tenha um protocolo (https://) — sem isso, o navegador
+// trata o endereço como um caminho interno do site, quebrando o link.
+// Não mexe em endereços que já têm protocolo (http, https, mailto, tel, etc).
+function normalizarUrlBio(url) {
+  if (!url) return '';
+  if (/^[a-z][a-z0-9+.-]*:/i.test(url)) return url; // já tem protocolo
+  return 'https://' + url;
 }
 
 async function salvarBio() {
@@ -3908,7 +3917,10 @@ async function salvarBio() {
   // Salvar links lendo os campos atuais do DOM
   const nomes = document.querySelectorAll('#bio-links-lista input[placeholder="Nome do link"]');
   const urls = document.querySelectorAll('#bio-links-lista input[placeholder="https://..."]');
-  bioData.links = Array.from(nomes).map((n, i) => ({ nome: n.value.trim(), url: urls[i]?.value.trim() || '' })).filter(l => l.nome);
+  bioData.links = Array.from(nomes).map((n, i) => ({
+    nome: n.value.trim(),
+    url: normalizarUrlBio(urls[i]?.value.trim() || ''),
+  })).filter(l => l.nome);
 
   try { localStorage.setItem('lp_bio', JSON.stringify(bioData)); } catch(e) {}
 

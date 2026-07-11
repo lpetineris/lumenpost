@@ -61,6 +61,15 @@
     const slug = window.location.pathname.split('/bio/')[1] ||
                  new URLSearchParams(window.location.search).get('slug');
 
+    // Garante que o link tenha um protocolo (https://) — sem isso, o navegador
+    // trata o endereço como um caminho interno do site, quebrando o link.
+    // Protege contra links salvos antes dessa correção existir.
+    function normalizarUrl(url) {
+      if (!url) return '';
+      if (/^[a-z][a-z0-9+.-]*:/i.test(url)) return url; // já tem protocolo
+      return 'https://' + url;
+    }
+
     if (!slug) {
       document.getElementById('titulo').textContent = 'Página não encontrada.';
     } else {
@@ -75,7 +84,7 @@
           document.getElementById('descricao').style.display = bio.descricao ? 'block' : 'none';
           const links = (bio.links || []).filter(l => l.nome && l.url);
           document.getElementById('links').innerHTML = links.length
-            ? links.map(l => `<a href="${escHtml(l.url)}" target="_blank" rel="noopener noreferrer" class="link-btn">${escHtml(l.nome)}</a>`).join('')
+            ? links.map(l => `<a href="${escHtml(normalizarUrl(l.url))}" target="_blank" rel="noopener noreferrer" class="link-btn">${escHtml(l.nome)}</a>`).join('')
             : '<p style="text-align:center;color:#9CA3AF;font-size:14px">Nenhum link configurado.</p>';
         })
         .catch(() => {
