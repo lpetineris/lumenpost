@@ -1,0 +1,11 @@
+{
+  "name": "guia-pdf-post",
+  "private": true,
+  "description": "Gerador do PDF do Guia do Usuário do Lumen Post (public/guia_usuario_lumen_post.pdf)",
+  "scripts": {
+    "gerar": "node gerar_guia_post.js"
+  },
+  "dependencies": {
+    "pdfkit": "^0.19.1"
+  }
+}
