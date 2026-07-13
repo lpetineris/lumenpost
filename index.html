@@ -1889,7 +1889,6 @@ async function carregarPerfilCentral() {
           result[0].pin ? `Pinterest: ${result[0].pin}` : '',
         ].filter(Boolean).join(' | '),
         restricoes: result[0].restricoes || '',
-        resumo_estrategico: result[0].resumo_estrategico || '',
       };
       try { localStorage.setItem('lp_perfil', JSON.stringify(perfil)); } catch(e) {}
     } else {
@@ -1901,8 +1900,31 @@ async function carregarPerfilCentral() {
   } catch(e) {
     console.error('Erro ao carregar perfil central:', e);
   }
+  try {
+    const resumos = await dbCall('select', 'resumos_salvos', {user_id: CURRENT_USER_ID});
+    perfil.resumosAtivos = (resumos && Array.isArray(resumos))
+      ? resumos.filter(r => r.ativo).map(r => ({titulo: r.titulo, texto: r.texto}))
+      : [];
+  } catch(e) {
+    console.error('Erro ao carregar resumos ativos:', e);
+    perfil.resumosAtivos = [];
+  }
   renderVozes();
   verificarPerfil();
+}
+
+// Monta o bloco de insights a partir de todos os resumos marcados como ativos
+// (0, 1 ou vários — ver aba Históricos do Lumen Mind).
+function formatResumosAtivos(lista) {
+  if (!lista || !lista.length) return '';
+  const blocos = lista.map(r => `[${r.titulo}]\n${r.texto}`).join('\n\n');
+  return `
+═══════════════════════════════════════
+INSIGHTS DA ANÁLISE DE CLIENTES (Lumen Mind)
+═══════════════════════════════════════
+Use estes insights, quando fizer sentido para o tema, para tornar o post mais relevante e estratégico — conectando o conteúdo a percepções reais sobre os clientes desta empresa:
+${blocos}
+`;
 }
 
 function verificarPerfil() {
@@ -2068,13 +2090,7 @@ RESTRIÇÕES DE MARCA — RESPEITE SEMPRE
 ═══════════════════════════════════════
 ${p.restricoes}
 ` : ''}
-${p.resumo_estrategico ? `
-═══════════════════════════════════════
-INSIGHTS DA ANÁLISE DE CLIENTES (Lumen Mind)
-═══════════════════════════════════════
-Use estes insights, quando fizer sentido para o tema, para tornar o post mais relevante e estratégico — conectando o conteúdo a percepções reais sobre os clientes desta empresa:
-${p.resumo_estrategico}
-` : ''}
+${formatResumosAtivos(p.resumosAtivos)}
 
 ═══════════════════════════════════════
 SUA MISSÃO NESTE POST
@@ -3195,9 +3211,7 @@ Descrição: ${perfil.historia || ''}
 Propósito: ${perfil.proposito || ''}
 Cliente ideal: ${perfil.cliente || ''}
 Diferenciais: ${perfil.diferenciais || ''}
-${perfil.resumo_estrategico
-    ? `\nINSIGHTS DA ANÁLISE DE CLIENTES (Lumen Mind):\n${perfil.resumo_estrategico}`
-    : ''}
+${formatResumosAtivos(perfil.resumosAtivos)}
 
 Período: de ${dataInicio} a ${dataFim} (${diasTotais} dias).
 Rede(s) social(is) desta etapa: ${redesGrupo.map(k => REDES[k].label).join(', ')}.
