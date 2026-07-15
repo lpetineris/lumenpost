@@ -2049,7 +2049,9 @@ function togglePin() {
 }
 function lumenLogout(ev) {
   if (ev) ev.preventDefault();
+  console.log('[Lumen] Sair clicado. Dentro de iframe?', window.parent !== window);
   if (window.parent && window.parent !== window) {
+    console.log('[Lumen] Enviando lumen-logout para o parent...');
     window.parent.postMessage({ type: 'lumen-logout' }, '*');
   } else {
     window.location.reload();
