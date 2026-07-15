@@ -4473,6 +4473,10 @@ carregarPerfilCentral();
 garantirProgramacaoFixa();
 // Load from Supabase on startup
 loadFromCloud();
+
+// ── HEIGHT RESIZE (iframe) ─────────────────────────────────────
+function sendHeight(){var h=document.documentElement.scrollHeight||document.body.scrollHeight;if(window.parent&&window.parent!==window)window.parent.postMessage({type:'lumen-height',height:h},'*');}
+window.addEventListener('load',function(){sendHeight();var obs=new MutationObserver(sendHeight);obs.observe(document.body,{childList:true,subtree:true,attributes:true});setInterval(sendHeight,1000);});
 </script>
 </body>
 </html>
