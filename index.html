@@ -4493,8 +4493,9 @@ garantirProgramacaoFixa();
 loadFromCloud();
 
 // ── HEIGHT RESIZE (iframe) ─────────────────────────────────────
-function sendHeight(){var h=document.documentElement.scrollHeight||document.body.scrollHeight;if(window.parent&&window.parent!==window)window.parent.postMessage({type:'lumen-height',height:h},'*');}
-window.addEventListener('load',function(){sendHeight();var obs=new MutationObserver(sendHeight);obs.observe(document.body,{childList:true,subtree:true,attributes:true});setInterval(sendHeight,1000);});
+function sendHeight(){if(window.parent&&window.parent!==window)window.parent.postMessage({type:'lumen-height',height:window.innerHeight},'*');}
+window.addEventListener('load',sendHeight);
+window.addEventListener('resize',sendHeight);
 </script>
 </body>
 </html>
