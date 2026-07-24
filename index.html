@@ -4115,8 +4115,8 @@ function renderLinksBio() {
   cont.innerHTML = bioData.links.map((l, i) => `
     <div style="display:flex;gap:6px;align-items:center">
       <div style="flex:1;display:flex;flex-direction:column;gap:4px">
-        <input type="text" value="${l.nome || ''}" placeholder="Nome do link" onchange="bioData.links[${i}].nome=this.value;atualizarPreviewBio()" style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--bg)">
-        <input type="url" value="${l.url || ''}" placeholder="https://..." onchange="bioData.links[${i}].url=this.value;atualizarPreviewBio()" style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--bg)">
+        <input type="text" value="${l.nome || ''}" placeholder="Nome do link" onchange="bioData.links[${i}].nome=this.value;atualizarPreviewBio()" style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--bg);color:var(--text)">
+        <input type="url" value="${l.url || ''}" placeholder="https://..." onchange="bioData.links[${i}].url=this.value;atualizarPreviewBio()" style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--bg);color:var(--text)">
       </div>
       <button onclick="removerLinkBio(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;flex-shrink:0">×</button>
     </div>`).join('');
