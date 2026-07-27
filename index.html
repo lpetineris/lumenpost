@@ -356,6 +356,18 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .fmt-btn.on { background: var(--g); border-color: var(--g); color: #fff; }
 .fmt-resumo { font-size: 11.5px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
 .fmt-nota { font-size: 11px; color: var(--text3); margin-top: 4px; line-height: 1.5; font-style: italic; }
+.carrossel-tiras { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.carrossel-tira { position: relative; flex: 0 0 auto; }
+.carrossel-tira img {
+  width: 64px; height: 64px; object-fit: cover;
+  border-radius: 8px; border: 1px solid var(--border); display: block;
+}
+.carrossel-tira span {
+  position: absolute; top: 3px; left: 3px;
+  background: rgba(0,0,0,.72); color: #fff;
+  font-size: 10px; font-weight: 600; line-height: 1;
+  padding: 3px 5px; border-radius: 5px;
+}
 
 .voz-btn.on {
   border-color: var(--g);
@@ -2436,6 +2448,7 @@ function renderFormatos() {
             <div class="fmt-grid">${pills}</div>
             <div class="fmt-resumo" id="fmt-resumo-${rede}">${FORMATOS[rede][formatoSelecionado[rede]].resumo}</div>${nota}`;
   }).join('');
+  atualizarCampoMidia();
 }
 
 function escolherFormato(rede, f) {
@@ -2450,21 +2463,25 @@ function escolherFormato(rede, f) {
   });
   const res = document.getElementById('fmt-resumo-' + rede);
   if (res) res.textContent = FORMATOS[rede][f].resumo;
+  atualizarCampoMidia();
 }
 
 // ── MÍDIA ─────────────────────────────────────────────────────────────
 // Redimensiona uma imagem para no máximo `maxLado` px no lado maior, mantendo proporção.
 // Retorna uma Promise com o dataURL da imagem já redimensionada (JPEG, qualidade 0.88).
-function redimensionarImagem(dataUrl, maxLado) {
+function redimensionarImagem(dataUrl, maxLado, qualidade) {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       let { width, height } = img;
 
-      if (width <= maxLado && height <= maxLado) {
+      if (width <= maxLado && height <= maxLado && qualidade === undefined) {
         // Já está dentro do limite — não precisa redimensionar
         resolve(dataUrl);
         return;
+      }
+      if (width > maxLado || height > maxLado) {
+        // segue para o cálculo abaixo
       }
 
       if (width > height) {
@@ -2480,36 +2497,146 @@ function redimensionarImagem(dataUrl, maxLado) {
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', 0.88));
+      resolve(canvas.toDataURL('image/jpeg', qualidade === undefined ? 0.88 : qualidade));
     };
     img.onerror = () => resolve(dataUrl); // fallback: usa original se der erro
     img.src = dataUrl;
   });
 }
 
-function carregarMidia(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const isVideo = file.type.startsWith('video/');
-    let dataUrl = e.target.result;
+// Um carrossel é feito de várias imagens, então o formato decide se o campo
+// aceita mais de um arquivo. Limite de 10: é o que o Instagram aceitava por
+// padrão e segura o tamanho do que é enviado para a IA.
+const MAX_IMAGENS_CARROSSEL = 10;
 
-    if (!isVideo) {
-      // Redimensiona imagens para no máximo 1080px no lado maior
-      dataUrl = await redimensionarImagem(dataUrl, 1080);
+function ehCarrossel() {
+  return vozSelecionadas.has('instagram') && formatoSelecionado.instagram === 'carrossel';
+}
+
+// Ajusta o campo de arquivo conforme o formato escolhido.
+function atualizarCampoMidia() {
+  const input = document.getElementById('input-midia');
+  const dz = document.getElementById('dropzone');
+  if (!input || !dz) return;
+  const multi = ehCarrossel();
+
+  input.multiple = multi;
+  input.accept = multi ? 'image/*' : 'image/*,video/*';
+
+  const label = dz.querySelector('.dz-label');
+  const sub = dz.querySelector('.dz-sub');
+  if (label) label.textContent = multi ? 'Selecionar imagens do carrossel' : 'Selecionar arquivo';
+  if (sub) sub.textContent = multi
+    ? `JPG · PNG — até ${MAX_IMAGENS_CARROSSEL}, na ordem em que vão aparecer`
+    : 'JPG · PNG · MP4 · MOV';
+}
+
+// O pedido para a IA tem teto de 4,5 MB no Vercel, e 10 fotos passam disso
+// com folga. Vai baixando resolução e qualidade até o conjunto caber, com
+// margem para o prompt e o resto da requisição.
+const ORCAMENTO_CARROSSEL = 3 * 1024 * 1024;
+const ESCALAS = [[860, 0.85], [700, 0.78], [580, 0.7], [460, 0.62], [360, 0.55]];
+
+async function ajustarAoOrcamento(brutos) {
+  let imagens = [];
+  for (let i = 0; i < ESCALAS.length; i++) {
+    const [lado, q] = ESCALAS[i];
+    imagens = [];
+    for (const b of brutos) {
+      imagens.push({ dataUrl: await redimensionarImagem(b.dataUrl, lado, q), nome: b.nome });
     }
+    const total = imagens.reduce((a, im) => a + im.dataUrl.length, 0);
+    if (total <= ORCAMENTO_CARROSSEL) break;
+  }
+  return imagens;
+}
 
+function lerArquivo(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function carregarMidia(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+
+  const multi = ehCarrossel();
+
+  if (!multi) {
+    // Caminho de sempre — uma imagem ou um vídeo.
+    const file = files[0];
+    const isVideo = file.type.startsWith('video/');
+    let dataUrl = await lerArquivo(file);
+    if (!dataUrl) { mostrarToast('Não foi possível ler o arquivo.'); return; }
+    if (!isVideo) dataUrl = await redimensionarImagem(dataUrl, 1080);
     midiaAtual = { tipo: isVideo ? 'video' : 'imagem', dataUrl, nome: file.name };
-    const inner = document.getElementById('midia-inner');
-    inner.innerHTML = isVideo
-      ? `<video src="${dataUrl}" style="width:100%;max-height:130px;border-radius:10px;border:1px solid var(--border)" controls></video>`
-      : `<img src="${dataUrl}" style="width:100%;max-height:130px;object-fit:cover;border-radius:10px;border:1px solid var(--border)">`;
-    document.getElementById('midia-nome').textContent = file.name;
-    document.getElementById('midia-preview').style.display = 'block';
-    document.getElementById('dropzone').style.display = 'none';
+    renderPreviewMidia();
+    return;
+  }
+
+  // Carrossel — várias imagens, na ordem escolhida.
+  const imagens = files.filter(f => f.type.startsWith('image/'));
+  if (files.length > imagens.length) {
+    mostrarToast('Carrossel aceita só imagens — os vídeos foram ignorados.');
+  }
+  if (!imagens.length) { document.getElementById('input-midia').value = ''; return; }
+
+  const cortou = imagens.length > MAX_IMAGENS_CARROSSEL;
+  const usadas = imagens.slice(0, MAX_IMAGENS_CARROSSEL);
+
+  // Menos resolução que a imagem única: são até 10 indo no mesmo pedido para
+  // a IA, e o limite de tamanho da requisição é de 4,5 MB.
+  const brutos = [];
+  for (const f of usadas) {
+    const bruto = await lerArquivo(f);
+    if (bruto) brutos.push({ dataUrl: bruto, nome: f.name });
+  }
+  if (!brutos.length) { mostrarToast('Não foi possível ler as imagens.'); return; }
+  const lidas = await ajustarAoOrcamento(brutos);
+
+  // A primeira imagem continua sendo a "mídia" do post — é ela que aparece na
+  // miniatura do Banco e no modal. As demais vão em `extras`, para o formato
+  // antigo do campo seguir válido em tudo que já existia.
+  midiaAtual = {
+    tipo: 'imagem',
+    dataUrl: lidas[0].dataUrl,
+    nome: lidas[0].nome,
+    extras: lidas.slice(1),
   };
-  reader.readAsDataURL(file);
+  renderPreviewMidia();
+  if (cortou) mostrarToast(`Carrossel usa até ${MAX_IMAGENS_CARROSSEL} imagens — as demais foram descartadas.`);
+}
+
+// Todas as imagens do post, na ordem. Vale para carrossel e para imagem única.
+function imagensDoPost(m) {
+  if (!m || m.tipo !== 'imagem') return [];
+  return [{ dataUrl: m.dataUrl, nome: m.nome }].concat(m.extras || []);
+}
+
+function renderPreviewMidia() {
+  const inner = document.getElementById('midia-inner');
+  const imgs = imagensDoPost(midiaAtual);
+
+  if (midiaAtual && midiaAtual.tipo === 'video') {
+    inner.innerHTML = `<video src="${midiaAtual.dataUrl}" style="width:100%;max-height:130px;border-radius:10px;border:1px solid var(--border)" controls></video>`;
+    document.getElementById('midia-nome').textContent = midiaAtual.nome;
+  } else if (imgs.length > 1) {
+    inner.innerHTML = `<div class="carrossel-tiras">` + imgs.map((im, i) =>
+      `<div class="carrossel-tira"><img src="${im.dataUrl}"><span>${i + 1}</span></div>`
+    ).join('') + `</div>`;
+    document.getElementById('midia-nome').textContent =
+      `${imgs.length} imagens — a IA escreve um cartão para cada, nessa ordem`;
+  } else if (imgs.length === 1) {
+    inner.innerHTML = `<img src="${imgs[0].dataUrl}" style="width:100%;max-height:130px;object-fit:cover;border-radius:10px;border:1px solid var(--border)">`;
+    document.getElementById('midia-nome').textContent = imgs[0].nome;
+  }
+
+  document.getElementById('midia-preview').style.display = 'block';
+  document.getElementById('dropzone').style.display = 'none';
 }
 
 function removerMidia() {
@@ -2707,10 +2834,15 @@ async function gerarPost() {
 
     // Mostrar mídia (compartilhada entre todas as redes)
     if (midiaAtual) {
+      const _imgs = imagensDoPost(midiaAtual);
       document.getElementById('resultado-midia-inner').innerHTML = midiaAtual.tipo === 'video'
         ? `<video src="${midiaAtual.dataUrl}" controls style="width:100%;max-height:200px;display:block"></video>`
-        : `<img src="${midiaAtual.dataUrl}" style="width:100%;max-height:200px;object-fit:cover;display:block">`;
-      document.getElementById('midia-tipo').textContent = midiaAtual.tipo === 'video' ? '▶ VÍDEO' : '📷 IMAGEM';
+        : (_imgs.length > 1
+            ? `<div class="carrossel-tiras" style="padding:10px">` + _imgs.map((im, i) =>
+                `<div class="carrossel-tira"><img src="${im.dataUrl}"><span>${i + 1}</span></div>`).join('') + `</div>`
+            : `<img src="${midiaAtual.dataUrl}" style="width:100%;max-height:200px;object-fit:cover;display:block">`);
+      document.getElementById('midia-tipo').textContent = midiaAtual.tipo === 'video'
+        ? '▶ VÍDEO' : (_imgs.length > 1 ? `📷 ${_imgs.length} IMAGENS` : '📷 IMAGEM');
       document.getElementById('resultado-midia').style.display = 'block';
     } else {
       document.getElementById('resultado-midia').style.display = 'none';
@@ -2733,9 +2865,21 @@ async function gerarPost() {
 async function gerarParaRede(key, tema, tom, isRetry, formatoKey) {
   const r = REDES[key] || REDES.linkedin;
   const fKey = formatoKey || (FORMATOS[key] ? (formatoSelecionado[key] || formatoPadrao(key)) : null);
-  const usarImagem = midiaAtual && midiaAtual.tipo === 'imagem' && !isRetry;
+  // Só o carrossel usa as imagens extras — nos outros formatos vai só a primeira,
+  // e trocar de formato não descarta o que o usuário já subiu.
+  const todasImagens = imagensDoPost(midiaAtual);
+  const imagens = (!isRetry && todasImagens.length)
+    ? (fKey === 'carrossel' ? todasImagens : todasImagens.slice(0, 1))
+    : [];
+  const usarImagem = imagens.length > 0;
+  const varias = imagens.length > 1;
+
+  const contextoVisual = varias
+    ? `As ${imagens.length} imagens acima são os cartões do carrossel, na ordem em que vão aparecer. Escreva exatamente ${imagens.length} cartões — um para cada imagem, respeitando a ordem: o texto do primeiro cartão fala da primeira imagem, e assim por diante. Use cada imagem para capturar atmosfera, produto, cenário e paleta — sem identificar pessoas.`
+    : `A imagem acima é o contexto visual. Use-a para capturar atmosfera, produto, cenário e paleta — sem identificar pessoas.`;
+
   const userPrompt = usarImagem
-    ? `A imagem acima é o contexto visual. Use-a para capturar atmosfera, produto, cenário e paleta — sem identificar pessoas.
+    ? `${contextoVisual}
 
 TEMA DO POST: ${tema}
 TOM: ${TOM_MAP[tom]}
@@ -2747,13 +2891,15 @@ TOM: ${TOM_MAP[tom]}${midiaAtual && midiaAtual.tipo === 'video' ? '\nCONTEXTO: U
 Escreva o post agora. Comece direto pelo gancho — sem introdução, sem explicação.`;
 
   var msgContent;
-  if (usarImagem && midiaAtual.dataUrl) {
-    var matches = midiaAtual.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-    if (matches) {
-      msgContent = [
-        { type: 'image', source: { type: 'base64', media_type: matches[1], data: matches[2] } },
-        { type: 'text', text: userPrompt }
-      ];
+  if (usarImagem) {
+    var blocos = [];
+    imagens.forEach(function(im) {
+      var m = (im.dataUrl || '').match(/^data:([^;]+);base64,(.+)$/);
+      if (m) blocos.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } });
+    });
+    if (blocos.length) {
+      blocos.push({ type: 'text', text: userPrompt });
+      msgContent = blocos;
     } else {
       msgContent = userPrompt;
     }
@@ -3273,15 +3419,24 @@ function baixarMidia(idx) {
     return;
   }
   const ext = post.midia.tipo === 'video' ? 'mp4' : 'jpg';
-  const nomeArquivo = (post.midia.nome || `lumen-post-${post.rede || 'midia'}`).replace(/\.[^/.]+$/, '') + '.' + ext;
+  const imgs = post.midia.tipo === 'video'
+    ? [{ dataUrl: post.midia.dataUrl, nome: post.midia.nome }]
+    : imagensDoPost(post.midia);
 
-  const a = document.createElement('a');
-  a.href = post.midia.dataUrl;
-  a.download = nomeArquivo;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  mostrarToast('Download iniciado!');
+  imgs.forEach(function(im, i) {
+    // Um clique por arquivo, espaçados — o navegador ignora downloads simultâneos.
+    setTimeout(function() {
+      const base = (im.nome || `lumen-post-${post.rede || 'midia'}`).replace(/\.[^/.]+$/, '');
+      const nomeArquivo = (imgs.length > 1 ? `${String(i + 1).padStart(2, '0')}-${base}` : base) + '.' + ext;
+      const a = document.createElement('a');
+      a.href = im.dataUrl;
+      a.download = nomeArquivo;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }, i * 350);
+  });
+  mostrarToast(imgs.length > 1 ? `Baixando ${imgs.length} imagens...` : 'Download iniciado!');
 }
 
 function verPost(idx) {
@@ -3313,9 +3468,13 @@ function verPost(idx) {
   const dlBtn = document.getElementById('modal-footer-download-btn');
   if (p.midia) {
     mm.style.display = 'block';
+    const imgsModal = imagensDoPost(p.midia);
     mm.innerHTML = p.midia.tipo === 'video'
       ? `<video src="${p.midia.dataUrl}" controls style="width:100%;max-height:260px;display:block"></video>`
-      : `<img src="${p.midia.dataUrl}" style="width:100%;max-height:260px;object-fit:contain;display:block">`;
+      : (imgsModal.length > 1
+          ? `<div class="carrossel-tiras" style="padding:12px">` + imgsModal.map((im, i) =>
+              `<div class="carrossel-tira"><img src="${im.dataUrl}" style="width:88px;height:88px"><span>${i + 1}</span></div>`).join('') + `</div>`
+          : `<img src="${p.midia.dataUrl}" style="width:100%;max-height:260px;object-fit:contain;display:block">`);
     if (dlBtn) { dlBtn.style.display = 'inline-flex'; window._modalMidiaAtual = p.midia; window._modalMidiaRede = p.rede; }
   } else {
     mm.style.display = 'none';
