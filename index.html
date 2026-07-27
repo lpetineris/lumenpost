@@ -1739,6 +1739,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 let vozSelecionadas = new Set(); // multi-select
 let vozAtual = null; // mantido para compatibilidade
 let formatoAtual = null; // formato da rede em vozAtual, quando a rede tem formatos
+let tomAtual = null;     // tom escolhido para a geração em curso
 let postAtual = null;
 let midiaAtual = null;
 // ── SUPABASE ──────────────────────────────────────────────────
@@ -2545,11 +2546,13 @@ function buildSystem() {
   const p = perfil;
   const r = REDES[vozAtual] || REDES.linkedin;
   const fmt = (FORMATOS[vozAtual] && FORMATOS[vozAtual][formatoAtual]) || null;
+  const tomEscolhido = tomAtual || (document.getElementById('input-tom') || {}).value || 'autoridade';
   const TOM_DESC = {
     autoridade: 'Autoridade genuína: fala com convicção, dados concretos e ponto de vista próprio. Posiciona a marca como referência sem soar arrogante.',
     emocional: 'Emocional e próximo: toca em algo real da vida do cliente. Cria identificação, não apenas informação. Usa linguagem humana, não corporativa.',
     bastidores: 'Bastidores e transparência: mostra o processo, a realidade por trás do trabalho. Gera confiança e diferenciação pela autenticidade.',
-    educativo: 'Educativo e prático: ensina algo concreto que o leitor pode aplicar. Claro, direto, sem jargão desnecessário.',
+    tecnico: 'Técnico e educativo: ensina algo concreto que o leitor pode aplicar hoje. Explica o porquê, não só o quê. Claro e direto, sem jargão desnecessário — e quando o termo técnico for necessário, traduz na mesma frase.',
+    lancamento: 'Lançamento e novidade: anuncia com energia real, sem euforia publicitária. Diz o que é, para quem serve e o que muda para o cliente. A novidade precisa aparecer nas primeiras linhas — quem só ler o começo tem que entender o que está sendo lançado.',
     humor: 'Humor inteligente: leve, com personalidade, nunca forçado. O humor serve a mensagem — não é o fim em si.',
   };
 
@@ -2579,7 +2582,7 @@ ${formatResumosAtivos(p.resumosAtivos)}
 ═══════════════════════════════════════
 SUA MISSÃO NESTE POST
 ═══════════════════════════════════════
-Tom solicitado: ${TOM_DESC[vozAtual] || TOM_DESC.autoridade}
+Tom solicitado: ${TOM_DESC[tomEscolhido] || TOM_DESC.autoridade}
 
 ${r.instrucao}
 ${fmt ? `
@@ -2763,7 +2766,7 @@ Escreva o post agora. Comece direto pelo gancho — sem introdução, sem explic
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system: buildSystemPara(key, fKey),
+        system: buildSystemPara(key, fKey, tom),
         max_tokens: 1000,
         messages: [{ role: 'user', content: msgContent }]
       })
@@ -2788,14 +2791,17 @@ Escreva o post agora. Comece direto pelo gancho — sem introdução, sem explic
   }
 }
 
-function buildSystemPara(key, formatoKey) {
+function buildSystemPara(key, formatoKey, tomKey) {
   const vozAnterior = vozAtual;
   const fmtAnterior = formatoAtual;
+  const tomAnterior = tomAtual;
   vozAtual = key;
   formatoAtual = formatoKey || null;
+  tomAtual = tomKey || null;
   const sys = buildSystem();
   vozAtual = vozAnterior;
   formatoAtual = fmtAnterior;
+  tomAtual = tomAnterior;
   return sys;
 }
 
