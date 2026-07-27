@@ -690,11 +690,16 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
   padding: 12px 14px; font-size: 13px;
   line-height: 1.65; color: var(--text);
   max-height: 80px; overflow: hidden; position: relative;
+  /* Preserva as quebras: sem isso um carrossel vira uma linha corrida
+     ("CAPA Título: ... CARTÃO 2 ..."), ilegível na prévia. */
+  white-space: pre-wrap;
 }
 .post-corpo::after {
   content: ''; position: absolute;
   bottom: 0; left: 0; right: 0; height: 28px;
-  background: linear-gradient(transparent, white);
+  /* Desvanece até o fundo do próprio cartão. Era branco fixo, sobra de tema
+     claro, e no tema escuro virava uma faixa acesa no meio do texto. */
+  background: linear-gradient(transparent, var(--bg));
 }
 .post-footer {
   padding: 8px 14px; display: flex; gap: 6px;
@@ -2092,9 +2097,7 @@ const FORMATOS = {
       instrucao: `FORMATO: POST DE FEED (imagem única)
 Entregue a legenda do post, seguindo a estrutura do Instagram descrita acima.
 
-FORMATO DA RESPOSTA — siga exatamente:
-LEGENDA
-[a legenda completa, pronta para copiar]`
+FORMATO DA RESPOSTA: só a legenda, pronta para copiar e publicar. Sem rótulo, sem cabeçalho, sem a palavra LEGENDA na frente — aqui o texto inteiro já é a legenda.`
     },
     carrossel: {
       label: 'Carrossel', emoji: '🎠', produz: ['fotos','artes'],
