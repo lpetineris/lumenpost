@@ -12,6 +12,7 @@
     { "src": "/api/guia", "dest": "/api/guia.js" },
     { "src": "/api/email", "dest": "/api/email.js" },
     { "src": "/api/bio", "dest": "/api/bio.js" },
+    { "src": "/api/midia", "dest": "/api/midia.js" },
     { "src": "/bio/(.*)", "dest": "/bio.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
