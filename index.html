@@ -355,7 +355,6 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .fmt-btn:hover { border-color: var(--g-c); color: var(--g-c); }
 .fmt-btn.on { background: var(--g); border-color: var(--g); color: #fff; }
 .fmt-resumo { font-size: 11.5px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
-.fmt-nota { font-size: 11px; color: var(--text3); margin-top: 4px; line-height: 1.5; font-style: italic; }
 .carrossel-tiras { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
 .carrossel-tira { position: relative; flex: 0 0 auto; }
 .carrossel-tira img {
@@ -2176,7 +2175,16 @@ Recurso: [...]`
   },
 };
 
-// Formatos que a empresa consegue produzir, segundo o Perfil.
+// Todos os formatos da rede. É o que a aba Gerar oferece: ali quem escolhe
+// é o usuário, que já sabe o que consegue produzir — inclusive quando quer
+// experimentar um formato fora do costume.
+function todosFormatos(redeKey) {
+  return FORMATOS[redeKey] ? Object.keys(FORMATOS[redeKey]) : null;
+}
+
+// Formatos que a empresa consegue produzir, segundo o Perfil. Só vale para a
+// programação automática, onde é a IA que escolhe no lugar do usuário e não
+// tem como saber o que ele consegue produzir.
 // Sem informação no Perfil, devolve todos — não vale limitar por engano.
 function formatosDisponiveis(redeKey) {
   const todos = FORMATOS[redeKey];
@@ -2187,11 +2195,18 @@ function formatosDisponiveis(redeKey) {
   return possiveis.length ? possiveis : Object.keys(todos);
 }
 
+// Padrão da aba Gerar — o formato marcado como padrao (Feed), sem olhar o Perfil.
 function formatoPadrao(redeKey) {
   const todos = FORMATOS[redeKey];
   if (!todos) return null;
+  return Object.keys(todos).find(f => todos[f].padrao) || Object.keys(todos)[0];
+}
+
+// Padrão da programação automática — respeita o que o Perfil permite.
+function formatoPadraoPermitido(redeKey) {
   const disp = formatosDisponiveis(redeKey);
-  const padrao = Object.keys(todos).find(f => todos[f].padrao);
+  if (!disp) return null;
+  const padrao = formatoPadrao(redeKey);
   return disp.includes(padrao) ? padrao : disp[0];
 }
 
@@ -2430,23 +2445,19 @@ function renderFormatos() {
 
   wrap.style.display = 'block';
   wrap.innerHTML = comFormato.map(rede => {
-    const disponiveis = formatosDisponiveis(rede);
+    const disponiveis = todosFormatos(rede);
     if (!formatoSelecionado[rede] || !disponiveis.includes(formatoSelecionado[rede])) {
       formatoSelecionado[rede] = formatoPadrao(rede);
     }
-    const escondidos = Object.keys(FORMATOS[rede]).filter(f => !disponiveis.includes(f));
     const pills = disponiveis.map(f => {
       const cfg = FORMATOS[rede][f];
       const on = formatoSelecionado[rede] === f ? ' on' : '';
       return `<button type="button" class="fmt-btn${on}" id="fmt-${rede}-${f}" title="${cfg.resumo}"
         onclick="escolherFormato('${rede}','${f}')">${cfg.emoji} ${cfg.label}</button>`;
     }).join('');
-    const nota = escondidos.length
-      ? `<div class="fmt-nota">${escondidos.map(f => FORMATOS[rede][f].label).join(' e ')} ${escondidos.length > 1 ? 'ficaram ocultos' : 'ficou oculto'} porque seu Perfil não marca esse tipo de produção.</div>`
-      : '';
     return `<label>Formato ${comFormato.length > 1 ? '— ' + REDES[rede].label : ''}</label>
             <div class="fmt-grid">${pills}</div>
-            <div class="fmt-resumo" id="fmt-resumo-${rede}">${FORMATOS[rede][formatoSelecionado[rede]].resumo}</div>${nota}`;
+            <div class="fmt-resumo" id="fmt-resumo-${rede}">${FORMATOS[rede][formatoSelecionado[rede]].resumo}</div>`;
   }).join('');
   atualizarCampoMidia();
 }
@@ -2457,7 +2468,7 @@ function escolherFormato(rede, f) {
     return;
   }
   formatoSelecionado[rede] = f;
-  formatosDisponiveis(rede).forEach(k => {
+  todosFormatos(rede).forEach(k => {
     const b = document.getElementById('fmt-' + rede + '-' + k);
     if (b) b.classList.toggle('on', k === f);
   });
@@ -4018,7 +4029,7 @@ async function confirmarProgramacaoAutomatica() {
         const permitidos = FORMATOS[e.rede] ? formatosDisponiveis(e.rede) : null;
         const fmt = permitidos && permitidos.includes(e.formato)
           ? e.formato
-          : (permitidos ? formatoPadrao(e.rede) : null);
+          : (permitidos ? formatoPadraoPermitido(e.rede) : null);
 
         if (!espacos[e.data]) espacos[e.data] = [];
         espacos[e.data].push({ id: gerarIdEspaco(), rede: e.rede, formato: fmt });
@@ -4091,7 +4102,7 @@ function preencherEspacoProgramacao(data, redeKey) {
 
     // Formato definido pela IA na programação — pré-seleciona no gerador.
     if (FORMATOS[redeKey]) {
-      const disp = formatosDisponiveis(redeKey);
+      const disp = todosFormatos(redeKey);
       const daSugestao = sugestao && sugestao.formato;
       formatoSelecionado[redeKey] = (daSugestao && disp.includes(daSugestao))
         ? daSugestao
