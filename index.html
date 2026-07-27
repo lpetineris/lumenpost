@@ -3434,6 +3434,30 @@ function copiarTexto(idx) {
   copiarTextoSeguro(bancoPosts[idx].texto);
 }
 
+// Estamos dentro do iframe do Wix?
+function dentroDoWix() {
+  return !!(window.parent && window.parent !== window);
+}
+
+// Baixa um arquivo. Dentro do Wix o <a download> é ignorado pelo sandbox, então
+// o pedido vai para a página-mãe, que não é sandboxed, pela mesma ponte que já
+// funciona no Tendências. Fora do Wix, o caminho direto continua valendo.
+function baixarArquivo(url, dataUrl, nomeArquivo) {
+  if (dentroDoWix() && url) {
+    window.top.postMessage({ type: 'lumen-export', url: url }, '*');
+    if (window.parent !== window.top) {
+      window.parent.postMessage({ type: 'lumen-export', url: url }, '*');
+    }
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = dataUrl || url;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 function baixarMidia(idx) {
   const post = bancoPosts[idx];
   if (!post || !post.midia || !post.midia.dataUrl) {
@@ -3445,18 +3469,22 @@ function baixarMidia(idx) {
     ? [{ dataUrl: post.midia.dataUrl, nome: post.midia.nome }]
     : imagensDoPost(post.midia);
 
+  // O servidor só consegue servir o que já subiu para a nuvem.
+  if (dentroDoWix() && !post._cloudId) {
+    mostrarToast('Aguarde alguns segundos — a mídia ainda está sendo salva na nuvem.');
+    return;
+  }
+
   imgs.forEach(function(im, i) {
-    // Um clique por arquivo, espaçados — o navegador ignora downloads simultâneos.
+    // Um por vez, espaçados — o navegador descarta downloads simultâneos.
     setTimeout(function() {
       const base = (im.nome || `lumen-post-${post.rede || 'midia'}`).replace(/\.[^/.]+$/, '');
       const nomeArquivo = (imgs.length > 1 ? `${String(i + 1).padStart(2, '0')}-${base}` : base) + '.' + ext;
-      const a = document.createElement('a');
-      a.href = im.dataUrl;
-      a.download = nomeArquivo;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }, i * 350);
+      const url = post._cloudId
+        ? `${location.origin}/api/midia?id=${encodeURIComponent(post._cloudId)}&user=${encodeURIComponent(CURRENT_USER_ID)}&i=${i}`
+        : null;
+      baixarArquivo(url, im.dataUrl, nomeArquivo);
+    }, i * 600);
   });
   mostrarToast(imgs.length > 1 ? `Baixando ${imgs.length} imagens...` : 'Download iniciado!');
 }
@@ -3497,7 +3525,7 @@ function verPost(idx) {
           ? `<div class="carrossel-tiras" style="padding:12px">` + imgsModal.map((im, i) =>
               `<div class="carrossel-tira"><img src="${im.dataUrl}" style="width:88px;height:88px"><span>${i + 1}</span></div>`).join('') + `</div>`
           : `<img src="${p.midia.dataUrl}" style="width:100%;max-height:260px;object-fit:contain;display:block">`);
-    if (dlBtn) { dlBtn.style.display = 'inline-flex'; window._modalMidiaAtual = p.midia; window._modalMidiaRede = p.rede; }
+    if (dlBtn) { dlBtn.style.display = 'inline-flex'; window._modalMidiaAtual = p.midia; window._modalMidiaRede = p.rede; window._modalCloudId = p._cloudId || null; }
   } else {
     mm.style.display = 'none';
     if (dlBtn) dlBtn.style.display = 'none';
@@ -3514,15 +3542,27 @@ function baixarMidiaModal() {
     return;
   }
   const ext = midia.tipo === 'video' ? 'mp4' : 'jpg';
-  const nomeArquivo = (midia.nome || `lumen-post-${window._modalMidiaRede || 'midia'}`).replace(/\.[^/.]+$/, '') + '.' + ext;
+  const imgs = midia.tipo === 'video'
+    ? [{ dataUrl: midia.dataUrl, nome: midia.nome }]
+    : imagensDoPost(midia);
+  const cloudId = window._modalCloudId;
 
-  const a = document.createElement('a');
-  a.href = midia.dataUrl;
-  a.download = nomeArquivo;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  mostrarToast('Download iniciado!');
+  if (dentroDoWix() && !cloudId) {
+    mostrarToast('Aguarde alguns segundos — a mídia ainda está sendo salva na nuvem.');
+    return;
+  }
+
+  imgs.forEach(function(im, i) {
+    setTimeout(function() {
+      const base = (im.nome || `lumen-post-${window._modalMidiaRede || 'midia'}`).replace(/\.[^/.]+$/, '');
+      const nomeArquivo = (imgs.length > 1 ? `${String(i + 1).padStart(2, '0')}-${base}` : base) + '.' + ext;
+      const url = cloudId
+        ? `${location.origin}/api/midia?id=${encodeURIComponent(cloudId)}&user=${encodeURIComponent(CURRENT_USER_ID)}&i=${i}`
+        : null;
+      baixarArquivo(url, im.dataUrl, nomeArquivo);
+    }, i * 600);
+  });
+  mostrarToast(imgs.length > 1 ? `Baixando ${imgs.length} imagens...` : 'Download iniciado!');
 }
 
 function copiarModal() {
@@ -3686,7 +3726,7 @@ function verPostCal(p, chave) {
     mm.innerHTML = midiaCompleta.tipo === 'video'
       ? `<video src="${midiaCompleta.dataUrl}" controls style="width:100%;max-height:260px;display:block"></video>`
       : `<img src="${midiaCompleta.dataUrl}" style="width:100%;max-height:260px;object-fit:contain;display:block">`;
-    if (dlBtn) { dlBtn.style.display = 'inline-flex'; window._modalMidiaAtual = midiaCompleta; window._modalMidiaRede = p.redeName; }
+    if (dlBtn) { dlBtn.style.display = 'inline-flex'; window._modalMidiaAtual = midiaCompleta; window._modalMidiaRede = p.redeName; window._modalCloudId = p._cloudId || null; }
   } else {
     mm.style.display = 'none';
     if (dlBtn) dlBtn.style.display = 'none';
