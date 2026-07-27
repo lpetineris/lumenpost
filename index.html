@@ -2224,22 +2224,33 @@ function formatoPadraoPermitido(redeKey) {
   return disp.includes(padrao) ? padrao : disp[0];
 }
 
-// Insere um post na nuvem. A coluna "formato" é nova — se ainda não existir
-// no banco, o Supabase recusa a linha inteira e o post se perderia. Nesse
-// caso, repete sem o campo: melhor salvar sem o rótulo do que não salvar.
-let _semColunaFormato = false;
+// Insere um post na nuvem. Campos novos (formato, programacao_id) podem ainda
+// não existir como coluna: o Supabase recusa a linha inteira nesse caso e o
+// post se perderia. Aqui a coluna faltante é identificada pela mensagem de
+// erro, removida e o insert repetido — melhor salvar sem um campo do que não
+// salvar. Uma vez detectada, ela é lembrada e nem é tentada de novo.
+const _colunasAusentes = new Set();
+
+function _colunaRecusada(res) {
+  const txt = JSON.stringify((res && (res.error || res)) || '');
+  if (!/(PGRST204|42703|schema cache|column)/i.test(txt)) return null;
+  const m = txt.match(/'([a-z_]+)' column|column "([a-z_]+)"/i);
+  return m ? (m[1] || m[2]) : null;
+}
+
+function _semAusentes(payload) {
+  const limpo = {};
+  Object.keys(payload).forEach(k => { if (!_colunasAusentes.has(k)) limpo[k] = payload[k]; });
+  return limpo;
+}
+
 function dbInsertPost(payload) {
-  if (_semColunaFormato) {
-    const { formato, ...sem } = payload;
-    return dbCall('insert', 'posts', sem);
-  }
-  return dbCall('insert', 'posts', payload).then(function(res) {
-    const txt = JSON.stringify((res && (res.error || res)) || '');
-    if (/formato/i.test(txt) && /(column|coluna|PGRST204|42703|schema cache)/i.test(txt)) {
-      console.warn('Coluna "formato" não existe na tabela posts. Salvando sem ela.');
-      _semColunaFormato = true;
-      const { formato, ...sem } = payload;
-      return dbCall('insert', 'posts', sem);
+  return dbCall('insert', 'posts', _semAusentes(payload)).then(function(res) {
+    const col = _colunaRecusada(res);
+    if (col && !_colunasAusentes.has(col)) {
+      console.warn(`Coluna "${col}" não existe na tabela posts. Salvando sem ela.`);
+      _colunasAusentes.add(col);
+      return dbCall('insert', 'posts', _semAusentes(payload));
     }
     return res;
   });
@@ -3112,6 +3123,7 @@ function salvarAba(key) {
     badge: post.badge || 'badge-green', midia: midiaStr,
     data_publicacao: post.data || null,
     formato: post.formato || null,
+    programacao_id: post.programacaoId || null,
   }).then(function(res) {
     if(res && Array.isArray(res) && res[0]) {
       post._cloudId = res[0].id;
@@ -3195,6 +3207,7 @@ function salvarPost() {
     midia: midiaStr,
     data_publicacao: post.data || null,
     formato: post.formato || null,
+    programacao_id: post.programacaoId || null,
   }).then(function(r) {
     if(r && Array.isArray(r) && r[0]) {
       post._cloudId = r[0].id;
@@ -3235,6 +3248,7 @@ function marcarAprovacao() {
     midia: midiaStr,
     data_publicacao: post.data || null,
     formato: post.formato || null,
+    programacao_id: post.programacaoId || null,
   }).then(function(r) {
     if(r && Array.isArray(r) && r[0]) {
       post._cloudId = r[0].id;
@@ -3291,8 +3305,10 @@ function renderBanco() {
       : `<div class="post-thumb"><img src="${p.midia.dataUrl}"></div>`;
 
     // Indicador de expiração do post
+    // Só publicados expiram de fato (ver expirarImagensAntigas). Mostrar o
+    // aviso em rascunho era prometer uma limpeza que nunca acontecia.
     let expiraHtml = '';
-    if (p.data) {
+    if (p.data && p.status === 'publicado') {
       const agora = new Date(); agora.setHours(0,0,0,0);
       const dataPost = new Date(p.data + 'T00:00:00');
       const diasAteExpirar = 5 - Math.floor((agora - dataPost) / 86400000);
@@ -3769,10 +3785,22 @@ function excluirDoCalendario() {
     if (redeKey) removerEspacoDaProgramacao(chave, redeKey[0]);
   }
 
-  // Encontra no banco e move para a lixeira
-  var idxBanco = bancoPosts.findIndex(function(b) {
-    return b.texto === p.texto && b.redeName === p.redeName;
-  });
+  // Encontra no banco e move para a lixeira. Pelo id — comparar por texto
+  // falhava sempre que o post era editado no Banco depois de ir para o
+  // calendário, e podia apagar o post errado quando dois tinham o mesmo texto.
+  var idxBanco = -1;
+  if (p.id !== undefined && p.id !== null) {
+    idxBanco = bancoPosts.findIndex(function(b) { return b.id === p.id; });
+  }
+  if (idxBanco === -1 && p._cloudId) {
+    idxBanco = bancoPosts.findIndex(function(b) { return b._cloudId === p._cloudId; });
+  }
+  if (idxBanco === -1) {
+    // Último recurso, para posts antigos sem id estável.
+    idxBanco = bancoPosts.findIndex(function(b) {
+      return b.texto === p.texto && b.redeName === p.redeName;
+    });
+  }
 
   if (idxBanco !== -1) {
     var post = bancoPosts[idxBanco];
@@ -3903,17 +3931,50 @@ function excluirProgramacaoAtiva() {
   if (ativa.fixa) { mostrarToast('"Posts gerais" é uma programação fixa e não pode ser excluída.'); return; }
 
   const total = Object.values(ativa.espacos || {}).reduce((acc, arr) => acc + arr.length, 0);
-  const aviso = total > 0
-    ? `Excluir a programação "${ativa.nome}"? Isso vai remover ${total} espaço(s) ainda não preenchido(s). Os posts já salvos no banco não serão afetados.`
-    : `Excluir a programação "${ativa.nome}"?`;
 
-  if (!confirm(aviso)) return;
+  // Posts desta programação. Rascunhos e pendentes somem junto com o plano que
+  // os originou — é o que entulha o Banco. Aprovado e publicado ficam: são
+  // trabalho aprovado por alguém ou conteúdo que já foi ao ar, e apagar o
+  // registro disso ao reorganizar o calendário é perda de verdade.
+  const daProgramacao = bancoPosts.filter(p =>
+    (p.programacaoId || ID_PROGRAMACAO_FIXA) === ativa.id);
+  const descartaveis = daProgramacao.filter(p => p.status === 'rascunho' || p.status === 'aguardando');
+  const preservados = daProgramacao.length - descartaveis.length;
+
+  const partes = [`Excluir a programação "${ativa.nome}"?`];
+  if (total > 0) partes.push(`${total} espaço(s) ainda não preenchido(s) serão removidos.`);
+  if (descartaveis.length > 0) {
+    partes.push(`${descartaveis.length} post(s) em rascunho ou aguardando aprovação irão para a lixeira, com 7 dias para restaurar.`);
+  }
+  if (preservados > 0) {
+    partes.push(`${preservados} post(s) aprovado(s) ou publicado(s) serão mantidos no Banco.`);
+  }
+
+  if (!confirm(partes.join('\n\n'))) return;
+
+  descartaveis.forEach(post => {
+    post.excluidoEm = Date.now();
+    lixeira.push(post);
+    if (post._cloudId) dbCall('delete', 'posts', { id: post._cloudId, user_id: CURRENT_USER_ID });
+    const i = bancoPosts.indexOf(post);
+    if (i !== -1) bancoPosts.splice(i, 1);
+    if (post.data) removerPostDoCal(post, null);
+  });
+
+  if (descartaveis.length) {
+    try { localStorage.setItem('lp_lixeira', JSON.stringify(lixeira)); } catch(e) {}
+    salvarStorage();
+    renderBanco();
+  }
 
   programacoes = programacoes.filter(p => p.id !== ativa.id);
   programacaoAtivaId = programacoes.length > 0 ? programacoes[0].id : null;
   salvarProgramacoes();
   renderCal();
-  mostrarToast(`Programação "${ativa.nome}" excluída.`);
+
+  mostrarToast(descartaveis.length
+    ? `Programação excluída. ${descartaveis.length} rascunho(s) foram para a lixeira.`
+    : `Programação "${ativa.nome}" excluída.`);
 }
 
 function abrirModalProgramacao() {
@@ -4568,6 +4629,7 @@ function restaurarPost(idx) {
     badge: post.badge || 'badge-green', midia: midiaStr,
     data_publicacao: post.data || null,
     formato: post.formato || null,
+    programacao_id: post.programacaoId || null,
   }).then(function(r) {
     if (r && Array.isArray(r) && r[0]) {
       post._cloudId = r[0].id;
