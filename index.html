@@ -893,6 +893,15 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .modal-corpo { padding: 20px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; color: var(--text); }
 .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; background: var(--bg2); }
 
+.prog-aviso {
+  display: none; margin: 0 24px 4px;
+  padding: 11px 14px; border-radius: var(--rs);
+  background: rgba(220,38,38,.12); border: 1px solid rgba(220,38,38,.45);
+  color: #FCA5A5; font-size: 12.5px; line-height: 1.55;
+}
+.prog-aviso.show { display: block; }
+.prog-aviso strong { color: #FECACA; }
+
 /* ── TOAST ── */
 #toast {
   position: fixed; bottom: 24px; right: 24px;
@@ -1647,6 +1656,8 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
         </div>
       </div>
     </div>
+
+    <div class="prog-aviso" id="prog-aviso"></div>
 
     <div class="modal-footer">
       <button class="btn2" onclick="fecharModalProgramacao()">Cancelar</button>
@@ -3863,6 +3874,7 @@ function excluirProgramacaoAtiva() {
 }
 
 function abrirModalProgramacao() {
+  avisoProgramacao(null); // não carrega o aviso da tentativa anterior
   // Popular checkboxes de redes
   const cont = document.getElementById('prog-redes-check');
   cont.innerHTML = Object.entries(REDES).map(([key, r]) =>
@@ -3981,16 +3993,31 @@ Use apenas estas chaves de rede: ${redesGrupo.join(', ')}. Todas as datas devem 
   }
 }
 
+// O aviso vai dentro do modal, não só no toast: com o modal aberto o usuário
+// está olhando para o centro da tela, e um recado que aparece no canto e some
+// sozinho passa como se nada tivesse acontecido.
+function avisoProgramacao(html) {
+  const el = document.getElementById('prog-aviso');
+  if (!el) return;
+  if (!html) { el.classList.remove('show'); el.innerHTML = ''; return; }
+  el.innerHTML = html;
+  el.classList.add('show');
+}
+
 async function confirmarProgramacaoAutomatica() {
+  avisoProgramacao(null);
   const nome = document.getElementById('prog-nome-auto').value.trim();
   const dataInicio = document.getElementById('prog-data-inicio').value;
   const dataFim = document.getElementById('prog-data-fim').value;
   const redesEscolhidas = Array.from(document.querySelectorAll('#prog-redes-check input:checked')).map(c => c.value);
 
-  if (!nome) { mostrarToast('Dê um nome para a programação.'); return; }
-  if (!dataInicio || !dataFim) { mostrarToast('Defina o período da programação.'); return; }
-  if (redesEscolhidas.length === 0) { mostrarToast('Selecione pelo menos uma rede social.'); return; }
-  if (!perfil.nome) { mostrarToast('Configure o Perfil da Empresa primeiro.'); return; }
+  if (!nome) { avisoProgramacao('Dê um nome para a programação.'); return; }
+  if (!dataInicio || !dataFim) { avisoProgramacao('Defina o período da programação.'); return; }
+  if (redesEscolhidas.length === 0) { avisoProgramacao('Selecione pelo menos uma rede social.'); return; }
+  if (!perfil.nome) {
+    avisoProgramacao('<strong>O Perfil da Empresa não foi carregado.</strong><br>A IA precisa dele para montar a programação. Abra a página <strong>Perfil</strong> no menu, confirme que está preenchido e salvo, e volte aqui. Se já estiver preenchido, recarregue esta página.');
+    return;
+  }
 
   const btn = document.getElementById('prog-btn-confirmar');
   btn.disabled = true;
@@ -4012,6 +4039,7 @@ async function confirmarProgramacaoAutomatica() {
   const espacos = {};
   const sugestoes = {};
   const falhas = [];
+  const motivos = [];
 
   for (let i = 0; i < grupos.length; i++) {
     const grupo = grupos[i];
@@ -4039,7 +4067,11 @@ async function confirmarProgramacaoAutomatica() {
         sugestoes[chaveSug].push({ tema: e.tema || '', hora: e.hora || '', motivo: e.motivo || '', formato: fmt });
       });
     } catch(err) {
+      console.error('Falha ao gerar programação:', err);
       falhas.push(grupo.map(k => REDES[k].label).join('/'));
+      motivos.push((err && err.name === 'AbortError')
+        ? 'a IA demorou mais de 60 segundos para responder'
+        : (err && err.message) || 'erro de comunicação com a IA');
     }
   }
 
@@ -4050,7 +4082,8 @@ async function confirmarProgramacaoAutomatica() {
   const totalEspacos = Object.values(espacos).reduce((acc, arr) => acc + arr.length, 0);
 
   if (totalEspacos === 0) {
-    mostrarToast('Não foi possível gerar a programação. Tente novamente ou reduza o período.');
+    const porque = motivos.length ? motivos[0] : 'a IA não devolveu nenhuma sugestão';
+    avisoProgramacao(`<strong>Não foi possível gerar a programação.</strong><br>Motivo: ${porque}.<br>Tente de novo ou reduza o período. Se insistir, reduza também o número de redes.`);
     return;
   }
 
