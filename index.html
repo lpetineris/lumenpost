@@ -343,6 +343,20 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 
 .voz-btn:hover { border-color: var(--g-c); background: var(--g-l); box-shadow: var(--s2); }
 
+/* ── Formatos (Instagram) ── */
+.fmt-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.fmt-btn {
+  font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 500;
+  padding: 6px 12px; border-radius: 20px;
+  border: 1.5px solid var(--border); background: var(--bg2);
+  color: var(--text2); cursor: pointer; white-space: nowrap;
+  transition: all .15s;
+}
+.fmt-btn:hover { border-color: var(--g-c); color: var(--g-c); }
+.fmt-btn.on { background: var(--g); border-color: var(--g); color: #fff; }
+.fmt-resumo { font-size: 11.5px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+.fmt-nota { font-size: 11px; color: var(--text3); margin-top: 4px; line-height: 1.5; font-style: italic; }
+
 .voz-btn.on {
   border-color: var(--g);
   background: var(--g-l);
@@ -645,6 +659,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 }
 .badge-linkedin { background: rgba(59,130,246,.16); color: #60A5FA; }
 .badge-instagram { background: rgba(168,85,247,.16); color: #C084FC; }
+.badge-formato { background: var(--bg2); color: var(--text2); border: 1px solid var(--border); font-weight: 500; }
 .badge-tiktok { background: rgba(34,197,94,.16); color: #4ADE80; }
 .badge-green { background: var(--g-l); color: var(--g); }
 
@@ -1014,6 +1029,8 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
               <label>Rede social <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--text3)">— selecione uma ou mais</span></label>
               <div class="voz-grid" id="voz-grid"></div>
             </div>
+
+            <div class="field" id="formato-wrap" style="display:none"></div>
 
             <div class="field">
               <label>Imagem ou vídeo</label>
@@ -1721,6 +1738,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 // ── ESTADO ───────────────────────────────────────────────────────────
 let vozSelecionadas = new Set(); // multi-select
 let vozAtual = null; // mantido para compatibilidade
+let formatoAtual = null; // formato da rede em vozAtual, quando a rede tem formatos
 let postAtual = null;
 let midiaAtual = null;
 // ── SUPABASE ──────────────────────────────────────────────────
@@ -1827,6 +1845,7 @@ async function loadFromCloud() {
           data: p.data_publicacao || '',
           hora: p.hora || '',
           programacaoId: p.programacao_id || null,
+          formato: p.formato || null,
           midia: midia,
         };
       });
@@ -2037,6 +2056,159 @@ Hashtags: 3-5, descritivas e de nicho.
 Emojis: 0-2, apenas se naturais ao contexto.` },
 };
 
+// ── FORMATOS ──────────────────────────────────────────────────────────
+// Por enquanto só o Instagram tem formatos. As demais redes continuam com
+// um formato único (a legenda descrita em REDES[key].instrucao).
+// `produz` diz o que a empresa precisa conseguir produzir para usar o
+// formato — cruzado com o campo "O que você consegue produzir" do Perfil.
+const FORMATOS = {
+  instagram: {
+    feed: {
+      label: 'Feed', emoji: '🖼', padrao: true, produz: ['fotos','artes'],
+      resumo: 'Uma imagem única com legenda.',
+      instrucao: `FORMATO: POST DE FEED (imagem única)
+Entregue a legenda do post, seguindo a estrutura do Instagram descrita acima.
+
+FORMATO DA RESPOSTA — siga exatamente:
+LEGENDA
+[a legenda completa, pronta para copiar]`
+    },
+    carrossel: {
+      label: 'Carrossel', emoji: '🎠', produz: ['fotos','artes'],
+      resumo: 'Vários cartões que o seguidor desliza.',
+      instrucao: `FORMATO: CARROSSEL
+Um carrossel é lido deslizando. Cada cartão precisa entregar uma ideia sozinho e criar vontade de deslizar para o próximo.
+Use de 5 a 8 cartões. A capa carrega o gancho; o último cartão carrega o CTA.
+Cada cartão: um título curto (até 6 palavras) e no máximo 2 linhas de apoio. Texto de cartão é lido em 2 segundos — corte tudo que não for essencial.
+Nunca quebre uma frase no meio para continuar no cartão seguinte.
+
+FORMATO DA RESPOSTA — siga exatamente:
+CAPA
+Título: [até 6 palavras, é o gancho]
+Apoio: [1 linha, opcional]
+
+CARTÃO 2
+Título: [...]
+Apoio: [...]
+
+(siga até o último cartão)
+
+CARTÃO FINAL
+Título: [o CTA]
+Apoio: [...]
+
+LEGENDA
+[a legenda que acompanha o carrossel, 80-150 palavras, com hashtags]`
+    },
+    reels: {
+      label: 'Reels', emoji: '🎬', produz: ['videos'],
+      resumo: 'Vídeo curto. Entrega roteiro e legenda.',
+      instrucao: `FORMATO: REELS
+O conteúdo do Reels é o vídeo — a legenda é secundária. Sua entrega principal é o roteiro.
+Duração alvo: 15 a 30 segundos. Isso significa poucas cenas e frases faladas curtas.
+Os 3 primeiros segundos decidem tudo: comece pelo gancho, sem apresentação, sem "oi pessoal", sem logo.
+Escreva a fala do jeito que se fala, não do jeito que se escreve.
+O texto na tela nunca repete a fala palavra por palavra — ele reforça ou complementa.
+
+FORMATO DA RESPOSTA — siga exatamente:
+GANCHO (0-3s)
+Fala: [o que é dito, 1 frase curta]
+Na tela: [texto que aparece na tela]
+Imagem: [o que está sendo mostrado]
+
+CENA 2
+Fala: [...]
+Na tela: [...]
+Imagem: [...]
+
+(siga até a última cena — 3 a 5 cenas no total)
+
+CTA FINAL
+Fala: [...]
+Na tela: [...]
+
+ÁUDIO
+[sugestão do tipo de áudio: trilha em alta, som ambiente, narração — e por quê]
+
+LEGENDA
+[a legenda do Reels, 40-80 palavras, com hashtags]`
+    },
+    stories: {
+      label: 'Stories', emoji: '⚡', produz: ['fotos','videos','artes'],
+      resumo: 'Sequência de telas que somem em 24h.',
+      instrucao: `FORMATO: STORIES
+Stories não tem legenda. É uma sequência de telas, cada uma vista por 2 ou 3 segundos.
+Use de 3 a 5 telas. Cada tela: no máximo 2 linhas de texto, porque o dedo já está subindo para pular.
+Story é conversa, não anúncio. Escreva como quem manda mensagem para um conhecido.
+Aproveite os recursos nativos — enquete, caixa de pergunta, quiz, contagem regressiva, link — porque eles seguram a pessoa e geram resposta. Sugira o recurso na tela onde ele faz sentido, não em todas.
+
+FORMATO DA RESPOSTA — siga exatamente:
+TELA 1
+Texto: [até 2 linhas]
+Imagem: [o que mostrar]
+Recurso: [enquete/pergunta/quiz/nenhum — se houver, escreva as opções]
+
+TELA 2
+Texto: [...]
+Imagem: [...]
+Recurso: [...]
+
+(siga até a última tela)
+
+TELA FINAL
+Texto: [o CTA — arrasta pra cima, link na bio, responde aqui]
+Imagem: [...]
+Recurso: [...]`
+    },
+  },
+};
+
+// Formatos que a empresa consegue produzir, segundo o Perfil.
+// Sem informação no Perfil, devolve todos — não vale limitar por engano.
+function formatosDisponiveis(redeKey) {
+  const todos = FORMATOS[redeKey];
+  if (!todos) return null;
+  const capacidade = (perfil.producao || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (!capacidade.length) return Object.keys(todos);
+  const possiveis = Object.keys(todos).filter(f => todos[f].produz.some(p => capacidade.includes(p)));
+  return possiveis.length ? possiveis : Object.keys(todos);
+}
+
+function formatoPadrao(redeKey) {
+  const todos = FORMATOS[redeKey];
+  if (!todos) return null;
+  const disp = formatosDisponiveis(redeKey);
+  const padrao = Object.keys(todos).find(f => todos[f].padrao);
+  return disp.includes(padrao) ? padrao : disp[0];
+}
+
+// Insere um post na nuvem. A coluna "formato" é nova — se ainda não existir
+// no banco, o Supabase recusa a linha inteira e o post se perderia. Nesse
+// caso, repete sem o campo: melhor salvar sem o rótulo do que não salvar.
+let _semColunaFormato = false;
+function dbInsertPost(payload) {
+  if (_semColunaFormato) {
+    const { formato, ...sem } = payload;
+    return dbCall('insert', 'posts', sem);
+  }
+  return dbCall('insert', 'posts', payload).then(function(res) {
+    const txt = JSON.stringify((res && (res.error || res)) || '');
+    if (/formato/i.test(txt) && /(column|coluna|PGRST204|42703|schema cache)/i.test(txt)) {
+      console.warn('Coluna "formato" não existe na tabela posts. Salvando sem ela.');
+      _semColunaFormato = true;
+      const { formato, ...sem } = payload;
+      return dbCall('insert', 'posts', sem);
+    }
+    return res;
+  });
+}
+
+// Rótulo curto para badge/calendário. Posts antigos não têm formato — ficam sem rótulo.
+function rotuloFormato(redeKey, formatoKey) {
+  const f = FORMATOS[redeKey] && FORMATOS[redeKey][formatoKey];
+  return f ? f.label : '';
+}
+
 const TOM_MAP = {
   autoridade: 'autoridade e visão de mercado',
   emocional:  'emocional e próximo',
@@ -2144,6 +2316,7 @@ async function carregarPerfilCentral() {
           result[0].pin ? `Pinterest: ${result[0].pin}` : '',
         ].filter(Boolean).join(' | '),
         restricoes: result[0].restricoes || '',
+        producao: result[0].producao || '',
       };
       try { localStorage.setItem('lp_perfil', JSON.stringify(perfil)); } catch(e) {}
     } else {
@@ -2192,6 +2365,7 @@ function renderVozes() {
   grid.innerHTML = '';
   vozSelecionadas = new Set();
   vozAtual = null;
+  formatoSelecionado = {};
 
   Object.entries(REDES).forEach(([key, cfg], i) => {
     const btn = document.createElement('button');
@@ -2201,6 +2375,7 @@ function renderVozes() {
     btn.onclick = () => toggleVoz(key);
     grid.appendChild(btn);
   });
+  renderFormatos();
 }
 
 function toggleVoz(key) {
@@ -2219,9 +2394,62 @@ function toggleVoz(key) {
   }
   vozAtual = Array.from(vozSelecionadas)[0];
   atualizarSugestaoHorario();
+  renderFormatos();
 }
 
 function selecionarVoz(key) { toggleVoz(key); } // compatibilidade
+
+// ── FORMATOS (aba Gerar) ──────────────────────────────────────────────
+// O bloco só aparece para redes que têm formatos. Hoje, só o Instagram.
+let formatoSelecionado = {}; // { instagram: 'reels' }
+
+function renderFormatos() {
+  const wrap = document.getElementById('formato-wrap');
+  if (!wrap) return;
+
+  const comFormato = Array.from(vozSelecionadas).filter(k => FORMATOS[k]);
+  if (!comFormato.length) {
+    wrap.style.display = 'none';
+    wrap.innerHTML = '';
+    formatoSelecionado = {};
+    return;
+  }
+
+  wrap.style.display = 'block';
+  wrap.innerHTML = comFormato.map(rede => {
+    const disponiveis = formatosDisponiveis(rede);
+    if (!formatoSelecionado[rede] || !disponiveis.includes(formatoSelecionado[rede])) {
+      formatoSelecionado[rede] = formatoPadrao(rede);
+    }
+    const escondidos = Object.keys(FORMATOS[rede]).filter(f => !disponiveis.includes(f));
+    const pills = disponiveis.map(f => {
+      const cfg = FORMATOS[rede][f];
+      const on = formatoSelecionado[rede] === f ? ' on' : '';
+      return `<button type="button" class="fmt-btn${on}" id="fmt-${rede}-${f}" title="${cfg.resumo}"
+        onclick="escolherFormato('${rede}','${f}')">${cfg.emoji} ${cfg.label}</button>`;
+    }).join('');
+    const nota = escondidos.length
+      ? `<div class="fmt-nota">${escondidos.map(f => FORMATOS[rede][f].label).join(' e ')} ${escondidos.length > 1 ? 'ficaram ocultos' : 'ficou oculto'} porque seu Perfil não marca esse tipo de produção.</div>`
+      : '';
+    return `<label>Formato ${comFormato.length > 1 ? '— ' + REDES[rede].label : ''}</label>
+            <div class="fmt-grid">${pills}</div>
+            <div class="fmt-resumo" id="fmt-resumo-${rede}">${FORMATOS[rede][formatoSelecionado[rede]].resumo}</div>${nota}`;
+  }).join('');
+}
+
+function escolherFormato(rede, f) {
+  if (postAtual || Object.keys(resultadosPorRede).length > 0) {
+    mostrarToast('Para trocar o formato, clique em Limpar e gere novamente.');
+    return;
+  }
+  formatoSelecionado[rede] = f;
+  formatosDisponiveis(rede).forEach(k => {
+    const b = document.getElementById('fmt-' + rede + '-' + k);
+    if (b) b.classList.toggle('on', k === f);
+  });
+  const res = document.getElementById('fmt-resumo-' + rede);
+  if (res) res.textContent = FORMATOS[rede][f].resumo;
+}
 
 // ── MÍDIA ─────────────────────────────────────────────────────────────
 // Redimensiona uma imagem para no máximo `maxLado` px no lado maior, mantendo proporção.
@@ -2316,6 +2544,7 @@ function contemMetaComentario(texto) {
 function buildSystem() {
   const p = perfil;
   const r = REDES[vozAtual] || REDES.linkedin;
+  const fmt = (FORMATOS[vozAtual] && FORMATOS[vozAtual][formatoAtual]) || null;
   const TOM_DESC = {
     autoridade: 'Autoridade genuína: fala com convicção, dados concretos e ponto de vista próprio. Posiciona a marca como referência sem soar arrogante.',
     emocional: 'Emocional e próximo: toca em algo real da vida do cliente. Cria identificação, não apenas informação. Usa linguagem humana, não corporativa.',
@@ -2353,7 +2582,12 @@ SUA MISSÃO NESTE POST
 Tom solicitado: ${TOM_DESC[vozAtual] || TOM_DESC.autoridade}
 
 ${r.instrucao}
-
+${fmt ? `
+═══════════════════════════════════════
+FORMATO DESTE POST
+═══════════════════════════════════════
+${fmt.instrucao}
+` : ''}
 ═══════════════════════════════════════
 REGRAS DE ESCRITA — OBRIGATÓRIAS
 ═══════════════════════════════════════
@@ -2407,7 +2641,9 @@ Não crie posts com: promessas de resultado garantido sem respaldo; afirmações
 ═══════════════════════════════════════
 FORMATO DA RESPOSTA
 ═══════════════════════════════════════
-Entregue APENAS o texto final do post, pronto para copiar e publicar. Sem introdução, sem explicação, sem "aqui está o post", sem comentários sobre suas escolhas. Só o post.`;
+${fmt
+  ? `Siga exatamente a estrutura definida em FORMATO DESTE POST — mesmos rótulos, mesma ordem. Nada antes, nada depois: sem introdução, sem explicação, sem "aqui está", sem comentários sobre suas escolhas. Preencha os campos com o conteúdo final, pronto para produzir e publicar, e não deixe nenhum colchete de exemplo na resposta.`
+  : `Entregue APENAS o texto final do post, pronto para copiar e publicar. Sem introdução, sem explicação, sem "aqui está o post", sem comentários sobre suas escolhas. Só o post.`}`;
 }
 
 // Estado dos resultados gerados por rede: { linkedin: {texto, status}, instagram: {...} }
@@ -2444,7 +2680,7 @@ async function gerarPost() {
 
   try {
     // Gera um post para cada rede selecionada, em paralelo
-    const promessas = redesSelecionadas.map(key => gerarParaRede(key, tema, tom, false));
+    const promessas = redesSelecionadas.map(key => gerarParaRede(key, tema, tom, false, formatoSelecionado[key]));
     const resultados = await Promise.all(promessas);
 
     clearInterval(interval);
@@ -2491,8 +2727,9 @@ async function gerarPost() {
 }
 
 // Gera o texto para uma rede específica. Retorna {texto, redeName, badge, cal} ou null em falha.
-async function gerarParaRede(key, tema, tom, isRetry) {
+async function gerarParaRede(key, tema, tom, isRetry, formatoKey) {
   const r = REDES[key] || REDES.linkedin;
+  const fKey = formatoKey || (FORMATOS[key] ? (formatoSelecionado[key] || formatoPadrao(key)) : null);
   const usarImagem = midiaAtual && midiaAtual.tipo === 'imagem' && !isRetry;
   const userPrompt = usarImagem
     ? `A imagem acima é o contexto visual. Use-a para capturar atmosfera, produto, cenário e paleta — sem identificar pessoas.
@@ -2526,7 +2763,7 @@ Escreva o post agora. Comece direto pelo gancho — sem introdução, sem explic
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system: buildSystemPara(key),
+        system: buildSystemPara(key, fKey),
         max_tokens: 1000,
         messages: [{ role: 'user', content: msgContent }]
       })
@@ -2539,23 +2776,26 @@ Escreva o post agora. Comece direto pelo gancho — sem introdução, sem explic
     if (contemMetaComentario(texto)) {
       if (!isRetry) {
         // Tenta novamente sem a imagem
-        return await gerarParaRede(key, tema, tom, true);
+        return await gerarParaRede(key, tema, tom, true, fKey);
       }
       return null;
     }
 
-    return { texto, redeName: r.label, badge: r.badge, cal: r.cal, rede: key };
+    return { texto, redeName: r.label, badge: r.badge, cal: r.cal, rede: key, formato: fKey };
   } catch(e) {
     console.error('Erro ao gerar para', key, e);
     return null;
   }
 }
 
-function buildSystemPara(key) {
+function buildSystemPara(key, formatoKey) {
   const vozAnterior = vozAtual;
+  const fmtAnterior = formatoAtual;
   vozAtual = key;
+  formatoAtual = formatoKey || null;
   const sys = buildSystem();
   vozAtual = vozAnterior;
+  formatoAtual = fmtAnterior;
   return sys;
 }
 
@@ -2578,6 +2818,7 @@ function renderizarResultado(tema, tom) {
 
     postAtual = {
       rede: key, redeName: r.redeName, badge: r.badge, cal: r.cal,
+      formato: r.formato || null,
       texto: r.texto, tom, tema,
       midia: midiaAtual ? { ...midiaAtual } : null,
       data: document.getElementById('input-data').value || '',
@@ -2585,7 +2826,8 @@ function renderizarResultado(tema, tom) {
       empresa: perfil.nome, criadoEm: new Date().toISOString(),
     };
 
-    document.getElementById('resultado-meta').innerHTML = `<strong>${perfil.nome}</strong> · ${r.redeName} · tom ${TOM_MAP[tom]}`;
+    const _rot = rotuloFormato(key, r.formato);
+    document.getElementById('resultado-meta').innerHTML = `<strong>${perfil.nome}</strong> · ${r.redeName}${_rot ? ' · ' + _rot : ''} · tom ${TOM_MAP[tom]}`;
     textoSimplesEl.textContent = r.texto;
     textoSimplesEl.style.display = 'block';
     document.getElementById('resultado-barra').style.display = 'flex';
@@ -2599,7 +2841,7 @@ function renderizarResultado(tema, tom) {
 
     abasEl.style.display = 'flex';
     abasEl.innerHTML = chaves.map((key, i) =>
-      `<button class="aba-btn${i===0?' on':''}" data-key="${key}" onclick="trocarAba('${key}')">${resultadosPorRede[key].redeName}</button>`
+      `<button class="aba-btn${i===0?' on':''}" data-key="${key}" onclick="trocarAba('${key}')">${resultadosPorRede[key].redeName}${rotuloFormato(key, resultadosPorRede[key].formato) ? ' · ' + rotuloFormato(key, resultadosPorRede[key].formato) : ''}</button>`
     ).join('');
 
     paineisEl.innerHTML = chaves.map((key, i) => {
@@ -2665,6 +2907,7 @@ function salvarAba(key) {
 
   const post = {
     rede: key, redeName: r.redeName, badge: r.badge, cal: r.cal,
+    formato: r.formato || null,
     texto: textoFinal,
     midia: midiaAtual ? { ...midiaAtual } : null,
     data: dataAtual,
@@ -2685,12 +2928,13 @@ function salvarAba(key) {
 
   var midiaStr = null;
   try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
-  dbCall('insert', 'posts', {
+  dbInsertPost({
     user_id: CURRENT_USER_ID,
     conteudo: post.texto || '', rede: post.rede || '',
     status: post.status || 'rascunho', empresa: perfil.nome || '',
     badge: post.badge || 'badge-green', midia: midiaStr,
     data_publicacao: post.data || null,
+    formato: post.formato || null,
   }).then(function(res) {
     if(res && Array.isArray(res) && res[0]) {
       post._cloudId = res[0].id;
@@ -2764,7 +3008,7 @@ function salvarPost() {
   // Save to Supabase
   var midiaStr = null;
   try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
-  dbCall('insert', 'posts', {
+  dbInsertPost({
     user_id: CURRENT_USER_ID,
     conteudo: post.texto || '',
     rede: post.rede || '',
@@ -2773,6 +3017,7 @@ function salvarPost() {
     badge: post.badge || 'badge-green',
     midia: midiaStr,
     data_publicacao: post.data || null,
+    formato: post.formato || null,
   }).then(function(r) {
     if(r && Array.isArray(r) && r[0]) {
       post._cloudId = r[0].id;
@@ -2803,7 +3048,7 @@ function marcarAprovacao() {
   }
   var midiaStr = null;
   try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
-  dbCall('insert', 'posts', {
+  dbInsertPost({
     user_id: CURRENT_USER_ID,
     conteudo: post.texto || '',
     rede: post.rede || '',
@@ -2812,6 +3057,7 @@ function marcarAprovacao() {
     badge: post.badge || 'badge-green',
     midia: midiaStr,
     data_publicacao: post.data || null,
+    formato: post.formato || null,
   }).then(function(r) {
     if(r && Array.isArray(r) && r[0]) {
       post._cloudId = r[0].id;
@@ -2892,6 +3138,7 @@ function renderBanco() {
           <div class="post-hdr">
             <div class="post-meta">
               <span class="badge ${p.badge || 'badge-green'}">${p.redeName || 'Post'}</span>
+              ${rotuloFormato(p.rede, p.formato) ? `<span class="badge badge-formato">${FORMATOS[p.rede][p.formato].emoji} ${rotuloFormato(p.rede, p.formato)}</span>` : ''}
               <span class="post-data">${p.empresa || ''} · ${criado}${p.data ? ' · ' + new Date(p.data+'T12:00:00').toLocaleDateString('pt-BR') + (p.hora ? ' às ' + p.hora : '') : ''}</span>
             </div>
             <span class="status ${sc[p.status]}">${sl[p.status]}</span>
@@ -3040,7 +3287,7 @@ function verPost(idx) {
   const dataBtn = document.getElementById('modal-footer-data-btn');
   if (dataBtn) { dataBtn.style.display = 'inline-flex'; dataBtn._source = 'banco'; }
   const p = bancoPosts[idx];
-  document.getElementById('modal-titulo').textContent = `${p.redeName || 'Post'} · ${p.empresa || ''}`;
+  document.getElementById('modal-titulo').textContent = `${p.redeName || 'Post'}${rotuloFormato(p.rede, p.formato) ? ' · ' + rotuloFormato(p.rede, p.formato) : ''} · ${p.empresa || ''}`;
   var dhEl = document.getElementById('modal-data-hora');
   if (p.data) {
     var dataFmt = new Date(p.data + 'T12:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
@@ -3208,10 +3455,15 @@ function renderCal() {
         const jaPreenchidos = contagemPreenchidos[redeKey] || 0;
         if (contagemMostrados[redeKey] <= jaPreenchidos) return; // este espaço já foi preenchido — pula
 
+        const rotFmt = rotuloFormato(redeKey, esp.formato);
         const espacoEl = document.createElement('div');
         espacoEl.className = `cal-espaco ${r.cal || 'generico'}`;
-        espacoEl.textContent = r.emoji + ' ' + r.label;
-        espacoEl.title = 'Clique para criar o post de ' + r.label;
+        espacoEl.textContent = rotFmt
+          ? FORMATOS[redeKey][esp.formato].emoji + ' ' + rotFmt
+          : r.emoji + ' ' + r.label;
+        espacoEl.title = rotFmt
+          ? `Clique para criar o ${rotFmt} de ${r.label}`
+          : 'Clique para criar o post de ' + r.label;
         espacoEl.onclick = () => preencherEspacoProgramacao(chave, redeKey);
         el.appendChild(espacoEl);
       });
@@ -3232,7 +3484,7 @@ function verPostCal(p, chave) {
   });
   const midiaCompleta = (postNoBanco && postNoBanco.midia) ? postNoBanco.midia : p.midia;
 
-  document.getElementById('modal-titulo').textContent = `${p.redeName || 'Post'} · ${p.empresa || ''}`;
+  document.getElementById('modal-titulo').textContent = `${p.redeName || 'Post'}${rotuloFormato(p.rede, p.formato) ? ' · ' + rotuloFormato(p.rede, p.formato) : ''} · ${p.empresa || ''}`;
   var dhEl2 = document.getElementById('modal-data-hora');
   if (chave) {
     var dataFmt2 = new Date(chave + 'T12:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
@@ -3457,6 +3709,38 @@ function fecharModalProgramacao() {
   document.getElementById('modal-prog-overlay').classList.remove('open');
 }
 
+// Monta o trecho do prompt que ensina a IA a escolher formatos. Só entra
+// para redes que têm formatos, e só com os que a empresa consegue produzir.
+function blocoFormatosParaPrompt(redesGrupo) {
+  const comFormato = redesGrupo.filter(k => FORMATOS[k]);
+  if (!comFormato.length) return '';
+
+  const capacidade = (perfil.producao || '').split(',').map(s => s.trim()).filter(Boolean);
+  const nomeCapacidade = { fotos: 'fotografar', videos: 'gravar vídeos curtos', artes: 'usar artes e imagens prontas' };
+
+  const linhas = comFormato.map(rede => {
+    const disp = formatosDisponiveis(rede);
+    const itens = disp.map(f => `- ${f}: ${FORMATOS[rede][f].label} — ${FORMATOS[rede][f].resumo}`).join('\n');
+    const fora = Object.keys(FORMATOS[rede]).filter(f => !disp.includes(f));
+    const proibido = fora.length
+      ? `\nNÃO use estes formatos de ${REDES[rede].label}, a empresa não consegue produzi-los: ${fora.join(', ')}.`
+      : '';
+    return `${REDES[rede].label} (chave "${rede}") — use exatamente uma destas chaves no campo "formato":\n${itens}${proibido}`;
+  }).join('\n\n');
+
+  const contexto = capacidade.length
+    ? `A empresa informou que consegue ${capacidade.map(c => nomeCapacidade[c] || c).join(', ')}.`
+    : `A empresa não informou o que consegue produzir — distribua os formatos com bom senso, sem concentrar tudo em vídeo.`;
+
+  return `
+FORMATOS DISPONÍVEIS
+${contexto}
+Você escolhe o formato de cada post. Varie ao longo do período: um calendário só de um formato cansa o seguidor e cansa quem produz. Escolha o formato pelo que o tema pede — um passo a passo pede carrossel, um bastidor rápido pede stories, uma demonstração pede reels.
+
+${linhas}
+`;
+}
+
 async function gerarEspacosParaGrupo(redesGrupo, perfil, dataInicio, dataFim, diasTotais) {
   const prompt = `Você é uma estrategista de mídias sociais sênior, especializada em pequenos e médios negócios. Crie um calendário editorial para a empresa "${perfil.nome}".
 
@@ -3470,6 +3754,7 @@ ${formatResumosAtivos(perfil.resumosAtivos)}
 
 Período: de ${dataInicio} a ${dataFim} (${diasTotais} dias).
 Rede(s) social(is) desta etapa: ${redesGrupo.map(k => REDES[k].label).join(', ')}.
+${blocoFormatosParaPrompt(redesGrupo)}
 
 Decida quantos posts fazem sentido nesse período para essa(s) rede(s), considerando uma frequência saudável e realista (geralmente 2-4 posts por semana por rede é adequado para uma pequena/média empresa). Você tem liberdade total para decidir a quantidade certa — não existe um teto artificial, use seu julgamento estratégico.
 
@@ -3481,7 +3766,8 @@ Para cada post, sugira também:
 Se fizer sentido estrategicamente (ex: uma data muito importante, um lançamento, uma campanha especial), você pode sugerir mais de um post na mesma rede e mesma data — isso é permitido, mas use com moderação.
 
 Responda APENAS em JSON válido, sem texto antes ou depois, no formato exato:
-{"espacos": [{"data": "YYYY-MM-DD", "rede": "linkedin", "tema": "...", "hora": "HH:MM", "motivo": "..."}]}
+{"espacos": [{"data": "YYYY-MM-DD", "rede": "linkedin", "formato": "", "tema": "...", "hora": "HH:MM", "motivo": "..."}]}
+O campo "formato" só se aplica às redes listadas em FORMATOS DISPONÍVEIS acima — para as demais, deixe string vazia.
 
 Use apenas estas chaves de rede: ${redesGrupo.join(', ')}. Todas as datas devem estar dentro do período informado.`;
 
@@ -3562,12 +3848,19 @@ async function confirmarProgramacaoAutomatica() {
       const espacosGrupo = await gerarEspacosParaGrupo(grupo, perfil, dataInicio, dataFim, diasTotais);
       espacosGrupo.forEach(e => {
         if (!e.data || !e.rede || !REDES[e.rede]) return;
+        // Aceita o formato só se a rede tiver formatos e a chave existir —
+        // a IA pode devolver um nome inventado ou um que o Perfil não permite.
+        const permitidos = FORMATOS[e.rede] ? formatosDisponiveis(e.rede) : null;
+        const fmt = permitidos && permitidos.includes(e.formato)
+          ? e.formato
+          : (permitidos ? formatoPadrao(e.rede) : null);
+
         if (!espacos[e.data]) espacos[e.data] = [];
-        espacos[e.data].push({ id: gerarIdEspaco(), rede: e.rede });
+        espacos[e.data].push({ id: gerarIdEspaco(), rede: e.rede, formato: fmt });
 
         const chaveSug = e.data + '|' + e.rede;
         if (!sugestoes[chaveSug]) sugestoes[chaveSug] = [];
-        sugestoes[chaveSug].push({ tema: e.tema || '', hora: e.hora || '', motivo: e.motivo || '' });
+        sugestoes[chaveSug].push({ tema: e.tema || '', hora: e.hora || '', motivo: e.motivo || '', formato: fmt });
       });
     } catch(err) {
       falhas.push(grupo.map(k => REDES[k].label).join('/'));
@@ -3631,6 +3924,16 @@ function preencherEspacoProgramacao(data, redeKey) {
       document.getElementById('input-tema').value = sugestao.tema;
     }
 
+    // Formato definido pela IA na programação — pré-seleciona no gerador.
+    if (FORMATOS[redeKey]) {
+      const disp = formatosDisponiveis(redeKey);
+      const daSugestao = sugestao && sugestao.formato;
+      formatoSelecionado[redeKey] = (daSugestao && disp.includes(daSugestao))
+        ? daSugestao
+        : formatoPadrao(redeKey);
+    }
+    renderFormatos();
+
     if (sugestao && sugestao.hora) {
       document.getElementById('input-hora').value = sugestao.hora;
       document.getElementById('sugestao-horario').style.display = 'none';
@@ -3646,7 +3949,8 @@ function preencherEspacoProgramacao(data, redeKey) {
 
     document.getElementById('input-tema').focus();
     if (sugestao && sugestao.motivo) {
-      mostrarToast(`💡 ${sugestao.motivo}`);
+      const rot = rotuloFormato(redeKey, formatoSelecionado[redeKey]);
+      mostrarToast(`💡 ${rot ? rot + ' — ' : ''}${sugestao.motivo}`);
     } else {
       mostrarToast(`Espaço de ${REDES[redeKey].label} em ${new Date(data+'T12:00:00').toLocaleDateString('pt-BR')} selecionado. Descreva o tema e gere o post!`);
     }
@@ -4005,12 +4309,13 @@ function restaurarPost(idx) {
   // Re-inserir no Supabase
   var midiaStr = null;
   try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
-  dbCall('insert', 'posts', {
+  dbInsertPost({
     user_id: CURRENT_USER_ID,
     conteudo: post.texto || '', rede: post.rede || '',
     status: post.status || 'rascunho', empresa: perfil.nome || '',
     badge: post.badge || 'badge-green', midia: midiaStr,
     data_publicacao: post.data || null,
+    formato: post.formato || null,
   }).then(function(r) {
     if (r && Array.isArray(r) && r[0]) {
       post._cloudId = r[0].id;
@@ -4411,6 +4716,8 @@ function limparGeradorSilencioso() {
   vozSelecionadas = new Set();
   vozAtual = null;
   document.querySelectorAll('.voz-btn').forEach(b => b.classList.remove('on'));
+  formatoSelecionado = {};
+  renderFormatos();
   programacaoContextoAtual = null; // será reatribuído por preencherEspacoProgramacao se vier de um espaço
 }
 
