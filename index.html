@@ -391,8 +391,10 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .fmt-rede.linkedin .fmt-rede-hdr { color: #60A5FA; }
 .fmt-rede.facebook { border-left-color: #3B82F6; }
 .fmt-rede.facebook .fmt-rede-hdr { color: #3B82F6; }
-.fmt-rede.pinterest { border-left-color: #F87171; }
-.fmt-rede.pinterest .fmt-rede-hdr { color: #F87171; }
+.fmt-rede.pinterest { border-left-color: #FB7185; }
+.fmt-rede.pinterest .fmt-rede-hdr { color: #FB7185; }
+.fmt-rede.youtube { border-left-color: #EF4444; }
+.fmt-rede.youtube .fmt-rede-hdr { color: #EF4444; }
 .fmt-rede.generico { border-left-color: var(--g-c); }
 .fmt-rede.generico .fmt-rede-hdr { color: var(--g-c); }
 
@@ -725,7 +727,8 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .badge-formato { background: var(--bg2); color: var(--text2); border: 1px solid var(--border); font-weight: 500; }
 .badge-tiktok { background: rgba(34,197,94,.16); color: #4ADE80; }
 .badge-facebook { background: rgba(59,130,246,.16); color: #3B82F6; }
-.badge-pinterest { background: rgba(248,113,113,.16); color: #F87171; }
+.badge-pinterest { background: rgba(251,113,133,.16); color: #FB7185; }
+.badge-youtube { background: rgba(239,68,68,.16); color: #EF4444; }
 .badge-green { background: var(--g-l); color: var(--g); }
 
 .post-data { font-size: 11px; color: var(--text3); }
@@ -829,7 +832,8 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .cal-lbl.instagram { background: rgba(168,85,247,.16); color: #C084FC; }
 .cal-lbl.tiktok { background: rgba(34,197,94,.16); color: #4ADE80; }
 .cal-lbl.facebook { background: rgba(59,130,246,.16); color: #3B82F6; }
-.cal-lbl.pinterest { background: rgba(248,113,113,.16); color: #F87171; }
+.cal-lbl.pinterest { background: rgba(251,113,133,.16); color: #FB7185; }
+.cal-lbl.youtube { background: rgba(239,68,68,.16); color: #EF4444; }
 .cal-lbl.generico { background: var(--g-l); color: var(--g); }
 .cal-lbl.sem-thumb { padding: 3px 4px; min-height: 22px; display: flex; align-items: center; }
 
@@ -851,7 +855,8 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .cal-espaco.instagram { border-color: #C084FC; color: #C084FC; background: rgba(168,85,247,.12); }
 .cal-espaco.tiktok { border-color: #4ADE80; color: #4ADE80; background: rgba(34,197,94,.12); }
 .cal-espaco.facebook { border-color: #3B82F6; color: #3B82F6; background: rgba(59,130,246,.12); }
-.cal-espaco.pinterest { border-color: #F87171; color: #F87171; background: rgba(248,113,113,.12); }
+.cal-espaco.pinterest { border-color: #FB7185; color: #FB7185; background: rgba(251,113,133,.12); }
+.cal-espaco.youtube { border-color: #EF4444; color: #EF4444; background: rgba(239,68,68,.12); }
 .cal-espaco.generico { border-color: var(--g); color: var(--g); background: var(--g-l); }
 
 .legenda { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
@@ -2198,14 +2203,13 @@ Tom: amigável, informativo, próximo. Evite ser formal demais ou coloquial dema
 Hashtags: 2-3 apenas, integradas ao texto ou no final.
 Emojis: 2-4, com moderação.` },
 
-  youtube:   { label: 'YouTube',   emoji: '▶️',  badge: 'badge-tiktok',    cal: 'generico',  instrucao: `YOUTUBE — Formato e estrutura:
-Descrição que serve dois propósitos: convencer quem está decidindo assistir E ser encontrada pelo algoritmo.
-Primeiro parágrafo (2-3 linhas): o que o vídeo entrega, por que vale assistir. Sem spoilers, mas com promessa clara.
-Desenvolvimento: contexto, palavras-chave naturalmente integradas, links e referências relevantes.
-Comprimento: 150-300 palavras. Mais longo que outras redes — o YouTube valoriza descrições completas.
-Tom: informativo, com autoridade, convidativo.
-Hashtags: 5-8, específicas do nicho, no final.
-Emojis: 1-3, apenas para organizar seções ou destacar CTAs.` },
+  youtube:   { label: 'YouTube',   emoji: '▶️',  badge: 'badge-youtube',   cal: 'youtube',  instrucao: `YOUTUBE — Formato e estrutura:
+No YouTube quem decide se o vídeo é assistido é o título junto com a miniatura, não a descrição. O título é o texto mais importante da plataforma: ele aparece na busca, nas sugestões e na tela inicial.
+Título: até 60 caracteres antes de ser cortado. Precisa ter a promessa E a palavra que a pessoa buscaria. "Como fazer brigadeiro que não gruda" encontra; "Nossa receita especial" não encontra nada.
+Descrição: as 2 ou 3 primeiras linhas aparecem antes do "mostrar mais" — são elas que convencem quem ficou na dúvida. O resto serve para contexto, links e busca.
+Tom: informativo e direto. O YouTube é onde as pessoas vão aprender algo.
+Hashtags: até 3. Diferente do Pinterest, aqui elas funcionam — as três primeiras aparecem acima do título.
+Emojis: 1-3, só para organizar seções da descrição.` },
 
   pinterest: { label: 'Pinterest', emoji: '📌', badge: 'badge-pinterest', cal: 'pinterest',  instrucao: `PINTEREST — Formato e estrutura:
 Pinterest não é rede social, é buscador visual. As pessoas chegam procurando — "bolo de casamento simples", "sala pequena com sofá cinza" — e não seguindo perfis. O texto existe para ser encontrado.
@@ -2740,6 +2744,94 @@ Na tela: [...]
 
 TEXTO DO POST
 [o texto que acompanha o vídeo no feed, 60-120 palavras]`
+    },
+  },
+
+  youtube: {
+    video: {
+      label: 'Vídeo', emoji: '▶️', padrao: true, produz: ['videos'], multi: false, aceita: ['video'],
+      resumo: 'Vídeo longo, com título e descrição.',
+      base: `Vídeo longo não é vídeo curto esticado: aqui a pessoa escolheu assistir e há tempo para desenvolver.
+O título e a miniatura decidem o clique. Os dois trabalham juntos e não devem dizer a mesma coisa — se a miniatura já mostra o resultado, o título faz a pergunta; se o título entrega o assunto, a miniatura mostra a cena.
+Capítulos ajudam quem procura um trecho específico e são indexados pela busca. Valem em qualquer vídeo com mais de uns 3 minutos.`,
+      tenho: `FORMATO: VÍDEO — o vídeo já está gravado
+
+FORMATO DA RESPOSTA — siga exatamente:
+TÍTULO
+[até 60 caracteres, com a promessa e a palavra que a pessoa buscaria]
+
+DESCRIÇÃO
+[150-300 palavras. As 2-3 primeiras linhas convencem quem está em dúvida; o resto dá contexto e alimenta a busca. Até 3 hashtags no final.]
+
+CAPÍTULOS
+[lista de marcações no formato "00:00 Nome do trecho". Se o vídeo for curto demais para capítulos, escreva "—".]`,
+      produzir: `FORMATO: VÍDEO — o vídeo ainda será gravado
+Para vídeo longo não escreva fala palavra por palavra: entregue a estrutura, com o que cobrir em cada bloco. Quem grava desenvolve com as próprias palavras, e sai mais natural.
+Diga também o que colocar na miniatura — ela decide o clique tanto quanto o título, e quase ninguém planeja isso antes de gravar.
+
+FORMATO DA RESPOSTA — siga exatamente:
+ESTRUTURA
+Abertura (0-30s): [o que dizer para segurar quem chegou — a promessa, sem enrolação e sem vinheta]
+Bloco 1: [o que cobrir]
+Bloco 2: [o que cobrir]
+(siga até o último bloco — 3 a 6 blocos)
+Fechamento: [como encerrar e o que pedir]
+
+MINIATURA
+O que mostrar: [a cena ou o objeto]
+Texto na miniatura: [3 a 5 palavras, se houver]
+Por quê: [1 linha — como ela se completa com o título em vez de repeti-lo]
+
+TÍTULO
+[até 60 caracteres, com a promessa e a palavra que a pessoa buscaria]
+
+DESCRIÇÃO
+[150-300 palavras, com até 3 hashtags no final]`
+    },
+    shorts: {
+      label: 'Shorts', emoji: '⚡', produz: ['videos'], multi: false, aceita: ['video'],
+      resumo: 'Vídeo curto vertical. Roteiro antes, texto depois.',
+      base: `Shorts é vertical, curto e roda em repetição — o fim emenda no começo. Vale terminar de um jeito que faça a volta parecer natural.
+Ele é servido para quem não conhece o canal, então nada de "como eu falei no vídeo passado". Cada Short se explica sozinho.
+Nada de pedir inscrição antes de entregar alguma coisa. E não comece com apresentação: a pessoa vai embora no primeiro segundo.
+O título do Short é curto e aparece por cima do vídeo, não numa lista.`,
+      tenho: `FORMATO: SHORTS — o vídeo já está gravado
+
+FORMATO DA RESPOSTA — siga exatamente:
+TÍTULO
+[até 50 caracteres, direto]
+
+DESCRIÇÃO
+[1 a 3 linhas, com até 3 hashtags]`,
+      produzir: `FORMATO: SHORTS — o vídeo ainda será gravado
+Sua entrega principal é o roteiro. Duração alvo: 20 a 50 segundos.
+Diga o que aparece no primeiro quadro: é ele que segura o dedo, antes de qualquer palavra.
+Fale como se fala. O texto na tela complementa a fala, não a repete.
+
+FORMATO DA RESPOSTA — siga exatamente:
+PRIMEIRO QUADRO
+[o que a pessoa vê no instante em que o vídeo abre]
+
+GANCHO (0-3s)
+Fala: [1 frase curta]
+Na tela: [texto que aparece]
+
+CENA 2
+Fala: [...]
+Na tela: [...]
+Imagem: [o que está sendo mostrado]
+
+(siga até a última cena — 3 a 5 cenas no total)
+
+FECHAMENTO
+Fala: [algo que feche a ideia e emende bem na repetição]
+Na tela: [...]
+
+TÍTULO
+[até 50 caracteres, direto]
+
+DESCRIÇÃO
+[1 a 3 linhas, com até 3 hashtags]`
     },
   },
 };
