@@ -273,11 +273,24 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .card-body { padding: 20px; }
 
 /* ── GRID ── */
+/* Formulário em cima, resultado embaixo. Lado a lado, o formulário ficava
+   estreito e altíssimo, e o resultado colava no topo com um vazio enorme por
+   baixo. Em largura total o resultado ainda ganha: roteiro e carrossel são
+   textos estruturados, que se leem melhor sem quebrar em coluna estreita. */
 .gerador-grid {
   display: grid;
-  grid-template-columns: 290px 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
   align-items: start;
+}
+.config-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 22px;
+  align-items: start;
+}
+@media (max-width: 820px) {
+  .config-cols { grid-template-columns: 1fr; gap: 0; }
 }
 
 /* ── CAMPOS ── */
@@ -519,7 +532,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
   border: 1px solid var(--border);
   border-radius: var(--r);
   box-shadow: var(--s1);
-  min-height: 420px;
+  min-height: 240px;
   display: flex; flex-direction: column;
   overflow: hidden;
 }
@@ -1091,14 +1104,20 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
         <div class="card">
           <div class="card-hdr">Configurar post</div>
           <div class="card-body">
+          <div class="config-cols">
 
+            <!-- Coluna 1 — onde vai ser publicado -->
+            <div>
             <div class="field">
               <label>Rede social <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--text3)">— selecione uma ou mais</span></label>
               <div class="voz-grid" id="voz-grid"></div>
             </div>
 
             <div class="field" id="formato-wrap" style="display:none"></div>
+            </div>
 
+            <!-- Coluna 2 — o material e o texto -->
+            <div>
             <div class="field">
               <label>Você já tem a foto ou o vídeo?</label>
               <div class="etapa-grid">
@@ -1151,6 +1170,9 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
               </div>
               <div id="sugestao-horario" style="display:none;margin-top:6px;padding:8px 10px;background:var(--g-l);border-radius:var(--rs);font-size:12px;color:var(--g-mid);line-height:1.6"></div>
             </div>
+            </div>
+
+          </div><!-- /config-cols -->
 
             <button class="btn btn-full" id="btn-gerar" onclick="gerarPost()">
               ✦ Gerar
@@ -1177,7 +1199,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 
         <div class="resultado-vazio" id="resultado-vazio">
           <div class="ico">✦</div>
-          <p>Configure o post ao lado<br>e clique em <em>Gerar</em>.</p>
+          <p>Configure o post acima<br>e clique em <em>Gerar</em>.</p>
         </div>
 
         <div class="loading" id="loading">
@@ -3408,6 +3430,16 @@ function buildSystemPara(key, formatoKey, tomKey) {
 // Renderiza a área de resultado — com abas se houver 2+ redes, sem abas se houver só 1
 function renderizarResultado(tema, tom) {
   const chaves = Object.keys(resultadosPorRede);
+
+  // Quem desenha o resultado é quem deve esconder o "configure acima". Antes
+  // isso dependia de gerarPost ter feito a limpeza — funciona, mas deixa a
+  // função dependente de quem a chama.
+  if (chaves.length) {
+    const vazio = document.getElementById('resultado-vazio');
+    vazio.classList.add('hidden');
+    vazio.style.display = 'none';
+  }
+
   const abasEl = document.getElementById('resultado-abas');
   const paineisEl = document.getElementById('resultado-abas-paineis');
   const textoSimplesEl = document.getElementById('resultado-texto');
