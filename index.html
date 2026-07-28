@@ -357,6 +357,26 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .etapa-btn.on strong { color: var(--g-c); }
 
 /* ── Formatos (Instagram) ── */
+.fmt-rede {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text3);
+  border-radius: var(--rs);
+  padding: 11px 12px 12px;
+  background: var(--bg2);
+}
+.fmt-rede + .fmt-rede { margin-top: 10px; }
+.fmt-rede-hdr {
+  font-size: 12px; font-weight: 600; color: var(--text2);
+  margin-bottom: 9px; display: flex; align-items: center; gap: 5px;
+}
+/* Mesma cor que a rede já tem no calendário e nos selos do Banco. */
+.fmt-rede.instagram { border-left-color: #C084FC; }
+.fmt-rede.instagram .fmt-rede-hdr { color: #C084FC; }
+.fmt-rede.tiktok { border-left-color: #4ADE80; }
+.fmt-rede.tiktok .fmt-rede-hdr { color: #4ADE80; }
+.fmt-rede.generico { border-left-color: var(--g-c); }
+.fmt-rede.generico .fmt-rede-hdr { color: var(--g-c); }
+
 .fmt-grid { display: flex; flex-wrap: wrap; gap: 6px; }
 .fmt-btn {
   font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 500;
@@ -367,7 +387,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 }
 .fmt-btn:hover { border-color: var(--g-c); color: var(--g-c); }
 .fmt-btn.on { background: var(--g); border-color: var(--g); color: #fff; }
-.fmt-resumo { font-size: 11.5px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+.fmt-resumo { font-size: 11.5px; color: var(--text3); margin-top: 7px; line-height: 1.5; }
 .carrossel-tiras { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
 .carrossel-tira { position: relative; flex: 0 0 auto; }
 .carrossel-tira img {
@@ -2674,7 +2694,10 @@ function renderFormatos() {
   }
 
   wrap.style.display = 'block';
-  wrap.innerHTML = comFormato.map(rede => {
+  // Com várias redes, as molduras dizem de quem é cada bloco — mas alguém
+  // precisa dizer que aquilo tudo é a escolha de formato.
+  const titulo = comFormato.length > 1 ? '<label>Formato de cada rede</label>' : '';
+  wrap.innerHTML = titulo + comFormato.map(rede => {
     const disponiveis = todosFormatos(rede);
     if (!formatoSelecionado[rede] || !disponiveis.includes(formatoSelecionado[rede])) {
       formatoSelecionado[rede] = formatoPadrao(rede);
@@ -2685,9 +2708,19 @@ function renderFormatos() {
       return `<button type="button" class="fmt-btn${on}" id="fmt-${rede}-${f}" title="${cfg.resumo}"
         onclick="escolherFormato('${rede}','${f}')">${cfg.emoji} ${cfg.label}</button>`;
     }).join('');
-    return `<label>Formato ${comFormato.length > 1 ? '— ' + REDES[rede].label : ''}</label>
-            <div class="fmt-grid">${pills}</div>
+    const corpo = `<div class="fmt-grid">${pills}</div>
             <div class="fmt-resumo" id="fmt-resumo-${rede}">${FORMATOS[rede][formatoSelecionado[rede]].resumo}</div>`;
+
+    // Com uma rede só, moldura seria enfeite. Com duas ou mais, é o que separa
+    // "os formatos do TikTok" de "os formatos do Instagram" — sem ela os dois
+    // blocos correm juntos e a pessoa não sabe onde um termina.
+    if (comFormato.length === 1) {
+      return `<label>Formato</label>${corpo}`;
+    }
+    return `<div class="fmt-rede ${REDES[rede].cal || 'generico'}">
+              <div class="fmt-rede-hdr">${REDES[rede].emoji} ${REDES[rede].label}</div>
+              ${corpo}
+            </div>`;
   }).join('');
   atualizarCampoMidia();
 }
