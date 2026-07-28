@@ -2841,7 +2841,14 @@ async function carregarMidia(input) {
   let videoNovo = null;
   if (arquivosVideo.length && tipos.has('video')) {
     const dv = await lerArquivo(arquivosVideo[0]);
-    if (dv) videoNovo = { dataUrl: dv, nome: arquivosVideo[0].name };
+    if (dv) {
+      videoNovo = { dataUrl: dv, nome: arquivosVideo[0].name };
+      mostrarToast('Lendo o vídeo...');
+      videoNovo.quadros = await extrairQuadros(dv, 720);
+      if (!videoNovo.quadros.length) {
+        mostrarToast('Não consegui ler as imagens deste vídeo — o texto sairá a partir do tema.');
+      }
+    }
   } else if (arquivosVideo.length) {
     mostrarToast('Nenhum dos formatos escolhidos usa vídeo — o arquivo foi ignorado.');
   }
@@ -2853,7 +2860,7 @@ async function carregarMidia(input) {
     midiaAtual = imagensAtuais.length
       ? { tipo: 'imagem', dataUrl: imagensAtuais[0].dataUrl, nome: imagensAtuais[0].nome,
           extras: imagensAtuais.slice(1), video: videoNovo }
-      : { tipo: 'video', dataUrl: videoNovo.dataUrl, nome: videoNovo.nome };
+      : { tipo: 'video', dataUrl: videoNovo.dataUrl, nome: videoNovo.nome, quadros: videoNovo.quadros || [] };
     renderPreviewMidia();
     return;
   }
@@ -2898,10 +2905,100 @@ async function carregarMidia(input) {
   if (cortou) mostrarToast(`Carrossel usa até ${MAX_IMAGENS_CARROSSEL} imagens — as demais foram descartadas.`);
 }
 
+// A IA não recebe vídeo, só imagens. Sem isto, quem sobe um vídeo recebe um
+// texto escrito às cegas: tudo que chegava ao modelo era a frase "um vídeo
+// acompanha este post". Aqui o navegador tira alguns quadros do vídeo e são
+// eles que vão — a IA passa a enxergar o que foi gravado.
+const QUADROS_POR_VIDEO = 3;
+
+function extrairQuadros(dataUrl, maxLado) {
+  return new Promise((resolve) => {
+    const v = document.createElement('video');
+    v.preload = 'auto'; v.muted = true; v.playsInline = true;
+    const quadros = [];
+    // 'inicio' → esperando os metadados; 'medindo' → forçando o cálculo da
+    // duração; 'capturando' → percorrendo os instantes.
+    let tempos = [], i = 0, encerrado = false, fase = 'inicio';
+
+    function encerrar() {
+      if (encerrado) return;
+      encerrado = true;
+      try { v.removeAttribute('src'); v.load(); } catch (e) {}
+      resolve(quadros);
+    }
+
+    function capturar() {
+      try {
+        const escala = Math.min(1, (maxLado || 720) / Math.max(v.videoWidth, v.videoHeight));
+        const c = document.createElement('canvas');
+        c.width = Math.round(v.videoWidth * escala);
+        c.height = Math.round(v.videoHeight * escala);
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+        quadros.push({ dataUrl: c.toDataURL('image/jpeg', 0.75), segundo: Math.round(v.currentTime) });
+      } catch (e) { /* quadro perdido não invalida os outros */ }
+    }
+
+    function comecar(duracao) {
+      if (!isFinite(duracao) || duracao <= 0 || !v.videoWidth) return encerrar();
+      // Evita o primeiro e o último instante, que costumam ser quadro preto.
+      tempos = [duracao * 0.15, duracao * 0.5, duracao * 0.85].slice(0, QUADROS_POR_VIDEO);
+      fase = 'capturando';
+      i = 0;
+      v.currentTime = tempos[0];
+    }
+
+    v.onerror = encerrar;
+
+    v.onloadedmetadata = function () {
+      // Vídeo gravado no navegador (e alguns celulares) chega com duração
+      // infinita: só depois de tentar avançar até o fim o navegador calcula.
+      if (v.duration === Infinity) {
+        fase = 'medindo';
+        v.currentTime = 1e101;
+        return;
+      }
+      comecar(v.duration);
+    };
+
+    // Só interessa quando fomos nós que pedimos a medição. Este evento também
+    // dispara antes dos metadados, quando videoWidth ainda é 0 — agir ali
+    // fazia a extração desistir de todo vídeo.
+    v.ondurationchange = function () {
+      if (fase === 'medindo' && isFinite(v.duration) && v.duration > 0) comecar(v.duration);
+    };
+
+    v.onseeked = function () {
+      if (fase !== 'capturando') return;
+      capturar();
+      i++;
+      if (i < tempos.length) v.currentTime = tempos[i];
+      else encerrar();
+    };
+
+    // Codec que o navegador não decodifica trava sem disparar erro — a trava de
+    // tempo garante que a geração não fica esperando por ele.
+    setTimeout(encerrar, 15000);
+    v.src = dataUrl;
+  });
+}
+
+// Os quadros servem só para a IA enxergar o vídeo na hora de gerar. Salvá-los
+// seria guardar três imagens a mais por post, na nuvem e no navegador, sem
+// nenhum uso depois.
+function midiaParaSalvar(m) {
+  if (!m) return null;
+  const { quadros, ...copia } = m;
+  if (copia.video) {
+    const { quadros: q2, ...semQuadros } = copia.video;
+    copia.video = semQuadros;
+  }
+  return copia;
+}
+
 // O vídeo do post, esteja ele sozinho ou acompanhando as imagens.
 function videoDoPost(m) {
   if (!m) return null;
-  if (m.tipo === 'video') return { dataUrl: m.dataUrl, nome: m.nome };
+  if (m.tipo === 'video') return { dataUrl: m.dataUrl, nome: m.nome, quadros: m.quadros || [] };
   return m.video || null;
 }
 
@@ -2929,7 +3026,8 @@ function renderPreviewMidia() {
 
   if (vid) {
     partes.push(`<video src="${vid.dataUrl}" style="width:100%;max-height:130px;border-radius:10px;border:1px solid var(--border);margin-top:6px" controls></video>`);
-    legenda.push('1 vídeo');
+    const q = (vid.quadros || []).length;
+    legenda.push(q ? `1 vídeo (a IA vai ver ${q} quadros dele)` : '1 vídeo (não consegui ler as imagens dele)');
   }
 
   inner.innerHTML = partes.join('');
@@ -3178,23 +3276,30 @@ async function gerarPost() {
 async function gerarParaRede(key, tema, tom, isRetry, formatoKey) {
   const r = REDES[key] || REDES.linkedin;
   const fKey = formatoKey || (FORMATOS[key] ? (formatoSelecionado[key] || formatoPadrao(key)) : null);
-  // Só o carrossel usa as imagens extras — nos outros formatos vai só a primeira,
-  // e trocar de formato não descarta o que o usuário já subiu.
+  // Cada formato recebe só o material que usa: o carrossel leva todas as
+  // imagens, o Reels leva o vídeo, e nenhum leva o material do outro.
   const fmtCfg = FORMATOS[key] && FORMATOS[key][fKey];
-  const fmtCfgAceitaImagem = !fmtCfg || (fmtCfg.aceita || []).includes('imagem');
+  const aceita = fmtCfg ? (fmtCfg.aceita || []) : ['imagem', 'video'];
+  const aceitaImagem = aceita.includes('imagem');
+  const aceitaVideo = aceita.includes('video');
+
   const todasImagens = imagensDoPost(midiaAtual);
-  const imagens = (!isRetry && todasImagens.length)
-    ? (fmtCfgAceitaImagem ? (fmtCfg && fmtCfg.multi ? todasImagens : todasImagens.slice(0, 1)) : [])
+  const imagens = (!isRetry && aceitaImagem && todasImagens.length)
+    ? (fmtCfg && fmtCfg.multi ? todasImagens : todasImagens.slice(0, 1))
     : [];
-  const usarImagem = imagens.length > 0;
   const varias = imagens.length > 1;
 
-  // O vídeo só é mencionado para quem o usa: dizer que há um vídeo num post de
-  // carrossel confunde a IA sobre o que ela está escrevendo.
-  const aceitaVideo = !fmtCfg || (fmtCfg.aceita || []).includes('video');
-  const temVideo = aceitaVideo && !!videoDoPost(midiaAtual);
+  const video = aceitaVideo ? videoDoPost(midiaAtual) : null;
+  const temVideo = !!video;
+  // Os quadros são o que faz a IA enxergar o vídeo. Sem eles (codec que o
+  // navegador não lê), sobra só a menção de que existe um vídeo.
+  const quadros = (!isRetry && video) ? (video.quadros || []) : [];
 
-  const contextoVisual = varias
+  const usarImagem = imagens.length > 0 || quadros.length > 0;
+
+  const contextoVisual = quadros.length
+    ? `As ${quadros.length} imagens acima são quadros retirados do vídeo que acompanha este post, na ordem em que aparecem${imagens.length ? ' (as anteriores são as imagens do post)' : ''}. Elas mostram o que foi gravado: use-as para entender assunto, cenário, produto e clima — sem identificar pessoas. Não descreva os quadros um a um; eles são o vídeo, não um carrossel.`
+    : varias
     ? `As ${imagens.length} imagens acima são os cartões do carrossel, na ordem em que vão aparecer. Escreva exatamente ${imagens.length} cartões — um para cada imagem, respeitando a ordem: o texto do primeiro cartão fala da primeira imagem, e assim por diante. Use cada imagem para capturar atmosfera, produto, cenário e paleta — sem identificar pessoas.`
     : `A imagem acima é o contexto visual. Use-a para capturar atmosfera, produto, cenário e paleta — sem identificar pessoas.`;
 
@@ -3213,7 +3318,7 @@ Escreva o post agora. Comece direto pelo gancho — sem introdução, sem explic
   var msgContent;
   if (usarImagem) {
     var blocos = [];
-    imagens.forEach(function(im) {
+    imagens.concat(quadros).forEach(function(im) {
       var m = (im.dataUrl || '').match(/^data:([^;]+);base64,(.+)$/);
       if (m) blocos.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } });
     });
@@ -3294,7 +3399,7 @@ function renderizarResultado(tema, tom) {
       texto: r.texto, tom, tema,
       etapa: etapaAtual,
       roteiro: etapaAtual === 'produzir' ? r.texto : (roteiroDeOrigem || null),
-      midia: midiaAtual ? { ...midiaAtual } : null,
+      midia: midiaParaSalvar(midiaAtual),
       data: document.getElementById('input-data').value || '',
       status: etapaAtual === 'produzir' ? 'producao' : 'rascunho', aprovacao: false, emailAprovacao: '',
       empresa: perfil.nome, criadoEm: new Date().toISOString(),
@@ -3385,7 +3490,7 @@ function salvarAba(key) {
     texto: textoFinal,
     etapa: etapaAtual,
     roteiro: etapaAtual === 'produzir' ? textoFinal : (roteiroDeOrigem || null),
-    midia: midiaAtual ? { ...midiaAtual } : null,
+    midia: midiaParaSalvar(midiaAtual),
     data: dataAtual,
     hora: document.getElementById('input-hora').value || '',
     status: etapaAtual === 'produzir' ? 'producao' : 'rascunho',
