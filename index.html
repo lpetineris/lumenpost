@@ -2172,19 +2172,19 @@ const FORMATOS = {
   instagram: {
     feed: {
       label: 'Feed', emoji: '🖼', padrao: true, produz: ['fotos','artes'], multi: false, aceita: ['imagem','video'],
-      resumo: 'Uma imagem \u00fanica com legenda.',
-      tenho: `FORMATO: POST DE FEED (imagem \u00fanica) \u2014 voc\u00ea j\u00e1 tem a imagem
+      resumo: 'Uma imagem única com legenda.',
+      tenho: `FORMATO: POST DE FEED (imagem única) — você já tem a imagem
 Entregue a legenda do post, seguindo a estrutura do Instagram descrita acima.
 
-FORMATO DA RESPOSTA: s\u00f3 a legenda, pronta para copiar e publicar. Sem r\u00f3tulo, sem cabe\u00e7alho, sem a palavra LEGENDA na frente \u2014 aqui o texto inteiro j\u00e1 \u00e9 a legenda.`,
-      produzir: `FORMATO: POST DE FEED (imagem \u00fanica) \u2014 a imagem ainda ser\u00e1 produzida
-Antes da legenda, diga que imagem fazer. Seja concreto o bastante para algu\u00e9m executar com um celular: o que aparece, de que \u00e2ngulo, com que luz.
+FORMATO DA RESPOSTA: só a legenda, pronta para copiar e publicar. Sem rótulo, sem cabeçalho, sem a palavra LEGENDA na frente — aqui o texto inteiro já é a legenda.`,
+      produzir: `FORMATO: POST DE FEED (imagem única) — a imagem ainda será produzida
+Antes da legenda, diga que imagem fazer. Seja concreto o bastante para alguém executar com um celular: o que aparece, de que ângulo, com que luz.
 
-FORMATO DA RESPOSTA \u2014 siga exatamente:
+FORMATO DA RESPOSTA — siga exatamente:
 A FOTO
-O que mostrar: [descri\u00e7\u00e3o do assunto principal]
-Enquadramento: [\u00e2ngulo e dist\u00e2ncia]
-Luz e clima: [natural, contraluz, ambiente \u2014 e a sensa\u00e7\u00e3o que deve passar]
+O que mostrar: [descrição do assunto principal]
+Enquadramento: [ângulo e distância]
+Luz e clima: [natural, contraluz, ambiente — e a sensação que deve passar]
 Evite: [o erro mais comum nesse tipo de foto]
 
 LEGENDA
@@ -2192,127 +2192,127 @@ LEGENDA
     },
     carrossel: {
       label: 'Carrossel', emoji: '🎠', produz: ['fotos','artes'], multi: true, aceita: ['imagem'],
-      resumo: 'V\u00e1rios cart\u00f5es que o seguidor desliza.',
-      base: `Um carrossel \u00e9 lido deslizando. Cada cart\u00e3o precisa entregar uma ideia sozinho e criar vontade de deslizar para o pr\u00f3ximo.
-Use de 5 a 8 cart\u00f5es. A capa carrega o gancho; o \u00faltimo cart\u00e3o carrega o CTA.
-Cada cart\u00e3o: um t\u00edtulo curto (at\u00e9 6 palavras) e no m\u00e1ximo 2 linhas de apoio. Texto de cart\u00e3o \u00e9 lido em 2 segundos \u2014 corte tudo que n\u00e3o for essencial.
-Nunca quebre uma frase no meio para continuar no cart\u00e3o seguinte.`,
-      tenho: `FORMATO: CARROSSEL \u2014 voc\u00ea j\u00e1 tem as imagens
-Escreva o texto de cada cart\u00e3o a partir das imagens enviadas, na ordem em que vieram.
+      resumo: 'Vários cartões que o seguidor desliza.',
+      base: `Um carrossel é lido deslizando. Cada cartão precisa entregar uma ideia sozinho e criar vontade de deslizar para o próximo.
+Use de 5 a 8 cartões. A capa carrega o gancho; o último cartão carrega o CTA.
+Cada cartão: um título curto (até 6 palavras) e no máximo 2 linhas de apoio. Texto de cartão é lido em 2 segundos — corte tudo que não for essencial.
+Nunca quebre uma frase no meio para continuar no cartão seguinte.`,
+      tenho: `FORMATO: CARROSSEL — você já tem as imagens
+Escreva o texto de cada cartão a partir das imagens enviadas, na ordem em que vieram.
 
-FORMATO DA RESPOSTA \u2014 siga exatamente:
+FORMATO DA RESPOSTA — siga exatamente:
 CAPA
-T\u00edtulo: [at\u00e9 6 palavras, \u00e9 o gancho]
+Título: [até 6 palavras, é o gancho]
 Apoio: [1 linha, opcional]
 
-CART\u00c3O 2
-T\u00edtulo: [...]
+CARTÃO 2
+Título: [...]
 Apoio: [...]
 
-(siga at\u00e9 o \u00faltimo cart\u00e3o)
+(siga até o último cartão)
 
 LEGENDA
 [a legenda que acompanha o carrossel, 80-150 palavras, com hashtags]`,
-      produzir: `FORMATO: CARROSSEL \u2014 as imagens ainda ser\u00e3o produzidas
-Para cada cart\u00e3o, diga o que ilustrar e escreva o texto que vai por cima.
+      produzir: `FORMATO: CARROSSEL — as imagens ainda serão produzidas
+Para cada cartão, diga o que ilustrar e escreva o texto que vai por cima.
 
-FORMATO DA RESPOSTA \u2014 siga exatamente:
+FORMATO DA RESPOSTA — siga exatamente:
 CAPA
-Imagem: [o que mostrar nesse cart\u00e3o]
-T\u00edtulo: [at\u00e9 6 palavras, \u00e9 o gancho]
+Imagem: [o que mostrar nesse cartão]
+Título: [até 6 palavras, é o gancho]
 Apoio: [1 linha, opcional]
 
-CART\u00c3O 2
+CARTÃO 2
 Imagem: [...]
-T\u00edtulo: [...]
+Título: [...]
 Apoio: [...]
 
-(siga at\u00e9 o \u00faltimo cart\u00e3o)
+(siga até o último cartão)
 
 LEGENDA
 [a legenda que acompanha o carrossel, 80-150 palavras, com hashtags]`
     },
     reels: {
       label: 'Reels', emoji: '🎬', produz: ['videos'], multi: false, aceita: ['video'],
-      resumo: 'V\u00eddeo curto. Roteiro antes, legenda depois.',
-      tenho: `FORMATO: REELS \u2014 o v\u00eddeo j\u00e1 est\u00e1 gravado
-N\u00e3o escreva roteiro: o v\u00eddeo existe. Escreva a legenda que vai acompanh\u00e1-lo.
-A legenda do Reels \u00e9 curta e n\u00e3o narra o que se v\u00ea \u2014 ela d\u00e1 o contexto que o v\u00eddeo n\u00e3o cabe dizer, ou provoca o coment\u00e1rio.
+      resumo: 'Vídeo curto. Roteiro antes, legenda depois.',
+      tenho: `FORMATO: REELS — o vídeo já está gravado
+Não escreva roteiro: o vídeo existe. Escreva a legenda que vai acompanhá-lo.
+A legenda do Reels é curta e não narra o que se vê — ela dá o contexto que o vídeo não cabe dizer, ou provoca o comentário.
 
-FORMATO DA RESPOSTA: s\u00f3 a legenda, 40-80 palavras, com hashtags. Sem r\u00f3tulo e sem cabe\u00e7alho.`,
-      produzir: `FORMATO: REELS \u2014 o v\u00eddeo ainda ser\u00e1 gravado
-O conte\u00fado do Reels \u00e9 o v\u00eddeo \u2014 a legenda \u00e9 secund\u00e1ria. Sua entrega principal \u00e9 o roteiro.
-Dura\u00e7\u00e3o alvo: 15 a 30 segundos. Isso significa poucas cenas e frases faladas curtas.
-Os 3 primeiros segundos decidem tudo: comece pelo gancho, sem apresenta\u00e7\u00e3o, sem "oi pessoal", sem logo.
-Escreva a fala do jeito que se fala, n\u00e3o do jeito que se escreve.
-O texto na tela nunca repete a fala palavra por palavra \u2014 ele refor\u00e7a ou complementa.
+FORMATO DA RESPOSTA: só a legenda, 40-80 palavras, com hashtags. Sem rótulo e sem cabeçalho.`,
+      produzir: `FORMATO: REELS — o vídeo ainda será gravado
+O conteúdo do Reels é o vídeo — a legenda é secundária. Sua entrega principal é o roteiro.
+Duração alvo: 15 a 30 segundos. Isso significa poucas cenas e frases faladas curtas.
+Os 3 primeiros segundos decidem tudo: comece pelo gancho, sem apresentação, sem "oi pessoal", sem logo.
+Escreva a fala do jeito que se fala, não do jeito que se escreve.
+O texto na tela nunca repete a fala palavra por palavra — ele reforça ou complementa.
 
-FORMATO DA RESPOSTA \u2014 siga exatamente:
+FORMATO DA RESPOSTA — siga exatamente:
 GANCHO (0-3s)
-Fala: [o que \u00e9 dito, 1 frase curta]
+Fala: [o que é dito, 1 frase curta]
 Na tela: [texto que aparece na tela]
-Imagem: [o que est\u00e1 sendo mostrado]
+Imagem: [o que está sendo mostrado]
 
 CENA 2
 Fala: [...]
 Na tela: [...]
 Imagem: [...]
 
-(siga at\u00e9 a \u00faltima cena \u2014 3 a 5 cenas no total)
+(siga até a última cena — 3 a 5 cenas no total)
 
 CTA FINAL
 Fala: [...]
 Na tela: [...]
 
-\u00c1UDIO
-[sugira o TIPO de \u00e1udio \u2014 trilha acelerada, som ambiente, narra\u00e7\u00e3o, sil\u00eancio \u2014 e por qu\u00ea. Nunca cite uma m\u00fasica ou trend espec\u00edfica: voc\u00ea n\u00e3o tem como saber o que est\u00e1 em alta hoje.]
+ÁUDIO
+[sugira o TIPO de áudio — trilha acelerada, som ambiente, narração, silêncio — e por quê. Nunca cite uma música ou trend específica: você não tem como saber o que está em alta hoje.]
 
 LEGENDA
 [a legenda do Reels, 40-80 palavras, com hashtags]`
     },
     stories: {
       label: 'Stories', emoji: '⚡', produz: ['fotos','videos','artes'], multi: true, aceita: ['imagem','video'],
-      resumo: 'Sequ\u00eancia de telas que somem em 24h.',
-      base: `Stories n\u00e3o tem legenda. \u00c9 uma sequ\u00eancia de telas, cada uma vista por 2 ou 3 segundos.
-Use de 3 a 5 telas. Cada tela: no m\u00e1ximo 2 linhas de texto, porque o dedo j\u00e1 est\u00e1 subindo para pular.
-Story \u00e9 conversa, n\u00e3o an\u00fancio. Escreva como quem manda mensagem para um conhecido.
-Aproveite os recursos nativos \u2014 enquete, caixa de pergunta, quiz, contagem regressiva, link \u2014 porque eles seguram a pessoa e geram resposta. Sugira o recurso na tela onde ele faz sentido, n\u00e3o em todas.`,
-      tenho: `FORMATO: STORIES \u2014 voc\u00ea j\u00e1 tem o material
+      resumo: 'Sequência de telas que somem em 24h.',
+      base: `Stories não tem legenda. É uma sequência de telas, cada uma vista por 2 ou 3 segundos.
+Use de 3 a 5 telas. Cada tela: no máximo 2 linhas de texto, porque o dedo já está subindo para pular.
+Story é conversa, não anúncio. Escreva como quem manda mensagem para um conhecido.
+Aproveite os recursos nativos — enquete, caixa de pergunta, quiz, contagem regressiva, link — porque eles seguram a pessoa e geram resposta. Sugira o recurso na tela onde ele faz sentido, não em todas.`,
+      tenho: `FORMATO: STORIES — você já tem o material
 Escreva o texto de cada tela a partir do que foi enviado, na ordem.
 
-FORMATO DA RESPOSTA \u2014 siga exatamente:
+FORMATO DA RESPOSTA — siga exatamente:
 TELA 1
-Texto: [at\u00e9 2 linhas]
-Recurso: [enquete/pergunta/quiz/nenhum \u2014 se houver, escreva as op\u00e7\u00f5es]
+Texto: [até 2 linhas]
+Recurso: [enquete/pergunta/quiz/nenhum — se houver, escreva as opções]
 
 TELA 2
 Texto: [...]
 Recurso: [...]
 
-(siga at\u00e9 a \u00faltima tela)
+(siga até a última tela)
 
 TELA FINAL
-Texto: [o CTA \u2014 arrasta pra cima, link na bio, responde aqui]
+Texto: [o CTA — arrasta pra cima, link na bio, responde aqui]
 Recurso: [...]`,
-      produzir: `FORMATO: STORIES \u2014 o material ainda ser\u00e1 produzido
+      produzir: `FORMATO: STORIES — o material ainda será produzido
 Para cada tela, diga o que mostrar e escreva o texto que vai por cima.
 
-FORMATO DA RESPOSTA \u2014 siga exatamente:
+FORMATO DA RESPOSTA — siga exatamente:
 TELA 1
 Imagem: [o que mostrar]
-Texto: [at\u00e9 2 linhas]
-Recurso: [enquete/pergunta/quiz/nenhum \u2014 se houver, escreva as op\u00e7\u00f5es]
+Texto: [até 2 linhas]
+Recurso: [enquete/pergunta/quiz/nenhum — se houver, escreva as opções]
 
 TELA 2
 Imagem: [...]
 Texto: [...]
 Recurso: [...]
 
-(siga at\u00e9 a \u00faltima tela)
+(siga até a última tela)
 
 TELA FINAL
 Imagem: [...]
-Texto: [o CTA \u2014 arrasta pra cima, link na bio, responde aqui]
+Texto: [o CTA — arrasta pra cima, link na bio, responde aqui]
 Recurso: [...]`
     },
   },
