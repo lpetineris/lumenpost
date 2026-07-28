@@ -2233,7 +2233,7 @@ LEGENDA
 [a legenda completa, pronta para copiar]`
     },
     carrossel: {
-      label: 'Carrossel', emoji: '🎠', produz: ['fotos','artes'], multi: true, aceita: ['imagem'],
+      label: 'Carrossel', emoji: '🎠', produz: ['fotos','artes'], multi: true, unidade: 'cartões', aceita: ['imagem'],
       resumo: 'Vários cartões que o seguidor desliza.',
       base: `Um carrossel é lido deslizando. Cada cartão precisa entregar uma ideia sozinho e criar vontade de deslizar para o próximo.
 Use de 5 a 8 cartões. A capa carrega o gancho; o último cartão carrega o CTA.
@@ -2313,7 +2313,7 @@ LEGENDA
 [a legenda do Reels, 40-80 palavras, com hashtags]`
     },
     stories: {
-      label: 'Stories', emoji: '⚡', produz: ['fotos','videos','artes'], multi: true, aceita: ['imagem','video'],
+      label: 'Stories', emoji: '⚡', produz: ['fotos','videos','artes'], multi: true, unidade: 'telas', aceita: ['imagem','video'],
       resumo: 'Sequência de telas que somem em 24h.',
       base: `Stories não tem legenda. É uma sequência de telas, cada uma vista por 2 ou 3 segundos.
 Use de 3 a 5 telas. Cada tela: no máximo 2 linhas de texto, porque o dedo já está subindo para pular.
@@ -2403,7 +2403,7 @@ LEGENDA
 [a legenda, 20-60 palavras, com hashtags]`
     },
     foto: {
-      label: 'Foto', emoji: '🖼', produz: ['fotos','artes'], multi: true, aceita: ['imagem'],
+      label: 'Foto', emoji: '🖼', produz: ['fotos','artes'], multi: true, unidade: 'textos, um para cada imagem', aceita: ['imagem'],
       resumo: 'Photo Mode — imagens que deslizam, com música.',
       base: `O Photo Mode é uma sequência de imagens que a pessoa desliza, com música por cima. Funciona bem para antes e depois, passo a passo, listas e bastidores — e é a porta de entrada de quem não grava vídeo.
 Cada imagem carrega uma frase curta por cima. Frase de imagem é lida em 2 segundos: se não couber num respiro, está longa.
@@ -2444,6 +2444,109 @@ Texto: [...]
 
 LEGENDA
 [a legenda, 20-60 palavras, com hashtags]`
+    },
+  },
+
+  facebook: {
+    feed: {
+      label: 'Feed', emoji: '🖼', padrao: true, produz: ['fotos','artes'], multi: true, aceita: ['imagem','video'],
+      resumo: 'Publicação no feed, com uma ou várias fotos.',
+      base: `No Facebook o texto pesa mais que nas outras redes: o público lê. Parágrafos curtos, mas pode desenvolver o raciocínio.
+A ação que move o alcance aqui é o compartilhamento, não o salvamento. Escreva algo que a pessoa queira mandar para alguém — uma informação útil, uma história, uma opinião com a qual ela concorde.
+Diferente do Instagram, aqui o link é clicável dentro do post. Quando fizer sentido, o CTA pode mandar direto para o site, o WhatsApp ou o formulário, sem "link na bio".`,
+      tenho: `FORMATO: PUBLICAÇÃO NO FEED — você já tem o material
+Se vierem várias fotos, elas formam um álbum: o texto continua sendo um só, não um por foto.
+
+FORMATO DA RESPOSTA: só o texto da publicação, pronto para copiar. Sem rótulo e sem cabeçalho.`,
+      produzir: `FORMATO: PUBLICAÇÃO NO FEED — o material ainda será produzido
+Antes do texto, diga o que fotografar. Concreto o bastante para executar com um celular.
+
+FORMATO DA RESPOSTA — siga exatamente:
+A FOTO
+O que mostrar: [descrição do assunto principal]
+Enquadramento: [ângulo e distância]
+Luz e clima: [natural, contraluz, ambiente — e a sensação que deve passar]
+Evite: [o erro mais comum nesse tipo de foto]
+
+TEXTO
+[o texto da publicação, pronto para copiar]`
+    },
+    reels: {
+      label: 'Reels', emoji: '🎬', produz: ['videos'], multi: false, aceita: ['video'],
+      resumo: 'Vídeo curto. Roteiro antes, legenda depois.',
+      base: `O Reels do Facebook alcança muito além de quem já segue a página — é o formato que a Meta empurra para descoberta.
+O público aqui é mais amplo e em média mais velho que o do Instagram: menos código de nicho, mais clareza. O que se explica em uma frase funciona melhor que o que exige contexto.`,
+      tenho: `FORMATO: REELS — o vídeo já está gravado
+Não escreva roteiro: o vídeo existe. Escreva a legenda que vai com ele — curta, sem narrar o que se vê.
+
+FORMATO DA RESPOSTA: só a legenda, 30-70 palavras. Sem rótulo e sem cabeçalho.`,
+      produzir: `FORMATO: REELS — o vídeo ainda será gravado
+Sua entrega principal é o roteiro. Duração alvo: 20 a 45 segundos.
+Comece pelo gancho, nos primeiros segundos, e diga também o que aparece no primeiro quadro.
+Fale como se fala. O texto na tela complementa a fala, não a repete.
+
+FORMATO DA RESPOSTA — siga exatamente:
+PRIMEIRO QUADRO
+[o que a pessoa vê no instante em que o vídeo abre]
+
+GANCHO (0-3s)
+Fala: [1 frase curta]
+Na tela: [texto que aparece]
+
+CENA 2
+Fala: [...]
+Na tela: [...]
+Imagem: [o que está sendo mostrado]
+
+(siga até a última cena — 3 a 5 cenas no total)
+
+FECHAMENTO
+Fala: [...]
+Na tela: [...]
+
+ÁUDIO
+[sugira o TIPO de áudio — voz da própria pessoa, som ambiente, trilha, silêncio — e por quê. Nunca cite uma música ou trend específica: você não tem como saber o que está em alta hoje.]
+
+LEGENDA
+[a legenda, 30-70 palavras]`
+    },
+    stories: {
+      label: 'Stories', emoji: '⚡', produz: ['fotos','videos','artes'], multi: true, unidade: 'telas', aceita: ['imagem','video'],
+      resumo: 'Sequência de telas que somem em 24h.',
+      base: `Stories não tem legenda: é uma sequência de telas, cada uma vista por poucos segundos.
+Use de 3 a 5 telas, no máximo 2 linhas de texto em cada.
+O Stories do Facebook tem menos público que o do Instagram — vale para avisos rápidos, bastidores e lembretes, não para o conteúdo principal da semana.`,
+      tenho: `FORMATO: STORIES — você já tem o material
+Escreva o texto de cada tela a partir do que foi enviado, na ordem.
+
+FORMATO DA RESPOSTA — siga exatamente:
+TELA 1
+Texto: [até 2 linhas]
+
+TELA 2
+Texto: [...]
+
+(siga até a última tela)
+
+TELA FINAL
+Texto: [o CTA]`,
+      produzir: `FORMATO: STORIES — o material ainda será produzido
+Para cada tela, diga o que mostrar e escreva o texto que vai por cima.
+
+FORMATO DA RESPOSTA — siga exatamente:
+TELA 1
+Imagem: [o que mostrar]
+Texto: [até 2 linhas]
+
+TELA 2
+Imagem: [...]
+Texto: [...]
+
+(siga até a última tela)
+
+TELA FINAL
+Imagem: [...]
+Texto: [o CTA]`
     },
   },
 };
@@ -3387,13 +3490,20 @@ async function gerarParaRede(key, tema, tom, isRetry, formatoKey) {
   // Os quadros são o que faz a IA enxergar o vídeo. Sem eles (codec que o
   // navegador não lê), sobra só a menção de que existe um vídeo.
   const quadros = (!isRetry && video) ? (video.quadros || []) : [];
+  const unidade = fmtCfg && fmtCfg.unidade;
 
   const usarImagem = imagens.length > 0 || quadros.length > 0;
 
   const contextoVisual = quadros.length
     ? `As ${quadros.length} imagens acima são quadros retirados do vídeo que acompanha este post, na ordem em que aparecem${imagens.length ? ' (as anteriores são as imagens do post)' : ''}. Elas mostram o que foi gravado: use-as para entender assunto, cenário, produto e clima — sem identificar pessoas. Não descreva os quadros um a um; eles são o vídeo, não um carrossel.`
     : varias
-    ? `As ${imagens.length} imagens acima são os cartões do carrossel, na ordem em que vão aparecer. Escreva exatamente ${imagens.length} cartões — um para cada imagem, respeitando a ordem: o texto do primeiro cartão fala da primeira imagem, e assim por diante. Use cada imagem para capturar atmosfera, produto, cenário e paleta — sem identificar pessoas.`
+    ? (unidade
+        // Um texto por imagem — o nome da peça vem do formato. Fixar "cartão"
+        // aqui mandava a IA escrever cartões de carrossel num Stories, contra a
+        // instrução do próprio formato, que pede TELA.
+        ? `As ${imagens.length} imagens acima entram neste post na ordem em que aparecem. Escreva exatamente ${imagens.length} ${unidade}, respeitando essa ordem: o primeiro texto fala da primeira imagem, o segundo da segunda, e assim por diante. Use cada imagem para capturar atmosfera, produto, cenário e paleta — sem identificar pessoas.`
+        // Várias imagens, texto único: elas são contexto, não peças separadas.
+        : `As ${imagens.length} imagens acima acompanham este post, na ordem em que vão aparecer. O texto é um só — não escreva uma parte para cada imagem. Use-as em conjunto para capturar atmosfera, produto, cenário e paleta, sem identificar pessoas.`)
     : `A imagem acima é o contexto visual. Use-a para capturar atmosfera, produto, cenário e paleta — sem identificar pessoas.`;
 
   const userPrompt = usarImagem
