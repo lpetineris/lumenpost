@@ -343,6 +343,19 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 
 .voz-btn:hover { border-color: var(--g-c); background: var(--g-l); box-shadow: var(--s2); }
 
+/* ── Etapa: já tenho / vou produzir ── */
+.etapa-grid { display: flex; flex-direction: column; gap: 8px; }
+.etapa-btn {
+  font-family: 'Poppins', sans-serif; text-align: left; cursor: pointer;
+  background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: var(--rs); padding: 10px 12px; transition: all .15s;
+}
+.etapa-btn:hover { border-color: var(--g-c); }
+.etapa-btn.on { border-color: var(--g); background: var(--g-l); }
+.etapa-btn strong { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.etapa-btn span { display: block; font-size: 11.5px; color: var(--text3); line-height: 1.45; }
+.etapa-btn.on strong { color: var(--g-c); }
+
 /* ── Formatos (Instagram) ── */
 .fmt-grid { display: flex; flex-wrap: wrap; gap: 6px; }
 .fmt-btn {
@@ -681,6 +694,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
   padding: 2px 9px; border-radius: 10px;
   letter-spacing: .04em; text-transform: uppercase;
 }
+.st-producao { background: rgba(139,92,246,.16); color: #A78BFA; }
 .st-rascunho { background: rgba(168,162,158,.16); color: var(--text3); }
 .st-aguardando { background: rgba(245,158,11,.16); color: #FBBF24; }
 .st-aprovado { background: var(--ok-bg); color: var(--ok); }
@@ -753,6 +767,14 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 
 .cal-post-item { border-radius: 4px; margin-bottom: 2px; cursor: pointer; transition: opacity .15s; overflow: hidden; }
 .cal-post-item:hover { opacity: .8; }
+.cal-post-item.em-producao {
+  outline: 1px dashed #A78BFA; outline-offset: -1px;
+  opacity: .75; position: relative;
+}
+.cal-post-item.em-producao::after {
+  content: '⚙'; position: absolute; top: 1px; right: 2px;
+  font-size: 9px; color: #A78BFA;
+}
 .cal-thumb { width: 100%; height: 32px; object-fit: cover; display: block; }
 .cal-thumb-video {
   width: 100%; height: 32px; background: var(--g-d);
@@ -1058,6 +1080,18 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
             <div class="field" id="formato-wrap" style="display:none"></div>
 
             <div class="field">
+              <label>Você já tem a foto ou o vídeo?</label>
+              <div class="etapa-grid">
+                <button type="button" class="etapa-btn on" id="etapa-tenho" onclick="escolherEtapa('tenho')">
+                  <strong>Já tenho</strong><span>Suba o arquivo e receba o texto pronto para publicar.</span>
+                </button>
+                <button type="button" class="etapa-btn" id="etapa-produzir" onclick="escolherEtapa('produzir')">
+                  <strong>Ainda vou produzir</strong><span>Receba a orientação do que gravar ou fotografar. A legenda vem depois, com o material na mão.</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="field" id="midia-wrap">
               <label>Imagem ou vídeo</label>
               <div class="dropzone" id="dropzone">
                 <input type="file" id="input-midia" accept="image/*,video/*" onchange="carregarMidia(this)">
@@ -1157,6 +1191,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
     </div>
     <div class="filtros">
       <button class="filtro on" onclick="filtrar('todos', this)">Todos</button>
+      <button class="filtro" onclick="filtrar('producao', this)">Em produção</button>
       <button class="filtro" onclick="filtrar('rascunho', this)">Rascunho</button>
       <button class="filtro" onclick="filtrar('aguardando', this)">Aguardando aprovação</button>
       <button class="filtro" onclick="filtrar('aprovado', this)">Aprovado</button>
@@ -1874,6 +1909,7 @@ async function loadFromCloud() {
           hora: p.hora || '',
           programacaoId: p.programacao_id || null,
           formato: p.formato || null,
+          roteiro: p.roteiro || null,
           midia: midia,
         };
       });
@@ -2092,98 +2128,148 @@ Emojis: 0-2, apenas se naturais ao contexto.` },
 const FORMATOS = {
   instagram: {
     feed: {
-      label: 'Feed', emoji: '🖼', padrao: true, produz: ['fotos','artes'],
-      resumo: 'Uma imagem única com legenda.',
-      instrucao: `FORMATO: POST DE FEED (imagem única)
+      label: 'Feed', emoji: '\u{1F5BC}', padrao: true, produz: ['fotos','artes'], multi: false,
+      resumo: 'Uma imagem \u00fanica com legenda.',
+      tenho: `FORMATO: POST DE FEED (imagem \u00fanica) \u2014 voc\u00ea j\u00e1 tem a imagem
 Entregue a legenda do post, seguindo a estrutura do Instagram descrita acima.
 
-FORMATO DA RESPOSTA: só a legenda, pronta para copiar e publicar. Sem rótulo, sem cabeçalho, sem a palavra LEGENDA na frente — aqui o texto inteiro já é a legenda.`
+FORMATO DA RESPOSTA: s\u00f3 a legenda, pronta para copiar e publicar. Sem r\u00f3tulo, sem cabe\u00e7alho, sem a palavra LEGENDA na frente \u2014 aqui o texto inteiro j\u00e1 \u00e9 a legenda.`,
+      produzir: `FORMATO: POST DE FEED (imagem \u00fanica) \u2014 a imagem ainda ser\u00e1 produzida
+Antes da legenda, diga que imagem fazer. Seja concreto o bastante para algu\u00e9m executar com um celular: o que aparece, de que \u00e2ngulo, com que luz.
+
+FORMATO DA RESPOSTA \u2014 siga exatamente:
+A FOTO
+O que mostrar: [descri\u00e7\u00e3o do assunto principal]
+Enquadramento: [\u00e2ngulo e dist\u00e2ncia]
+Luz e clima: [natural, contraluz, ambiente \u2014 e a sensa\u00e7\u00e3o que deve passar]
+Evite: [o erro mais comum nesse tipo de foto]
+
+LEGENDA
+[a legenda completa, pronta para copiar]`
     },
     carrossel: {
-      label: 'Carrossel', emoji: '🎠', produz: ['fotos','artes'],
-      resumo: 'Vários cartões que o seguidor desliza.',
-      instrucao: `FORMATO: CARROSSEL
-Um carrossel é lido deslizando. Cada cartão precisa entregar uma ideia sozinho e criar vontade de deslizar para o próximo.
-Use de 5 a 8 cartões. A capa carrega o gancho; o último cartão carrega o CTA.
-Cada cartão: um título curto (até 6 palavras) e no máximo 2 linhas de apoio. Texto de cartão é lido em 2 segundos — corte tudo que não for essencial.
-Nunca quebre uma frase no meio para continuar no cartão seguinte.
+      label: 'Carrossel', emoji: '\u{1F3A0}', produz: ['fotos','artes'], multi: true,
+      resumo: 'V\u00e1rios cart\u00f5es que o seguidor desliza.',
+      base: `Um carrossel \u00e9 lido deslizando. Cada cart\u00e3o precisa entregar uma ideia sozinho e criar vontade de deslizar para o pr\u00f3ximo.
+Use de 5 a 8 cart\u00f5es. A capa carrega o gancho; o \u00faltimo cart\u00e3o carrega o CTA.
+Cada cart\u00e3o: um t\u00edtulo curto (at\u00e9 6 palavras) e no m\u00e1ximo 2 linhas de apoio. Texto de cart\u00e3o \u00e9 lido em 2 segundos \u2014 corte tudo que n\u00e3o for essencial.
+Nunca quebre uma frase no meio para continuar no cart\u00e3o seguinte.`,
+      tenho: `FORMATO: CARROSSEL \u2014 voc\u00ea j\u00e1 tem as imagens
+Escreva o texto de cada cart\u00e3o a partir das imagens enviadas, na ordem em que vieram.
 
-FORMATO DA RESPOSTA — siga exatamente:
+FORMATO DA RESPOSTA \u2014 siga exatamente:
 CAPA
-Título: [até 6 palavras, é o gancho]
+T\u00edtulo: [at\u00e9 6 palavras, \u00e9 o gancho]
 Apoio: [1 linha, opcional]
 
-CARTÃO 2
-Título: [...]
+CART\u00c3O 2
+T\u00edtulo: [...]
 Apoio: [...]
 
-(siga até o último cartão)
+(siga at\u00e9 o \u00faltimo cart\u00e3o)
 
-CARTÃO FINAL
-Título: [o CTA]
+LEGENDA
+[a legenda que acompanha o carrossel, 80-150 palavras, com hashtags]`,
+      produzir: `FORMATO: CARROSSEL \u2014 as imagens ainda ser\u00e3o produzidas
+Para cada cart\u00e3o, diga o que ilustrar e escreva o texto que vai por cima.
+
+FORMATO DA RESPOSTA \u2014 siga exatamente:
+CAPA
+Imagem: [o que mostrar nesse cart\u00e3o]
+T\u00edtulo: [at\u00e9 6 palavras, \u00e9 o gancho]
+Apoio: [1 linha, opcional]
+
+CART\u00c3O 2
+Imagem: [...]
+T\u00edtulo: [...]
 Apoio: [...]
+
+(siga at\u00e9 o \u00faltimo cart\u00e3o)
 
 LEGENDA
 [a legenda que acompanha o carrossel, 80-150 palavras, com hashtags]`
     },
     reels: {
-      label: 'Reels', emoji: '🎬', produz: ['videos'],
-      resumo: 'Vídeo curto. Entrega roteiro e legenda.',
-      instrucao: `FORMATO: REELS
-O conteúdo do Reels é o vídeo — a legenda é secundária. Sua entrega principal é o roteiro.
-Duração alvo: 15 a 30 segundos. Isso significa poucas cenas e frases faladas curtas.
-Os 3 primeiros segundos decidem tudo: comece pelo gancho, sem apresentação, sem "oi pessoal", sem logo.
-Escreva a fala do jeito que se fala, não do jeito que se escreve.
-O texto na tela nunca repete a fala palavra por palavra — ele reforça ou complementa.
+      label: 'Reels', emoji: '\u{1F3AC}', produz: ['videos'], multi: false,
+      resumo: 'V\u00eddeo curto. Roteiro antes, legenda depois.',
+      tenho: `FORMATO: REELS \u2014 o v\u00eddeo j\u00e1 est\u00e1 gravado
+N\u00e3o escreva roteiro: o v\u00eddeo existe. Escreva a legenda que vai acompanh\u00e1-lo.
+A legenda do Reels \u00e9 curta e n\u00e3o narra o que se v\u00ea \u2014 ela d\u00e1 o contexto que o v\u00eddeo n\u00e3o cabe dizer, ou provoca o coment\u00e1rio.
 
-FORMATO DA RESPOSTA — siga exatamente:
+FORMATO DA RESPOSTA: s\u00f3 a legenda, 40-80 palavras, com hashtags. Sem r\u00f3tulo e sem cabe\u00e7alho.`,
+      produzir: `FORMATO: REELS \u2014 o v\u00eddeo ainda ser\u00e1 gravado
+O conte\u00fado do Reels \u00e9 o v\u00eddeo \u2014 a legenda \u00e9 secund\u00e1ria. Sua entrega principal \u00e9 o roteiro.
+Dura\u00e7\u00e3o alvo: 15 a 30 segundos. Isso significa poucas cenas e frases faladas curtas.
+Os 3 primeiros segundos decidem tudo: comece pelo gancho, sem apresenta\u00e7\u00e3o, sem "oi pessoal", sem logo.
+Escreva a fala do jeito que se fala, n\u00e3o do jeito que se escreve.
+O texto na tela nunca repete a fala palavra por palavra \u2014 ele refor\u00e7a ou complementa.
+
+FORMATO DA RESPOSTA \u2014 siga exatamente:
 GANCHO (0-3s)
-Fala: [o que é dito, 1 frase curta]
+Fala: [o que \u00e9 dito, 1 frase curta]
 Na tela: [texto que aparece na tela]
-Imagem: [o que está sendo mostrado]
+Imagem: [o que est\u00e1 sendo mostrado]
 
 CENA 2
 Fala: [...]
 Na tela: [...]
 Imagem: [...]
 
-(siga até a última cena — 3 a 5 cenas no total)
+(siga at\u00e9 a \u00faltima cena \u2014 3 a 5 cenas no total)
 
 CTA FINAL
 Fala: [...]
 Na tela: [...]
 
-ÁUDIO
-[sugestão do tipo de áudio: trilha em alta, som ambiente, narração — e por quê]
+\u00c1UDIO
+[sugira o TIPO de \u00e1udio \u2014 trilha acelerada, som ambiente, narra\u00e7\u00e3o, sil\u00eancio \u2014 e por qu\u00ea. Nunca cite uma m\u00fasica ou trend espec\u00edfica: voc\u00ea n\u00e3o tem como saber o que est\u00e1 em alta hoje.]
 
 LEGENDA
 [a legenda do Reels, 40-80 palavras, com hashtags]`
     },
     stories: {
-      label: 'Stories', emoji: '⚡', produz: ['fotos','videos','artes'],
-      resumo: 'Sequência de telas que somem em 24h.',
-      instrucao: `FORMATO: STORIES
-Stories não tem legenda. É uma sequência de telas, cada uma vista por 2 ou 3 segundos.
-Use de 3 a 5 telas. Cada tela: no máximo 2 linhas de texto, porque o dedo já está subindo para pular.
-Story é conversa, não anúncio. Escreva como quem manda mensagem para um conhecido.
-Aproveite os recursos nativos — enquete, caixa de pergunta, quiz, contagem regressiva, link — porque eles seguram a pessoa e geram resposta. Sugira o recurso na tela onde ele faz sentido, não em todas.
+      label: 'Stories', emoji: '\u26a1', produz: ['fotos','videos','artes'], multi: true,
+      resumo: 'Sequ\u00eancia de telas que somem em 24h.',
+      base: `Stories n\u00e3o tem legenda. \u00c9 uma sequ\u00eancia de telas, cada uma vista por 2 ou 3 segundos.
+Use de 3 a 5 telas. Cada tela: no m\u00e1ximo 2 linhas de texto, porque o dedo j\u00e1 est\u00e1 subindo para pular.
+Story \u00e9 conversa, n\u00e3o an\u00fancio. Escreva como quem manda mensagem para um conhecido.
+Aproveite os recursos nativos \u2014 enquete, caixa de pergunta, quiz, contagem regressiva, link \u2014 porque eles seguram a pessoa e geram resposta. Sugira o recurso na tela onde ele faz sentido, n\u00e3o em todas.`,
+      tenho: `FORMATO: STORIES \u2014 voc\u00ea j\u00e1 tem o material
+Escreva o texto de cada tela a partir do que foi enviado, na ordem.
 
-FORMATO DA RESPOSTA — siga exatamente:
+FORMATO DA RESPOSTA \u2014 siga exatamente:
 TELA 1
-Texto: [até 2 linhas]
-Imagem: [o que mostrar]
-Recurso: [enquete/pergunta/quiz/nenhum — se houver, escreva as opções]
+Texto: [at\u00e9 2 linhas]
+Recurso: [enquete/pergunta/quiz/nenhum \u2014 se houver, escreva as op\u00e7\u00f5es]
 
 TELA 2
 Texto: [...]
-Imagem: [...]
 Recurso: [...]
 
-(siga até a última tela)
+(siga at\u00e9 a \u00faltima tela)
 
 TELA FINAL
-Texto: [o CTA — arrasta pra cima, link na bio, responde aqui]
+Texto: [o CTA \u2014 arrasta pra cima, link na bio, responde aqui]
+Recurso: [...]`,
+      produzir: `FORMATO: STORIES \u2014 o material ainda ser\u00e1 produzido
+Para cada tela, diga o que mostrar e escreva o texto que vai por cima.
+
+FORMATO DA RESPOSTA \u2014 siga exatamente:
+TELA 1
+Imagem: [o que mostrar]
+Texto: [at\u00e9 2 linhas]
+Recurso: [enquete/pergunta/quiz/nenhum \u2014 se houver, escreva as op\u00e7\u00f5es]
+
+TELA 2
 Imagem: [...]
+Texto: [...]
+Recurso: [...]
+
+(siga at\u00e9 a \u00faltima tela)
+
+TELA FINAL
+Imagem: [...]
+Texto: [o CTA \u2014 arrasta pra cima, link na bio, responde aqui]
 Recurso: [...]`
     },
   },
@@ -2452,6 +2538,36 @@ function toggleVoz(key) {
 
 function selecionarVoz(key) { toggleVoz(key); } // compatibilidade
 
+// ── ETAPA DE PRODUÇÃO ─────────────────────────────────────────────────
+// Dois momentos diferentes do trabalho, que pedem coisas opostas da IA:
+// quem já gravou quer o texto; quem ainda não gravou quer saber o que gravar.
+// Entregar roteiro a quem já tem o vídeo pronto é inútil.
+let etapaAtual = 'tenho';           // 'tenho' | 'produzir'
+let roteiroDeOrigem = null;         // roteiro já gerado, quando se volta para legendar
+
+function escolherEtapa(qual) {
+  if (postAtual || Object.keys(resultadosPorRede).length > 0) {
+    mostrarToast('Para mudar, clique em Limpar e gere novamente.');
+    return;
+  }
+  etapaAtual = qual;
+  const t = document.getElementById('etapa-tenho');
+  const pr = document.getElementById('etapa-produzir');
+  if (t) t.classList.toggle('on', qual === 'tenho');
+  if (pr) pr.classList.toggle('on', qual === 'produzir');
+  atualizarVisibilidadeMidia();
+}
+
+// Sem material para subir, o campo de mídia não faz sentido — deixá-lo à vista
+// convida a anexar um arquivo que não seria usado.
+function atualizarVisibilidadeMidia() {
+  const wrap = document.getElementById('midia-wrap');
+  if (!wrap) return;
+  const mostrar = etapaAtual === 'tenho';
+  wrap.style.display = mostrar ? '' : 'none';
+  if (!mostrar && midiaAtual) removerMidia();
+}
+
 // ── FORMATOS (aba Gerar) ──────────────────────────────────────────────
 // O bloco só aparece para redes que têm formatos. Hoje, só o Instagram.
 let formatoSelecionado = {}; // { instagram: 'reels' }
@@ -2545,8 +2661,13 @@ function redimensionarImagem(dataUrl, maxLado, qualidade) {
 // padrão e segura o tamanho do que é enviado para a IA.
 const MAX_IMAGENS_CARROSSEL = 10;
 
+// Algum formato escolhido aceita várias imagens? Marcado no próprio formato,
+// não pelo nome — o Photo Mode do TikTok vai precisar do mesmo mecanismo.
 function ehCarrossel() {
-  return vozSelecionadas.has('instagram') && formatoSelecionado.instagram === 'carrossel';
+  return Array.from(vozSelecionadas).some(rede => {
+    const f = FORMATOS[rede] && FORMATOS[rede][formatoSelecionado[rede]];
+    return !!(f && f.multi);
+  });
 }
 
 // Ajusta o campo de arquivo conforme o formato escolhido.
@@ -2752,8 +2873,17 @@ ${fmt ? `
 ═══════════════════════════════════════
 FORMATO DESTE POST
 ═══════════════════════════════════════
-${fmt.instrucao}
-` : ''}
+${[fmt.base, fmt[etapaAtual === 'produzir' ? 'produzir' : 'tenho']].filter(Boolean).join('\n')}
+${roteiroDeOrigem ? `
+═══════════════════════════════════════
+O QUE FOI PLANEJADO PARA ESTE POST
+═══════════════════════════════════════
+Este roteiro foi criado antes da gravação:
+
+${roteiroDeOrigem}
+
+Use-o para manter a intenção original. Mas o material enviado é a verdade: se o que foi produzido difere do roteiro, escreva sobre o que existe, não sobre o que estava planejado.
+` : ''}` : ''}
 ═══════════════════════════════════════
 REGRAS DE ESCRITA — OBRIGATÓRIAS
 ═══════════════════════════════════════
@@ -2905,7 +3035,7 @@ async function gerarParaRede(key, tema, tom, isRetry, formatoKey) {
   // e trocar de formato não descarta o que o usuário já subiu.
   const todasImagens = imagensDoPost(midiaAtual);
   const imagens = (!isRetry && todasImagens.length)
-    ? (fKey === 'carrossel' ? todasImagens : todasImagens.slice(0, 1))
+    ? ((FORMATOS[key] && FORMATOS[key][fKey] && FORMATOS[key][fKey].multi) ? todasImagens : todasImagens.slice(0, 1))
     : [];
   const usarImagem = imagens.length > 0;
   const varias = imagens.length > 1;
@@ -3008,9 +3138,11 @@ function renderizarResultado(tema, tom) {
       rede: key, redeName: r.redeName, badge: r.badge, cal: r.cal,
       formato: r.formato || null,
       texto: r.texto, tom, tema,
+      etapa: etapaAtual,
+      roteiro: etapaAtual === 'produzir' ? r.texto : (roteiroDeOrigem || null),
       midia: midiaAtual ? { ...midiaAtual } : null,
       data: document.getElementById('input-data').value || '',
-      status: 'rascunho', aprovacao: false, emailAprovacao: '',
+      status: etapaAtual === 'produzir' ? 'producao' : 'rascunho', aprovacao: false, emailAprovacao: '',
       empresa: perfil.nome, criadoEm: new Date().toISOString(),
     };
 
@@ -3097,10 +3229,12 @@ function salvarAba(key) {
     rede: key, redeName: r.redeName, badge: r.badge, cal: r.cal,
     formato: r.formato || null,
     texto: textoFinal,
+    etapa: etapaAtual,
+    roteiro: etapaAtual === 'produzir' ? textoFinal : (roteiroDeOrigem || null),
     midia: midiaAtual ? { ...midiaAtual } : null,
     data: dataAtual,
     hora: document.getElementById('input-hora').value || '',
-    status: 'rascunho',
+    status: etapaAtual === 'produzir' ? 'producao' : 'rascunho',
     aprovacao: false, emailAprovacao: '',
     empresa: perfil.nome,
     programacaoId: programacaoContextoAtual || ID_PROGRAMACAO_FIXA,
@@ -3108,6 +3242,7 @@ function salvarAba(key) {
     criadoEm: new Date().toISOString(),
   };
 
+  descartarPostDeOrigem();
   bancoPosts.unshift(post);
   if (post.data) {
     adicionarPostAoCal(post.data, post);
@@ -3124,10 +3259,13 @@ function salvarAba(key) {
     data_publicacao: post.data || null,
     formato: post.formato || null,
     programacao_id: post.programacaoId || null,
+    roteiro: post.roteiro || null,
   }).then(function(res) {
     if(res && Array.isArray(res) && res[0]) {
+      var _idAntigo = post.id;
       post._cloudId = res[0].id;
       post.id = 'cloud_' + res[0].id;
+      sincronizarIdNoCal(_idAntigo, post);
     }
   });
 
@@ -3189,6 +3327,7 @@ function salvarPost() {
     id: Date.now() + Math.random(),
     criadoEm: new Date().toISOString()
   };
+  descartarPostDeOrigem();
   bancoPosts.unshift(post);
   if (post.data) {
     adicionarPostAoCal(post.data, post);
@@ -3208,10 +3347,13 @@ function salvarPost() {
     data_publicacao: post.data || null,
     formato: post.formato || null,
     programacao_id: post.programacaoId || null,
+    roteiro: post.roteiro || null,
   }).then(function(r) {
     if(r && Array.isArray(r) && r[0]) {
+      var _idAntigo = post.id;
       post._cloudId = r[0].id;
       post.id = 'cloud_' + r[0].id;
+      sincronizarIdNoCal(_idAntigo, post);
     }
   });
 
@@ -3249,10 +3391,13 @@ function marcarAprovacao() {
     data_publicacao: post.data || null,
     formato: post.formato || null,
     programacao_id: post.programacaoId || null,
+    roteiro: post.roteiro || null,
   }).then(function(r) {
     if(r && Array.isArray(r) && r[0]) {
+      var _idAntigo = post.id;
       post._cloudId = r[0].id;
       post.id = 'cloud_' + r[0].id;
+      sincronizarIdNoCal(_idAntigo, post);
     }
     renderBanco();
   });
@@ -3292,8 +3437,8 @@ function renderBanco() {
     return;
   }
 
-  const sl = { rascunho:'Rascunho', aguardando:'Aguardando aprovação', aprovado:'Aprovado', publicado:'Publicado' };
-  const sc = { rascunho:'st-rascunho', aguardando:'st-aguardando', aprovado:'st-aprovado', publicado:'st-publicado' };
+  const sl = { producao:'Em produção', rascunho:'Rascunho', aguardando:'Aguardando aprovação', aprovado:'Aprovado', publicado:'Publicado' };
+  const sc = { producao:'st-producao', rascunho:'st-rascunho', aguardando:'st-aguardando', aprovado:'st-aprovado', publicado:'st-publicado' };
 
   lista.innerHTML = filtrados.map(p => {
     const idx = bancoPosts.indexOf(p);
@@ -3344,9 +3489,11 @@ function renderBanco() {
             <button class="btn2 btn2-sm" onclick="copiarTexto(${idx})">Copiar</button>
             ${p.midia ? `<button class="btn2 btn2-sm" onclick="baixarMidia(${idx})">⬇ Baixar mídia</button>` : ''}
             <button class="btn2 btn2-sm" onclick="abrirModalData(${idx}, null)">📅 Alterar data</button>
-            <button class="btng" onclick="abrirModalEmail(${idx})">✉ Aprovar por email</button>
-            ${(p.status==='rascunho'||p.status==='aguardando')?`<button class="btng" onclick="mudarStatus(${idx},'aprovado')">Aprovado ✓</button>`:''}
-            ${p.status==='aprovado'?`<button class="btn" style="font-size:11px;padding:5px 12px" onclick="mudarStatus(${idx},'publicado')">Publicado</button>`:''}
+            ${p.status === 'producao'
+              ? `<button class="btn" style="font-size:11px;padding:5px 12px" onclick="gerarLegendaDePost(${idx})">✦ Já produzi — gerar legenda</button>`
+              : `<button class="btng" onclick="abrirModalEmail(${idx})">✉ Aprovar por email</button>
+                 ${(p.status==='rascunho'||p.status==='aguardando')?`<button class="btng" onclick="mudarStatus(${idx},'aprovado')">Aprovado ✓</button>`:''}
+                 ${p.status==='aprovado'?`<button class="btn" style="font-size:11px;padding:5px 12px" onclick="mudarStatus(${idx},'publicado')">Publicado</button>`:''}`}
             <button class="btnd" onclick="excluirPost(${idx})">Excluir</button>
           </div>
         </div>
@@ -3447,6 +3594,59 @@ function removerPostDoCal(post, chaveEspecifica) {
       cal_posts: JSON.stringify(calPosts),
     });
   }
+}
+
+// A volta do ciclo: o roteiro foi gerado antes, a pessoa produziu, e agora
+// vem buscar a legenda. Reabre o Gerar com tudo que já foi decidido — rede,
+// formato, tema, tom, data — pedindo só o material.
+function gerarLegendaDePost(idx) {
+  const post = bancoPosts[idx];
+  if (!post) return;
+
+  goTab('gerar');
+  setTimeout(() => {
+    limparGeradorSilencioso();
+
+    if (post.rede) {
+      vozSelecionadas = new Set([post.rede]);
+      vozAtual = post.rede;
+      document.querySelectorAll('.voz-btn').forEach(b => {
+        b.classList.toggle('on', b.id === 'voz-' + post.rede);
+      });
+    }
+    if (post.formato && FORMATOS[post.rede]) {
+      formatoSelecionado[post.rede] = post.formato;
+    }
+    renderFormatos();
+
+    document.getElementById('input-tema').value = post.tema || '';
+    if (post.tom) document.getElementById('input-tom').value = post.tom;
+    if (post.data) document.getElementById('input-data').value = post.data;
+    if (post.hora) document.getElementById('input-hora').value = post.hora;
+
+    // Agora é a etapa de quem já tem o material, com o roteiro como contexto.
+    escolherEtapa('tenho');
+    roteiroDeOrigem = post.roteiro || post.texto || null;
+    postDeOrigemIdx = idx;
+
+    mostrarToast('Suba a foto ou o vídeo que você produziu e clique em Gerar.');
+    document.getElementById('midia-wrap').scrollIntoView({ block: 'center' });
+  }, 150);
+}
+
+// Post que originou a legenda em curso — some do Banco quando a legenda é
+// salva, para não ficar o roteiro e a legenda como dois posts soltos.
+let postDeOrigemIdx = null;
+
+function descartarPostDeOrigem() {
+  if (postDeOrigemIdx === null) return;
+  const origem = bancoPosts[postDeOrigemIdx];
+  postDeOrigemIdx = null;
+  if (!origem || origem.status !== 'producao') return;
+  if (origem._cloudId) dbCall('delete', 'posts', { id: origem._cloudId, user_id: CURRENT_USER_ID });
+  if (origem.data) removerPostDoCal(origem, null);
+  const i = bancoPosts.indexOf(origem);
+  if (i !== -1) bancoPosts.splice(i, 1);
 }
 
 function copiarTexto(idx) {
@@ -3649,7 +3849,10 @@ function renderCal() {
 
     postsDoDataFiltrados.forEach(p => {
       const item = document.createElement('div');
-      item.className = 'cal-post-item';
+      // Em produção não está pronto para ir ao ar — precisa se distinguir de
+      // relance de quem já pode publicar.
+      item.className = 'cal-post-item' + (p.status === 'producao' ? ' em-producao' : '');
+      if (p.status === 'producao') item.title = 'Em produção — falta gravar e gerar a legenda';
       item.onclick = () => verPostCal(p, chave);
 
       if (p.midia) {
@@ -3822,6 +4025,27 @@ function excluirDoCalendario() {
 }
 
 // Helper: adiciona post ao calendário por data string (YYYY-MM-DD)
+// Quando a nuvem responde, o post troca de id. A cópia no calendário foi
+// gravada antes disso e ficaria com o id velho — e aí excluir pelo calendário
+// não encontra mais o post no Banco. Aqui os dois voltam a apontar um para o
+// outro.
+function sincronizarIdNoCal(idAntigo, post) {
+  if (idAntigo === undefined || idAntigo === null) return;
+  let mudou = false;
+  Object.keys(calPosts).forEach(function(data) {
+    (calPosts[data] || []).forEach(function(c) {
+      if (c.id === idAntigo) {
+        c.id = post.id;
+        c._cloudId = post._cloudId || null;
+        mudou = true;
+      }
+    });
+  });
+  if (mudou) {
+    try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {}
+  }
+}
+
 function adicionarPostAoCal(dataStr, post) {
   if (!dataStr) return;
   if (!calPosts[dataStr]) calPosts[dataStr] = [];
@@ -3838,6 +4062,12 @@ function adicionarPostAoCal(dataStr, post) {
       redeName: post.redeName, cal: post.cal,
       midia: midiaMin, texto: post.texto, empresa: post.empresa,
       hora: post.hora || null,
+      // id e status precisam vir junto: sem o id, excluir pelo calendário não
+      // acha o post no Banco e cai na comparação por texto; sem o status, o
+      // calendário não distingue o que ainda está em produção.
+      id: post.id, _cloudId: post._cloudId || null,
+      status: post.status || 'rascunho',
+      rede: post.rede, formato: post.formato || null,
       programacaoId: post.programacaoId || ID_PROGRAMACAO_FIXA
     });
     try { localStorage.setItem('lp_cal', JSON.stringify(calPosts)); } catch(e) {
@@ -4630,10 +4860,13 @@ function restaurarPost(idx) {
     data_publicacao: post.data || null,
     formato: post.formato || null,
     programacao_id: post.programacaoId || null,
+    roteiro: post.roteiro || null,
   }).then(function(r) {
     if (r && Array.isArray(r) && r[0]) {
+      var _idAntigo = post.id;
       post._cloudId = r[0].id;
       post.id = 'cloud_' + r[0].id;
+      sincronizarIdNoCal(_idAntigo, post);
     }
   });
   renderBanco();
@@ -4663,7 +4896,7 @@ function esvaziarLixeira() {
 function exportarPosts() {
   if (bancoPosts.length === 0) { mostrarToast('Nenhum post no banco para exportar.'); return; }
 
-  const sl = { rascunho: 'Rascunho', aguardando: 'Aguardando aprovação', aprovado: 'Aprovado', publicado: 'Publicado' };
+  const sl = { producao: 'Em produção', rascunho: 'Rascunho', aguardando: 'Aguardando aprovação', aprovado: 'Aprovado', publicado: 'Publicado' };
   const linhas = [];
   linhas.push('LUMEN POST — BACKUP DE POSTS');
   linhas.push('Exportado em: ' + new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}));
@@ -5032,6 +5265,10 @@ function limparGeradorSilencioso() {
   document.querySelectorAll('.voz-btn').forEach(b => b.classList.remove('on'));
   formatoSelecionado = {};
   renderFormatos();
+  etapaAtual = 'tenho';
+  roteiroDeOrigem = null;
+  postDeOrigemIdx = null;
+  escolherEtapa('tenho');
   programacaoContextoAtual = null; // será reatribuído por preencherEspacoProgramacao se vier de um espaço
 }
 
