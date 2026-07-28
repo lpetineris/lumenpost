@@ -2694,9 +2694,9 @@ function renderFormatos() {
   }
 
   wrap.style.display = 'block';
-  // Com várias redes, as molduras dizem de quem é cada bloco — mas alguém
-  // precisa dizer que aquilo tudo é a escolha de formato.
-  const titulo = comFormato.length > 1 ? '<label>Formato de cada rede</label>' : '';
+  const titulo = comFormato.length > 1
+    ? '<label>Formato de cada rede</label>'
+    : '<label>Formato</label>';
   wrap.innerHTML = titulo + comFormato.map(rede => {
     const disponiveis = todosFormatos(rede);
     if (!formatoSelecionado[rede] || !disponiveis.includes(formatoSelecionado[rede])) {
@@ -2711,12 +2711,8 @@ function renderFormatos() {
     const corpo = `<div class="fmt-grid">${pills}</div>
             <div class="fmt-resumo" id="fmt-resumo-${rede}">${FORMATOS[rede][formatoSelecionado[rede]].resumo}</div>`;
 
-    // Com uma rede só, moldura seria enfeite. Com duas ou mais, é o que separa
-    // "os formatos do TikTok" de "os formatos do Instagram" — sem ela os dois
-    // blocos correm juntos e a pessoa não sabe onde um termina.
-    if (comFormato.length === 1) {
-      return `<label>Formato</label>${corpo}`;
-    }
+    // A moldura vale para uma rede também: mantém o bloco reconhecível quando
+    // se marca a segunda, em vez de a interface mudar de forma no caminho.
     return `<div class="fmt-rede ${REDES[rede].cal || 'generico'}">
               <div class="fmt-rede-hdr">${REDES[rede].emoji} ${REDES[rede].label}</div>
               ${corpo}
