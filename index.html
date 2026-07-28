@@ -5837,8 +5837,10 @@ function toggleFaq(btn) {
 }
 
 function baixarGuia() {
-  window.open('/api/guia', '_blank');
-  mostrarToast('⚠ Para salvar o guia, use Ctrl+S na nova aba.');
+  // Pela mesma ponte da mídia: dentro do Wix o window.open é barrado pelo
+  // sandbox, e o pedido precisa ir para a página-mãe, que não é sandboxed.
+  baixarArquivo(location.origin + '/api/guia', null, 'Guia_Lumen_Post.pdf');
+  mostrarToast('Baixando o guia...');
 }
 
 // ── COPIAR ───────────────────────────────────────────────────────────
