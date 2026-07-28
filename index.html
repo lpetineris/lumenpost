@@ -387,6 +387,12 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .fmt-rede.instagram .fmt-rede-hdr { color: #C084FC; }
 .fmt-rede.tiktok { border-left-color: #4ADE80; }
 .fmt-rede.tiktok .fmt-rede-hdr { color: #4ADE80; }
+.fmt-rede.linkedin { border-left-color: #60A5FA; }
+.fmt-rede.linkedin .fmt-rede-hdr { color: #60A5FA; }
+.fmt-rede.facebook { border-left-color: #3B82F6; }
+.fmt-rede.facebook .fmt-rede-hdr { color: #3B82F6; }
+.fmt-rede.pinterest { border-left-color: #F87171; }
+.fmt-rede.pinterest .fmt-rede-hdr { color: #F87171; }
 .fmt-rede.generico { border-left-color: var(--g-c); }
 .fmt-rede.generico .fmt-rede-hdr { color: var(--g-c); }
 
@@ -718,6 +724,8 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .badge-instagram { background: rgba(168,85,247,.16); color: #C084FC; }
 .badge-formato { background: var(--bg2); color: var(--text2); border: 1px solid var(--border); font-weight: 500; }
 .badge-tiktok { background: rgba(34,197,94,.16); color: #4ADE80; }
+.badge-facebook { background: rgba(59,130,246,.16); color: #3B82F6; }
+.badge-pinterest { background: rgba(248,113,113,.16); color: #F87171; }
 .badge-green { background: var(--g-l); color: var(--g); }
 
 .post-data { font-size: 11px; color: var(--text3); }
@@ -820,6 +828,8 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .cal-lbl.linkedin { background: rgba(59,130,246,.16); color: #60A5FA; }
 .cal-lbl.instagram { background: rgba(168,85,247,.16); color: #C084FC; }
 .cal-lbl.tiktok { background: rgba(34,197,94,.16); color: #4ADE80; }
+.cal-lbl.facebook { background: rgba(59,130,246,.16); color: #3B82F6; }
+.cal-lbl.pinterest { background: rgba(248,113,113,.16); color: #F87171; }
 .cal-lbl.generico { background: var(--g-l); color: var(--g); }
 .cal-lbl.sem-thumb { padding: 3px 4px; min-height: 22px; display: flex; align-items: center; }
 
@@ -840,6 +850,8 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .cal-espaco.linkedin { border-color: #60A5FA; color: #60A5FA; background: rgba(59,130,246,.12); }
 .cal-espaco.instagram { border-color: #C084FC; color: #C084FC; background: rgba(168,85,247,.12); }
 .cal-espaco.tiktok { border-color: #4ADE80; color: #4ADE80; background: rgba(34,197,94,.12); }
+.cal-espaco.facebook { border-color: #3B82F6; color: #3B82F6; background: rgba(59,130,246,.12); }
+.cal-espaco.pinterest { border-color: #F87171; color: #F87171; background: rgba(248,113,113,.12); }
 .cal-espaco.generico { border-color: var(--g); color: var(--g); background: var(--g-l); }
 
 .legenda { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
@@ -2177,7 +2189,7 @@ Hashtags: 3-5, curtas e específicas do nicho. Não invente hashtags de trend: v
 Emojis: 2-5, integrados ao texto para marcar ritmo.
 Quem funciona no TikTok parece gente, não marca. Nada de locução publicitária, nada de "a [empresa] tem o prazer de".` },
 
-  facebook:  { label: 'Facebook',  emoji: '👥', badge: 'badge-green',     cal: 'generico',  instrucao: `FACEBOOK — Formato e estrutura:
+  facebook:  { label: 'Facebook',  emoji: '👥', badge: 'badge-facebook',  cal: 'facebook',  instrucao: `FACEBOOK — Formato e estrutura:
 Público mais amplo e diverso — tom acessível, sem jargões técnicos.
 Primeira linha: direta e relevante para o cotidiano do cliente ideal.
 Estrutura: gancho → contexto → valor → CTA (compartilhe, comente, marque alguém).
@@ -2195,7 +2207,7 @@ Tom: informativo, com autoridade, convidativo.
 Hashtags: 5-8, específicas do nicho, no final.
 Emojis: 1-3, apenas para organizar seções ou destacar CTAs.` },
 
-  pinterest: { label: 'Pinterest', emoji: '📌', badge: 'badge-instagram', cal: 'generico',  instrucao: `PINTEREST — Formato e estrutura:
+  pinterest: { label: 'Pinterest', emoji: '📌', badge: 'badge-pinterest', cal: 'pinterest',  instrucao: `PINTEREST — Formato e estrutura:
 Pinterest não é rede social, é buscador visual. As pessoas chegam procurando — "bolo de casamento simples", "sala pequena com sofá cinza" — e não seguindo perfis. O texto existe para ser encontrado.
 Isso muda tudo: escreva com as palavras que a pessoa digitaria na busca, não com as palavras internas da empresa. "Bolo vulcão de brigadeiro" encontra; "nossa criação assinada" não encontra nada.
 Tom: descritivo e inspirador. Diga o resultado ou a transformação que a imagem mostra.
@@ -2622,6 +2634,112 @@ TÍTULO
 
 DESCRIÇÃO
 [60-120 palavras, descritiva e encontrável]`
+    },
+  },
+
+  linkedin: {
+    post: {
+      label: 'Post', emoji: '📝', padrao: true, produz: ['fotos','artes'], multi: false, aceita: ['imagem','video'],
+      resumo: 'Publicação de texto, com ou sem imagem.',
+      base: `O LinkedIn corta o texto depois de mais ou menos três linhas e põe um "ver mais". Quase todo mundo decide ali se continua. O gancho tem que caber antes do corte — se a primeira frase é aquecimento, o post morreu.
+Link para fora derruba o alcance: o LinkedIn quer manter a pessoa dentro dele. Quando houver link, oriente a colocá-lo no primeiro comentário e a avisar no texto que ele está lá.
+Post sem imagem funciona bem aqui — texto sozinho é formato legítimo, ao contrário das outras redes. Não force uma imagem que não acrescenta.`,
+      tenho: `FORMATO: POST — o material, se houver, já está pronto
+Escreva o texto da publicação.
+
+FORMATO DA RESPOSTA: só o texto, pronto para copiar. Sem rótulo e sem cabeçalho. Se o post pedir um link, termine com uma linha avisando que ele está no primeiro comentário.`,
+      produzir: `FORMATO: POST — ainda será produzido
+Comece decidindo se esse post precisa de imagem. Muitos dos melhores posts do LinkedIn são só texto, e uma imagem genérica de banco atrapalha mais do que ajuda. Se não precisar, diga isso e explique por quê.
+
+FORMATO DA RESPOSTA — siga exatamente:
+IMAGEM
+Precisa de imagem: [sim ou não — e por quê, em 1 linha]
+O que mostrar: [se sim, a descrição; se não, escreva "—"]
+
+TEXTO
+[o texto da publicação, pronto para copiar]`
+    },
+    carrossel: {
+      label: 'Carrossel', emoji: '🎠', produz: ['artes','fotos'], multi: true, unidade: 'slides', aceita: ['imagem'],
+      resumo: 'Documento com slides que a pessoa desliza.',
+      base: `No LinkedIn o carrossel é um documento PDF que a plataforma abre como slides. É um dos formatos de maior alcance ali, porque a pessoa desliza dentro do próprio feed.
+Diferente do carrossel do Instagram, aqui cabe e se espera mais texto por slide: o público está lendo, não passando o dedo. Ainda assim, um slide é uma ideia — se precisa de duas, são dois slides.
+Use de 8 a 12 slides. A capa promete o que a pessoa vai levar; o último slide fecha e chama para a conversa.`,
+      tenho: `FORMATO: CARROSSEL (documento) — você já tem as artes
+Escreva o texto de cada slide a partir das imagens enviadas, na ordem.
+
+FORMATO DA RESPOSTA — siga exatamente:
+CAPA
+Título: [a promessa, direta]
+Apoio: [1 linha]
+
+SLIDE 2
+Título: [...]
+Texto: [2 a 4 linhas]
+
+(siga até o último slide)
+
+SLIDE FINAL
+Título: [o fechamento]
+Texto: [o convite à conversa]
+
+TEXTO DO POST
+[o texto que acompanha o carrossel no feed, 60-120 palavras]`,
+      produzir: `FORMATO: CARROSSEL (documento) — as artes ainda serão produzidas
+Para cada slide, diga o que mostrar e escreva o texto. Slide de LinkedIn é quase todo texto — o visual serve para organizar, não para ilustrar.
+
+FORMATO DA RESPOSTA — siga exatamente:
+CAPA
+Visual: [o que aparece — normalmente só tipografia]
+Título: [a promessa, direta]
+Apoio: [1 linha]
+
+SLIDE 2
+Visual: [...]
+Título: [...]
+Texto: [2 a 4 linhas]
+
+(siga até o último slide — 8 a 12 no total)
+
+SLIDE FINAL
+Visual: [...]
+Título: [o fechamento]
+Texto: [o convite à conversa]
+
+TEXTO DO POST
+[o texto que acompanha o carrossel no feed, 60-120 palavras]`
+    },
+    video: {
+      label: 'Vídeo', emoji: '🎬', produz: ['videos'], multi: false, aceita: ['video'],
+      resumo: 'Vídeo nativo. Roteiro antes, texto depois.',
+      base: `Vídeo no LinkedIn roda mudo por padrão e é assistido no meio do expediente. O que precisa ser entendido tem que estar escrito na tela.
+Duração alvo: 30 a 90 segundos. Mais curto que um vídeo institucional, mais longo que um Reels — aqui há paciência para um raciocínio, desde que ele ande.
+Nada de vinheta, nada de apresentação. Comece pela ideia.`,
+      tenho: `FORMATO: VÍDEO — o vídeo já está gravado
+Não escreva roteiro. Escreva o texto que acompanha o vídeo no feed, lembrando que ele também é cortado depois de três linhas.
+
+FORMATO DA RESPOSTA: só o texto, 60-120 palavras. Sem rótulo e sem cabeçalho.`,
+      produzir: `FORMATO: VÍDEO — o vídeo ainda será gravado
+Sua entrega principal é o roteiro. Como roda mudo, o texto na tela carrega a informação; a fala reforça.
+
+FORMATO DA RESPOSTA — siga exatamente:
+GANCHO (0-5s)
+Fala: [a ideia, direta]
+Na tela: [o texto que aparece]
+
+BLOCO 2
+Fala: [...]
+Na tela: [...]
+Imagem: [o que está sendo mostrado]
+
+(siga até o último bloco — 3 a 5 blocos)
+
+FECHAMENTO
+Fala: [...]
+Na tela: [...]
+
+TEXTO DO POST
+[o texto que acompanha o vídeo no feed, 60-120 palavras]`
     },
   },
 };
