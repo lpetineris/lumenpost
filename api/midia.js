@@ -53,10 +53,14 @@ export default async function handler(req, res) {
     let midia;
     try { midia = JSON.parse(linha.midia); } catch (e) { return res.status(404).send('Mídia ilegível.'); }
 
-    // Mesma ordem que a ferramenta mostra: a principal e depois as extras.
+    // Mesma ordem que a ferramenta mostra: as imagens e, por último, o vídeo
+    // quando ele acompanha as imagens (redes diferentes usam materiais
+    // diferentes do mesmo post).
     const imagens = midia.tipo === 'video'
       ? [{ dataUrl: midia.dataUrl, nome: midia.nome }]
-      : [{ dataUrl: midia.dataUrl, nome: midia.nome }].concat(midia.extras || []);
+      : [{ dataUrl: midia.dataUrl, nome: midia.nome }]
+          .concat(midia.extras || [])
+          .concat(midia.video ? [midia.video] : []);
 
     const alvo = imagens[indice];
     if (!alvo || !alvo.dataUrl) return res.status(404).send('Imagem não encontrada nesse post.');

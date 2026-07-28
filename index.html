@@ -2089,8 +2089,9 @@ Legenda ultra-direta. O vídeo é o conteúdo — a legenda complementa, não re
 Primeira linha: hook em até 10 palavras. Algo que desperta curiosidade ou gera identificação imediata.
 Comprimento: 50-100 palavras. Frases curtas. Ritmo acelerado.
 Tom: coloquial, sem formalidade, com personalidade. Pode usar gírias se fizer sentido para a marca.
-Hashtags: 3-5, curtos e específicos do nicho. Sempre inclua 1-2 hashtags de trend quando relevante.
-Emojis: 2-5, integrados ao texto para marcar ritmo.` },
+Hashtags: 3-5, curtas e específicas do nicho. Não invente hashtags de trend: você não tem como saber o que está em alta hoje, e uma trend errada denuncia que o conteúdo não é de quem vive a plataforma.
+Emojis: 2-5, integrados ao texto para marcar ritmo.
+Quem funciona no TikTok parece gente, não marca. Nada de locução publicitária, nada de "a [empresa] tem o prazer de".` },
 
   facebook:  { label: 'Facebook',  emoji: '👥', badge: 'badge-green',     cal: 'generico',  instrucao: `FACEBOOK — Formato e estrutura:
 Público mais amplo e diverso — tom acessível, sem jargões técnicos.
@@ -2128,7 +2129,7 @@ Emojis: 0-2, apenas se naturais ao contexto.` },
 const FORMATOS = {
   instagram: {
     feed: {
-      label: 'Feed', emoji: '\u{1F5BC}', padrao: true, produz: ['fotos','artes'], multi: false,
+      label: 'Feed', emoji: '🖼', padrao: true, produz: ['fotos','artes'], multi: false, aceita: ['imagem','video'],
       resumo: 'Uma imagem \u00fanica com legenda.',
       tenho: `FORMATO: POST DE FEED (imagem \u00fanica) \u2014 voc\u00ea j\u00e1 tem a imagem
 Entregue a legenda do post, seguindo a estrutura do Instagram descrita acima.
@@ -2148,7 +2149,7 @@ LEGENDA
 [a legenda completa, pronta para copiar]`
     },
     carrossel: {
-      label: 'Carrossel', emoji: '\u{1F3A0}', produz: ['fotos','artes'], multi: true,
+      label: 'Carrossel', emoji: '🎠', produz: ['fotos','artes'], multi: true, aceita: ['imagem'],
       resumo: 'V\u00e1rios cart\u00f5es que o seguidor desliza.',
       base: `Um carrossel \u00e9 lido deslizando. Cada cart\u00e3o precisa entregar uma ideia sozinho e criar vontade de deslizar para o pr\u00f3ximo.
 Use de 5 a 8 cart\u00f5es. A capa carrega o gancho; o \u00faltimo cart\u00e3o carrega o CTA.
@@ -2190,7 +2191,7 @@ LEGENDA
 [a legenda que acompanha o carrossel, 80-150 palavras, com hashtags]`
     },
     reels: {
-      label: 'Reels', emoji: '\u{1F3AC}', produz: ['videos'], multi: false,
+      label: 'Reels', emoji: '🎬', produz: ['videos'], multi: false, aceita: ['video'],
       resumo: 'V\u00eddeo curto. Roteiro antes, legenda depois.',
       tenho: `FORMATO: REELS \u2014 o v\u00eddeo j\u00e1 est\u00e1 gravado
 N\u00e3o escreva roteiro: o v\u00eddeo existe. Escreva a legenda que vai acompanh\u00e1-lo.
@@ -2228,7 +2229,7 @@ LEGENDA
 [a legenda do Reels, 40-80 palavras, com hashtags]`
     },
     stories: {
-      label: 'Stories', emoji: '\u26a1', produz: ['fotos','videos','artes'], multi: true,
+      label: 'Stories', emoji: '⚡', produz: ['fotos','videos','artes'], multi: true, aceita: ['imagem','video'],
       resumo: 'Sequ\u00eancia de telas que somem em 24h.',
       base: `Stories n\u00e3o tem legenda. \u00c9 uma sequ\u00eancia de telas, cada uma vista por 2 ou 3 segundos.
 Use de 3 a 5 telas. Cada tela: no m\u00e1ximo 2 linhas de texto, porque o dedo j\u00e1 est\u00e1 subindo para pular.
@@ -2271,6 +2272,94 @@ TELA FINAL
 Imagem: [...]
 Texto: [o CTA \u2014 arrasta pra cima, link na bio, responde aqui]
 Recurso: [...]`
+    },
+  },
+
+  tiktok: {
+    video: {
+      label: 'Vídeo', emoji: '🎬', padrao: true, produz: ['videos'], multi: false, aceita: ['video'],
+      resumo: 'O formato nativo. Roteiro antes, legenda depois.',
+      base: `No TikTok o vídeo é o post inteiro. A legenda é uma nota de rodapé — curta, e nunca narrando o que já se vê na tela.
+O primeiro segundo decide se a pessoa fica. E não é só a primeira frase: é o primeiro quadro. Se a tela abrir num logo, numa vinheta ou em alguém dizendo "oi pessoal, tudo bem?", o vídeo já morreu.
+O TikTok premia o que parece real. Vídeo caseiro, gravado no celular, com a pessoa falando direto para a câmera, rende mais que produção caprichada de agência.`,
+      tenho: `FORMATO: VÍDEO — o vídeo já está gravado
+Não escreva roteiro: o vídeo existe. Escreva a legenda que vai abaixo dele.
+A legenda dá o contexto que não coube no vídeo, ou provoca resposta nos comentários. Não resuma o vídeo.
+
+FORMATO DA RESPOSTA: só a legenda, 20-60 palavras, com hashtags. Sem rótulo e sem cabeçalho.`,
+      produzir: `FORMATO: VÍDEO — o vídeo ainda será gravado
+Sua entrega principal é o roteiro. Duração alvo: 15 a 40 segundos.
+Comece pelo gancho, no primeiro segundo. Descreva também o que aparece no primeiro quadro, porque é ele que segura o dedo.
+Escreva a fala como se fala, com as hesitações e o ritmo de quem conversa — não como texto lido.
+O texto na tela complementa a fala, nunca a repete.
+
+FORMATO DA RESPOSTA — siga exatamente:
+PRIMEIRO QUADRO
+[o que a pessoa vê no instante em que o vídeo abre]
+
+GANCHO (0-3s)
+Fala: [1 frase curta]
+Na tela: [texto que aparece]
+
+CENA 2
+Fala: [...]
+Na tela: [...]
+Imagem: [o que está sendo mostrado]
+
+(siga até a última cena — 3 a 5 cenas no total)
+
+FECHAMENTO
+Fala: [o que fecha ou provoca comentário]
+Na tela: [...]
+
+ÁUDIO
+[sugira o TIPO de áudio — voz da própria pessoa, som ambiente, trilha acelerada, silêncio — e por quê. Nunca cite uma música, um som ou uma trend específica: você não tem como saber o que está em alta hoje, e errar isso entrega que o conteúdo não é de quem usa a plataforma.]
+
+LEGENDA
+[a legenda, 20-60 palavras, com hashtags]`
+    },
+    foto: {
+      label: 'Foto', emoji: '🖼', produz: ['fotos','artes'], multi: true, aceita: ['imagem'],
+      resumo: 'Photo Mode — imagens que deslizam, com música.',
+      base: `O Photo Mode é uma sequência de imagens que a pessoa desliza, com música por cima. Funciona bem para antes e depois, passo a passo, listas e bastidores — e é a porta de entrada de quem não grava vídeo.
+Cada imagem carrega uma frase curta por cima. Frase de imagem é lida em 2 segundos: se não couber num respiro, está longa.
+A primeira imagem é o gancho. Ela precisa fazer a pessoa parar e deslizar.`,
+      tenho: `FORMATO: FOTO (Photo Mode) — você já tem as imagens
+Escreva o texto que vai por cima de cada imagem enviada, na ordem em que vieram.
+
+FORMATO DA RESPOSTA — siga exatamente:
+IMAGEM 1
+Texto: [a frase que aparece por cima — curta]
+
+IMAGEM 2
+Texto: [...]
+
+(siga até a última imagem)
+
+ÁUDIO
+[o TIPO de música que combina — ritmo e clima. Nunca cite uma faixa ou trend específica.]
+
+LEGENDA
+[a legenda, 20-60 palavras, com hashtags]`,
+      produzir: `FORMATO: FOTO (Photo Mode) — as imagens ainda serão produzidas
+Para cada imagem, diga o que fotografar e escreva a frase que vai por cima. Use de 4 a 8 imagens.
+
+FORMATO DA RESPOSTA — siga exatamente:
+IMAGEM 1
+O que mostrar: [descrição concreta, executável com um celular]
+Texto: [a frase que aparece por cima — curta]
+
+IMAGEM 2
+O que mostrar: [...]
+Texto: [...]
+
+(siga até a última imagem)
+
+ÁUDIO
+[o TIPO de música que combina — ritmo e clima. Nunca cite uma faixa ou trend específica.]
+
+LEGENDA
+[a legenda, 20-60 palavras, com hashtags]`
     },
   },
 };
@@ -2671,21 +2760,42 @@ function ehCarrossel() {
 }
 
 // Ajusta o campo de arquivo conforme o formato escolhido.
+// O que os formatos escolhidos aceitam, somado. Com Carrossel no Instagram e
+// Vídeo no TikTok, o campo precisa aceitar imagens E vídeo — senão uma das
+// redes fica sem material e a ferramenta teria aceitado um pedido que não
+// consegue atender.
+function aceitosPelasRedes() {
+  const tipos = new Set();
+  Array.from(vozSelecionadas).forEach(rede => {
+    const f = FORMATOS[rede] && FORMATOS[rede][formatoSelecionado[rede]];
+    if (f && f.aceita) f.aceita.forEach(t => tipos.add(t));
+    else { tipos.add('imagem'); tipos.add('video'); } // rede sem formatos aceita os dois
+  });
+  if (!tipos.size) { tipos.add('imagem'); tipos.add('video'); }
+  return tipos;
+}
+
 function atualizarCampoMidia() {
   const input = document.getElementById('input-midia');
   const dz = document.getElementById('dropzone');
   if (!input || !dz) return;
-  const multi = ehCarrossel();
 
-  input.multiple = multi;
-  input.accept = multi ? 'image/*' : 'image/*,video/*';
+  const multi = ehCarrossel();
+  const tipos = aceitosPelasRedes();
+  const img = tipos.has('imagem'), vid = tipos.has('video');
+
+  input.multiple = multi || (img && vid);
+  input.accept = [img ? 'image/*' : '', vid ? 'video/*' : ''].filter(Boolean).join(',');
 
   const label = dz.querySelector('.dz-label');
   const sub = dz.querySelector('.dz-sub');
-  if (label) label.textContent = multi ? 'Selecionar imagens do carrossel' : 'Selecionar arquivo';
-  if (sub) sub.textContent = multi
-    ? `JPG · PNG — até ${MAX_IMAGENS_CARROSSEL}, na ordem em que vão aparecer`
-    : 'JPG · PNG · MP4 · MOV';
+  if (label) label.textContent = input.multiple ? 'Selecionar arquivos' : 'Selecionar arquivo';
+  if (sub) {
+    const partes = [];
+    if (img) partes.push(multi ? `imagens (até ${MAX_IMAGENS_CARROSSEL}, na ordem)` : 'JPG · PNG');
+    if (vid) partes.push('vídeo MP4 · MOV');
+    sub.textContent = partes.join(' + ');
+  }
 }
 
 // O pedido para a IA tem teto de 4,5 MB no Vercel, e 10 fotos passam disso
@@ -2722,26 +2832,45 @@ async function carregarMidia(input) {
   if (!files.length) return;
 
   const multi = ehCarrossel();
+  const tipos = aceitosPelasRedes();
 
-  if (!multi) {
-    // Caminho de sempre — uma imagem ou um vídeo.
-    const file = files[0];
-    const isVideo = file.type.startsWith('video/');
-    let dataUrl = await lerArquivo(file);
-    if (!dataUrl) { mostrarToast('Não foi possível ler o arquivo.'); return; }
-    if (!isVideo) dataUrl = await redimensionarImagem(dataUrl, 1080);
-    midiaAtual = { tipo: isVideo ? 'video' : 'imagem', dataUrl, nome: file.name };
+  const arquivosVideo = files.filter(f => f.type.startsWith('video/'));
+  const arquivosImagem = files.filter(f => f.type.startsWith('image/'));
+
+  // Um vídeo pode conviver com as imagens: uma rede usa um, outra usa o outro.
+  let videoNovo = null;
+  if (arquivosVideo.length && tipos.has('video')) {
+    const dv = await lerArquivo(arquivosVideo[0]);
+    if (dv) videoNovo = { dataUrl: dv, nome: arquivosVideo[0].name };
+  } else if (arquivosVideo.length) {
+    mostrarToast('Nenhum dos formatos escolhidos usa vídeo — o arquivo foi ignorado.');
+  }
+
+  if (!arquivosImagem.length) {
+    // Só vídeo.
+    if (!videoNovo) { document.getElementById('input-midia').value = ''; return; }
+    const imagensAtuais = imagensDoPost(midiaAtual);
+    midiaAtual = imagensAtuais.length
+      ? { tipo: 'imagem', dataUrl: imagensAtuais[0].dataUrl, nome: imagensAtuais[0].nome,
+          extras: imagensAtuais.slice(1), video: videoNovo }
+      : { tipo: 'video', dataUrl: videoNovo.dataUrl, nome: videoNovo.nome };
     renderPreviewMidia();
     return;
   }
 
-  // Carrossel — várias imagens, na ordem escolhida.
-  const imagens = files.filter(f => f.type.startsWith('image/'));
-  if (files.length > imagens.length) {
-    mostrarToast('Carrossel aceita só imagens — os vídeos foram ignorados.');
+  if (!multi) {
+    // Uma imagem só, mais o vídeo se houver.
+    let dataUrl = await lerArquivo(arquivosImagem[0]);
+    if (!dataUrl) { mostrarToast('Não foi possível ler o arquivo.'); return; }
+    dataUrl = await redimensionarImagem(dataUrl, 1080);
+    midiaAtual = { tipo: 'imagem', dataUrl, nome: arquivosImagem[0].name,
+                   video: videoNovo || videoDoPost(midiaAtual) };
+    renderPreviewMidia();
+    return;
   }
-  if (!imagens.length) { document.getElementById('input-midia').value = ''; return; }
 
+  // Várias imagens, na ordem escolhida.
+  const imagens = arquivosImagem;
   const cortou = imagens.length > MAX_IMAGENS_CARROSSEL;
   const usadas = imagens.slice(0, MAX_IMAGENS_CARROSSEL);
 
@@ -2763,9 +2892,17 @@ async function carregarMidia(input) {
     dataUrl: lidas[0].dataUrl,
     nome: lidas[0].nome,
     extras: lidas.slice(1),
+    video: videoNovo || videoDoPost(midiaAtual),
   };
   renderPreviewMidia();
   if (cortou) mostrarToast(`Carrossel usa até ${MAX_IMAGENS_CARROSSEL} imagens — as demais foram descartadas.`);
+}
+
+// O vídeo do post, esteja ele sozinho ou acompanhando as imagens.
+function videoDoPost(m) {
+  if (!m) return null;
+  if (m.tipo === 'video') return { dataUrl: m.dataUrl, nome: m.nome };
+  return m.video || null;
 }
 
 // Todas as imagens do post, na ordem. Vale para carrossel e para imagem única.
@@ -2777,20 +2914,30 @@ function imagensDoPost(m) {
 function renderPreviewMidia() {
   const inner = document.getElementById('midia-inner');
   const imgs = imagensDoPost(midiaAtual);
+  const vid = videoDoPost(midiaAtual);
+  const partes = [];
+  const legenda = [];
 
-  if (midiaAtual && midiaAtual.tipo === 'video') {
-    inner.innerHTML = `<video src="${midiaAtual.dataUrl}" style="width:100%;max-height:130px;border-radius:10px;border:1px solid var(--border)" controls></video>`;
-    document.getElementById('midia-nome').textContent = midiaAtual.nome;
-  } else if (imgs.length > 1) {
-    inner.innerHTML = `<div class="carrossel-tiras">` + imgs.map((im, i) =>
-      `<div class="carrossel-tira"><img src="${im.dataUrl}"><span>${i + 1}</span></div>`
-    ).join('') + `</div>`;
-    document.getElementById('midia-nome').textContent =
-      `${imgs.length} imagens — a IA escreve um cartão para cada, nessa ordem`;
+  if (imgs.length > 1) {
+    partes.push(`<div class="carrossel-tiras">` + imgs.map((im, i) =>
+      `<div class="carrossel-tira"><img src="${im.dataUrl}"><span>${i + 1}</span></div>`).join('') + `</div>`);
+    legenda.push(`${imgs.length} imagens, nessa ordem`);
   } else if (imgs.length === 1) {
-    inner.innerHTML = `<img src="${imgs[0].dataUrl}" style="width:100%;max-height:130px;object-fit:cover;border-radius:10px;border:1px solid var(--border)">`;
-    document.getElementById('midia-nome').textContent = imgs[0].nome;
+    partes.push(`<img src="${imgs[0].dataUrl}" style="width:100%;max-height:130px;object-fit:cover;border-radius:10px;border:1px solid var(--border)">`);
+    legenda.push(imgs[0].nome);
   }
+
+  if (vid) {
+    partes.push(`<video src="${vid.dataUrl}" style="width:100%;max-height:130px;border-radius:10px;border:1px solid var(--border);margin-top:6px" controls></video>`);
+    legenda.push('1 vídeo');
+  }
+
+  inner.innerHTML = partes.join('');
+  // Com material dos dois tipos, dizer quem usa o quê evita a dúvida de por que
+  // uma das redes "ignorou" o arquivo.
+  document.getElementById('midia-nome').textContent = (imgs.length && vid)
+    ? legenda.join(' + ') + ' — cada rede usa o que o formato dela pede'
+    : legenda.join(' ');
 
   document.getElementById('midia-preview').style.display = 'block';
   document.getElementById('dropzone').style.display = 'none';
@@ -3033,12 +3180,19 @@ async function gerarParaRede(key, tema, tom, isRetry, formatoKey) {
   const fKey = formatoKey || (FORMATOS[key] ? (formatoSelecionado[key] || formatoPadrao(key)) : null);
   // Só o carrossel usa as imagens extras — nos outros formatos vai só a primeira,
   // e trocar de formato não descarta o que o usuário já subiu.
+  const fmtCfg = FORMATOS[key] && FORMATOS[key][fKey];
+  const fmtCfgAceitaImagem = !fmtCfg || (fmtCfg.aceita || []).includes('imagem');
   const todasImagens = imagensDoPost(midiaAtual);
   const imagens = (!isRetry && todasImagens.length)
-    ? ((FORMATOS[key] && FORMATOS[key][fKey] && FORMATOS[key][fKey].multi) ? todasImagens : todasImagens.slice(0, 1))
+    ? (fmtCfgAceitaImagem ? (fmtCfg && fmtCfg.multi ? todasImagens : todasImagens.slice(0, 1)) : [])
     : [];
   const usarImagem = imagens.length > 0;
   const varias = imagens.length > 1;
+
+  // O vídeo só é mencionado para quem o usa: dizer que há um vídeo num post de
+  // carrossel confunde a IA sobre o que ela está escrevendo.
+  const aceitaVideo = !fmtCfg || (fmtCfg.aceita || []).includes('video');
+  const temVideo = aceitaVideo && !!videoDoPost(midiaAtual);
 
   const contextoVisual = varias
     ? `As ${imagens.length} imagens acima são os cartões do carrossel, na ordem em que vão aparecer. Escreva exatamente ${imagens.length} cartões — um para cada imagem, respeitando a ordem: o texto do primeiro cartão fala da primeira imagem, e assim por diante. Use cada imagem para capturar atmosfera, produto, cenário e paleta — sem identificar pessoas.`
@@ -3052,7 +3206,7 @@ TOM: ${TOM_MAP[tom]}
 
 Escreva o post agora. Comece direto pelo gancho — sem introdução, sem explicação.`
     : `TEMA DO POST: ${tema}
-TOM: ${TOM_MAP[tom]}${midiaAtual && midiaAtual.tipo === 'video' ? '\nCONTEXTO: Um vídeo acompanha este post.' : ''}
+TOM: ${TOM_MAP[tom]}${temVideo ? '\nCONTEXTO: Um vídeo acompanha este post.' : ''}
 
 Escreva o post agora. Comece direto pelo gancho — sem introdução, sem explicação.`;
 
@@ -3683,10 +3837,10 @@ function baixarMidia(idx) {
     mostrarToast('Mídia não encontrada.');
     return;
   }
-  const ext = post.midia.tipo === 'video' ? 'mp4' : 'jpg';
-  const imgs = post.midia.tipo === 'video'
-    ? [{ dataUrl: post.midia.dataUrl, nome: post.midia.nome }]
-    : imagensDoPost(post.midia);
+  const vid = videoDoPost(post.midia);
+  const imgs = imagensDoPost(post.midia)
+    .map(function(im) { return { dataUrl: im.dataUrl, nome: im.nome, ext: 'jpg' }; })
+    .concat(vid ? [{ dataUrl: vid.dataUrl, nome: vid.nome, ext: 'mp4' }] : []);
 
   // O servidor só consegue servir o que já subiu para a nuvem.
   if (dentroDoWix() && !post._cloudId) {
@@ -3698,7 +3852,7 @@ function baixarMidia(idx) {
     // Um por vez, espaçados — o navegador descarta downloads simultâneos.
     setTimeout(function() {
       const base = (im.nome || `lumen-post-${post.rede || 'midia'}`).replace(/\.[^/.]+$/, '');
-      const nomeArquivo = (imgs.length > 1 ? `${String(i + 1).padStart(2, '0')}-${base}` : base) + '.' + ext;
+      const nomeArquivo = (imgs.length > 1 ? `${String(i + 1).padStart(2, '0')}-${base}` : base) + '.' + im.ext;
       const url = post._cloudId
         ? `${location.origin}/api/midia?id=${encodeURIComponent(post._cloudId)}&user=${encodeURIComponent(CURRENT_USER_ID)}&i=${i}`
         : null;
