@@ -226,6 +226,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 
 .hero::before {
   content: '';
+  pointer-events: none;   /* enfeite não intercepta clique */
   position: absolute; top: -60px; right: -60px;
   width: 220px; height: 220px;
   background: rgba(255,255,255,.07);
@@ -234,6 +235,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 
 .hero::after {
   content: '';
+  pointer-events: none;   /* enfeite não intercepta clique */
   position: absolute; bottom: -40px; right: 60px;
   width: 120px; height: 120px;
   background: rgba(255,255,255,.05);
@@ -4438,9 +4440,7 @@ function dentroDoWix() {
 // o pedido vai para a página-mãe, que não é sandboxed, pela mesma ponte que já
 // funciona no Tendências. Fora do Wix, o caminho direto continua valendo.
 function baixarArquivo(url, dataUrl, nomeArquivo) {
-  console.log('[lumen] baixarArquivo', { url: url, dentroDoWix: dentroDoWix() });
   if (dentroDoWix() && url) {
-    console.log('[lumen] enviando lumen-export para a página-mãe');
     window.top.postMessage({ type: 'lumen-export', url: url }, '*');
     if (window.parent !== window.top) {
       window.parent.postMessage({ type: 'lumen-export', url: url }, '*');
