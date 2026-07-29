@@ -48,7 +48,10 @@
     },
     {
       "src": "/guia_usuario_lumen_post.pdf",
-      "dest": "/public/guia_usuario_lumen_post.pdf"
+      "dest": "/public/guia_usuario_lumen_post.pdf",
+      "headers": {
+        "Content-Disposition": "attachment; filename=\"Guia_Lumen_Post.pdf\""
+      }
     },
     {
       "src": "/bio/(.*)",
