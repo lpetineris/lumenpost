@@ -1,19 +1,62 @@
 {
   "version": 2,
-  "regions": ["gru1"],
+  "regions": [
+    "gru1"
+  ],
   "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "bio.html", "use": "@vercel/static" },
-    { "src": "api/*.js", "use": "@vercel/node" }
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "bio.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "api/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
   ],
   "routes": [
-    { "src": "/api/chat", "dest": "/api/chat.js" },
-    { "src": "/api/db", "dest": "/api/db.js" },
-    { "src": "/api/guia", "dest": "/api/guia.js" },
-    { "src": "/api/email", "dest": "/api/email.js" },
-    { "src": "/api/bio", "dest": "/api/bio.js" },
-    { "src": "/api/midia", "dest": "/api/midia.js" },
-    { "src": "/bio/(.*)", "dest": "/bio.html" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    {
+      "src": "/api/chat",
+      "dest": "/api/chat.js"
+    },
+    {
+      "src": "/api/db",
+      "dest": "/api/db.js"
+    },
+    {
+      "src": "/api/guia",
+      "dest": "/api/guia.js"
+    },
+    {
+      "src": "/api/email",
+      "dest": "/api/email.js"
+    },
+    {
+      "src": "/api/bio",
+      "dest": "/api/bio.js"
+    },
+    {
+      "src": "/api/midia",
+      "dest": "/api/midia.js"
+    },
+    {
+      "src": "/guia_usuario_lumen_post.pdf",
+      "dest": "/public/guia_usuario_lumen_post.pdf"
+    },
+    {
+      "src": "/bio/(.*)",
+      "dest": "/bio.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }

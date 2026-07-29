@@ -4433,7 +4433,9 @@ function dentroDoWix() {
 // o pedido vai para a página-mãe, que não é sandboxed, pela mesma ponte que já
 // funciona no Tendências. Fora do Wix, o caminho direto continua valendo.
 function baixarArquivo(url, dataUrl, nomeArquivo) {
+  console.log('[lumen] baixarArquivo', { url: url, dentroDoWix: dentroDoWix() });
   if (dentroDoWix() && url) {
+    console.log('[lumen] enviando lumen-export para a página-mãe');
     window.top.postMessage({ type: 'lumen-export', url: url }, '*');
     if (window.parent !== window.top) {
       window.parent.postMessage({ type: 'lumen-export', url: url }, '*');
@@ -5880,9 +5882,11 @@ function toggleFaq(btn) {
 }
 
 function baixarGuia() {
-  // Pela mesma ponte da mídia: dentro do Wix o window.open é barrado pelo
-  // sandbox, e o pedido precisa ir para a página-mãe, que não é sandboxed.
-  baixarArquivo(location.origin + '/api/guia', null, 'Guia_Lumen_Post.pdf');
+  // Arquivo estático, não a função /api/guia. O download pela ponte do Wix
+  // funciona com arquivo estático (é assim nos relatórios de Tendências) e
+  // estava falhando com a função — mesma mensagem, mesmo cabeçalho, mesmo
+  // código Velo, só mudava a origem da resposta.
+  baixarArquivo(location.origin + '/guia_usuario_lumen_post.pdf', null, 'Guia_Lumen_Post.pdf');
   mostrarToast('Baixando o guia...');
 }
 
