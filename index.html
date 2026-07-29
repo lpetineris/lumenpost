@@ -3038,6 +3038,7 @@ async function carregarPerfilCentral() {
         ].filter(Boolean).join(' | '),
         restricoes: result[0].restricoes || '',
         producao: result[0].producao || '',
+        sempreIncluir: result[0].sempre_incluir || '',
       };
       try { localStorage.setItem('lp_perfil', JSON.stringify(perfil)); } catch(e) {}
     } else {
@@ -3602,7 +3603,19 @@ Cliente ideal: ${p.cliente || ''}
 Tom de voz: ${p.tom || ''}
 Diferenciais: ${p.diferenciais || ''}
 ${p.redes ? `Presença online existente: ${p.redes}` : ''}
-${p.restricoes ? `
+${p.sempreIncluir ? `
+═══════════════════════════════════════
+O QUE ESTA MARCA SEMPRE INCLUI
+═══════════════════════════════════════
+${p.sempreIncluir}
+
+Encaixe isso onde o formato comporta, e omita onde não couber — forçar é pior que faltar:
+• Hashtag só entra onde há hashtag: na legenda, nunca no texto de uma tela de Stories, de um cartão de carrossel ou na fala de um roteiro.
+• No Pinterest, nunca use hashtags, mesmo que estejam listadas aqui. Lá elas não ajudam a ser encontrado e ocupam espaço que a palavra de busca deveria usar. Se houver palavras-chave entre elas, aproveite as palavras, sem o "#".
+• Perfil para marcar entra onde marcar faz sentido — legenda, texto de post — não no meio de um roteiro.
+• Link entra no CTA, seguindo a regra da rede: no Instagram vira "link na bio"; no LinkedIn, vai para o primeiro comentário; no Facebook pode ir direto no texto.
+• Um slogan ou assinatura não precisa aparecer em todo post. Use quando fecha bem o texto, e deixe de fora quando soaria decorado.
+` : ''}${p.restricoes ? `
 ═══════════════════════════════════════
 RESTRIÇÕES DE MARCA — RESPEITE SEMPRE
 ═══════════════════════════════════════
