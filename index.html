@@ -979,6 +979,20 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .prog-aviso.show { display: block; }
 .prog-aviso strong { color: #FECACA; }
 
+#saida-manual {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: 20px; z-index: 400; max-width: 560px; width: calc(100% - 32px);
+  background: var(--bg); border: 1px solid var(--g-m); border-radius: var(--rs);
+  box-shadow: var(--s2); padding: 13px 16px;
+}
+#saida-manual .sm-txt { font-size: 12.5px; color: var(--text2); margin-bottom: 7px; }
+#saida-manual .sm-url {
+  font-size: 11.5px; color: var(--g-c); word-break: break-all;
+  background: var(--bg2); border-radius: 6px; padding: 7px 9px; margin-bottom: 9px;
+  user-select: all;
+}
+#saida-manual .sm-acoes { display: flex; gap: 6px; }
+
 /* ── TOAST ── */
 #toast {
   position: fixed; bottom: 24px; right: 24px;
@@ -4424,6 +4438,11 @@ function baixarArquivo(url, dataUrl, nomeArquivo) {
     if (window.parent !== window.top) {
       window.parent.postMessage({ type: 'lumen-export', url: url }, '*');
     }
+    // Não há como saber daqui se o download começou: a resposta acontece na
+    // página-mãe, que é de outro domínio. Depois de alguns segundos aparece a
+    // saída manual — nunca custa mais que um clique em Fechar, e evita a
+    // pessoa ficar sem nada quando a ponte falha.
+    saidaManual(url, nomeArquivo);
     return;
   }
   const a = document.createElement('a');
@@ -4432,6 +4451,30 @@ function baixarArquivo(url, dataUrl, nomeArquivo) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+// Barra discreta com o endereço do arquivo, para copiar e abrir numa aba nova
+// caso o download não tenha começado.
+let _saidaTimer = null;
+function saidaManual(url, nomeArquivo) {
+  clearTimeout(_saidaTimer);
+  _saidaTimer = setTimeout(function() {
+    let bar = document.getElementById('saida-manual');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'saida-manual';
+      document.body.appendChild(bar);
+    }
+    bar.innerHTML =
+      '<div class="sm-txt">O download não começou? Copie o endereço e abra numa aba nova.</div>' +
+      '<div class="sm-url" id="sm-url"></div>' +
+      '<div class="sm-acoes">' +
+        '<button class="btn2 btn2-sm" onclick="copiarTextoSeguro(document.getElementById(\'sm-url\').textContent); mostrarToast(\'Endereço copiado.\')">Copiar endereço</button>' +
+        '<button class="btn2 btn2-sm" onclick="document.getElementById(\'saida-manual\').remove()">Fechar</button>' +
+      '</div>';
+    bar.querySelector('#sm-url').textContent = url;
+    bar.classList.add('on');
+  }, 3500);
 }
 
 function baixarMidia(idx) {
