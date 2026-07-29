@@ -881,13 +881,18 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
   position: relative; overflow: hidden;
   display: flex; align-items: center; justify-content: space-between; gap: 20px;
 }
+/* pointer-events: none é obrigatório aqui. Os círculos ficam sobre o botão e,
+   por serem desenhados depois dele, engoliam o clique em parte da área — o
+   cursor virava seta e o botão não respondia naquele pedaço. */
 .ajuda-dl::before {
   content: ''; position: absolute; top: -60px; right: -60px;
   width: 220px; height: 220px; background: rgba(255,255,255,.07); border-radius: 50%;
+  pointer-events: none;
 }
 .ajuda-dl::after {
   content: ''; position: absolute; bottom: -40px; right: 60px;
   width: 120px; height: 120px; background: rgba(255,255,255,.05); border-radius: 50%;
+  pointer-events: none;
 }
 .ajuda-dl-txt { position: relative; }
 .ajuda-dl-txt h3 { font-size: 16px; font-weight: 700; color: white; margin-bottom: 4px; }
