@@ -439,17 +439,11 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
   font-weight: 700;
 }
 
-.voz-tag { text-align: center; }
 
 .voz-btn { position: relative; }
 
 .voz-nome { font-size: 12px; font-weight: 600; color: var(--text); text-align: center; }
 .voz-rede { font-size: 11px; color: var(--text3); text-align: center; }
-.voz-tag {
-  display: inline-block; font-size: 10px;
-  padding: 1px 6px; border-radius: 10px; margin-top: 5px;
-  background: rgba(45,106,79,.1); color: var(--g); font-weight: 500;
-}
 
 /* ── UPLOAD ── */
 .dropzone {
@@ -866,15 +860,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .legenda-cor { width: 10px; height: 10px; border-radius: 2px; }
 
 /* ── PERFIL ── */
-.perfil-titulo { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
-.perfil-titulo span { color: var(--g-mid); }
-.perfil-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; line-height: 1.6; }
 
-.perfil-ok {
-  display: none; align-items: center; gap: 8px;
-  font-size: 12px; color: var(--ok); font-weight: 500; margin-top: 12px;
-}
-.perfil-ok.show { display: flex; }
 
 /* ── AJUDA ── */
 .ajuda-dl {
@@ -1095,7 +1081,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
     <span class="label-text">Fixar menu</span>
   </button>
 
-  <nav class="nav-section" id="nav-pills">
+  <nav class="nav-section">
     <button class="pill nav-item gerar on" data-tab="gerar" onclick="goTab('gerar')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6.34 6.34l1.5 1.5M16.16 16.16l1.5 1.5M6.34 17.66l1.5-1.5M16.16 7.84l1.5-1.5"/></svg>
       <span class="label-text">Gerar</span>
@@ -1400,7 +1386,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
       </div>
 
       <!-- Painel direito — resultado -->
-      <div class="resultado-wrap" id="resultado-comentario-wrap">
+      <div class="resultado-wrap">
         <div class="resultado-vazio" id="resultado-comentario-vazio">
           <div class="ico">💬</div>
           <p>Configure a resposta ao lado<br>e clique em <em>Gerar resposta</em>.</p>
@@ -1446,7 +1432,6 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
               <span style="font-size:12px;color:var(--text3);white-space:nowrap">lumenpost.vercel.app/bio/</span>
               <input type="text" id="bio-slug" placeholder="seunome" style="flex:1" oninput="atualizarPreviewBio()">
             </div>
-            <div id="bio-slug-status" style="font-size:11px;margin-top:4px"></div>
           </div>
 
           <div class="field">
@@ -2137,14 +2122,6 @@ function adicionarEspacoNaProgramacao(progId, data, rede) {
   prog.espacos[data].push(novoEspaco);
   salvarProgramacoes();
   return novoEspaco;
-}
-
-// Registra um espaço já preenchido na programação "Posts gerais" — chamado
-// sempre que um post é salvo fora do fluxo de espaço pré-criado.
-function registrarEmProgramacaoFixa(data, rede) {
-  if (!data || !rede) return;
-  garantirProgramacaoFixa();
-  adicionarEspacoNaProgramacao(ID_PROGRAMACAO_FIXA, data, rede);
 }
 
 // Decide onde registrar um post recém-salvo. Se ele veio de um espaço já
@@ -3014,6 +2991,9 @@ function toggleRailPin() {
 // com o Mind e as próximas ferramentas. Esta função só busca e guarda em
 // memória; quem editar precisa ir até a página Perfil, no menu do site.
 async function carregarPerfilCentral() {
+  // Versões antigas guardavam o perfil da empresa aqui e nada mais o lia.
+  // Limpa uma vez para não deixar dado da empresa parado no navegador.
+  try { localStorage.removeItem('lp_perfil'); } catch(e) {}
   try {
     const result = await dbCall('select_perfil', 'perfil_central', {user_id: CURRENT_USER_ID});
     if (result && result.error) {
@@ -3040,12 +3020,8 @@ async function carregarPerfilCentral() {
         producao: result[0].producao || '',
         sempreIncluir: result[0].sempre_incluir || '',
       };
-      try { localStorage.setItem('lp_perfil', JSON.stringify(perfil)); } catch(e) {}
     } else {
-      // Nada encontrado na nuvem (perfil apagado ou ainda não preenchido) —
-      // não deixa nenhum dado antigo "fantasma" sobrevivendo em cache local.
       perfil = {};
-      try { localStorage.removeItem('lp_perfil'); } catch(e) {}
     }
   } catch(e) {
     console.error('Erro ao carregar perfil central:', e);
@@ -3118,8 +3094,6 @@ function toggleVoz(key) {
   atualizarSugestaoHorario();
   renderFormatos();
 }
-
-function selecionarVoz(key) { toggleVoz(key); } // compatibilidade
 
 // ── ETAPA DE PRODUÇÃO ─────────────────────────────────────────────────
 // Dois momentos diferentes do trabalho, que pedem coisas opostas da IA:
@@ -3942,7 +3916,6 @@ function renderizarResultado(tema, tom) {
     textoSimplesEl.textContent = r.texto;
     textoSimplesEl.style.display = 'block';
     document.getElementById('resultado-barra').style.display = 'flex';
-    var _ba = document.getElementById('btn-aprov'); if(_ba) _ba.style.display = 'none';
 
   } else {
     // Modo abas — múltiplas redes
@@ -4159,60 +4132,6 @@ function salvarPost() {
   mostrarToast('Post salvo no banco!');
 }
 
-function marcarAprovacao() {
-  if (!postAtual) return;
-  postAtual.status = 'aguardando';
-  var post = { ...postAtual, id: Date.now(), criadoEm: new Date().toISOString() };
-  bancoPosts.unshift(post);
-  salvarStorage();
-  // Auto-add to calendar if date is set
-  if (post.data) {
-    adicionarPostAoCal(post.data, post);
-  }
-  var midiaStr = null;
-  try { midiaStr = post.midia ? JSON.stringify(post.midia) : null; } catch(e) {}
-  dbInsertPost({
-    user_id: CURRENT_USER_ID,
-    conteudo: post.texto || '',
-    rede: post.rede || '',
-    status: 'aguardando',
-    empresa: perfil.nome || '',
-    badge: post.badge || 'badge-green',
-    midia: midiaStr,
-    data_publicacao: post.data || null,
-    formato: post.formato || null,
-    programacao_id: post.programacaoId || null,
-    roteiro: post.roteiro || null,
-  }).then(function(r) {
-    if(r && Array.isArray(r) && r[0]) {
-      var _idAntigo = post.id;
-      post._cloudId = r[0].id;
-      post.id = 'cloud_' + r[0].id;
-      sincronizarIdNoCal(_idAntigo, post);
-    }
-    renderBanco();
-  });
-  // Enviar email de aprovação se houver endereço
-  if (post.emailAprovacao) {
-    fetch('/api/email', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        para: post.emailAprovacao,
-        empresa: perfil.nome || '',
-        rede: post.redeName || '',
-        texto: post.texto || '',
-      })
-    }).then(function(r) { return r.json(); })
-      .then(function(r) {
-        if (r.success) mostrarToast('Post salvo e email de aprovação enviado!');
-        else mostrarToast('Post salvo. Falha ao enviar email.');
-      })
-      .catch(function() { mostrarToast('Post salvo. Erro ao enviar email.'); });
-  } else {
-    mostrarToast('Salvo e marcado para aprovação.');
-  }
-}
 
 // ── BANCO ─────────────────────────────────────────────────────────────
 function renderBanco() {
