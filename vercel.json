@@ -47,6 +47,14 @@
       "dest": "/api/midia.js"
     },
     {
+      "src": "/api/token",
+      "dest": "/api/token.js"
+    },
+    {
+      "src": "/api/passe",
+      "dest": "/api/passe.js"
+    },
+    {
       "src": "/guia_usuario_lumen_post.pdf",
       "dest": "/public/guia_usuario_lumen_post.pdf",
       "headers": {
