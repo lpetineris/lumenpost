@@ -9,14 +9,19 @@
 // GET  ?autoteste=1        ->  emite e confere um passe de mentira, para
 //                              provar que o segredo está configurado aqui
 // ---------------------------------------------------------------------------
-import { emitirPasse, lerPasse, iguaisEmTempoConstante } from './_auth.js';
+import {
+  emitirPasse,
+  lerPasse,
+  iguaisEmTempoConstante,
+  segredoDoAmbiente,
+} from './_auth.js';
 
 const UID_AUTOTESTE = '__autoteste__';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
-  const segredo = process.env.LUMEN_TOKEN_SECRET;
+  const segredo = segredoDoAmbiente();
   if (!segredo) {
     return res.status(500).json({ erro: 'LUMEN_TOKEN_SECRET não configurado neste projeto' });
   }
@@ -40,8 +45,9 @@ export default async function handler(req, res) {
   }
 
   const { secret, userId } = req.body || {};
+  const apresentado = secret == null ? '' : String(secret).trim();
 
-  if (!iguaisEmTempoConstante(secret, segredo)) {
+  if (!iguaisEmTempoConstante(apresentado, segredo)) {
     return res.status(401).json({ erro: 'segredo inválido' });
   }
   if (!userId || typeof userId !== 'string') {

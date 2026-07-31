@@ -43,6 +43,16 @@ export function iguaisEmTempoConstante(a, b) {
   return crypto.timingSafeEqual(ba, bb);
 }
 
+// Painéis como o do Vercel e o cofre do Wix costumam guardar uma quebra de
+// linha ou um espaço no fim do que foi colado. Como o segredo é comparado byte
+// a byte e usado como chave do HMAC, um invisível desses reprova tudo. Então o
+// valor é sempre aparado — nos dois lados, e nos três projetos, para as
+// assinaturas continuarem compatíveis entre eles.
+export function segredoDoAmbiente() {
+  const s = process.env.LUMEN_TOKEN_SECRET;
+  return s ? String(s).trim() : null;
+}
+
 export function emitirPasse(userId, segredo, horas = VALIDADE_HORAS) {
   const agora = Math.floor(Date.now() / 1000);
   const payload = { uid: String(userId), iat: agora, exp: agora + horas * 3600 };
@@ -88,7 +98,7 @@ export function passeDoPedido(req) {
 // Quem chama decide o que fazer com o null — durante a transição, cair no
 // comportamento antigo; depois, recusar.
 export function identidade(req) {
-  const segredo = process.env.LUMEN_TOKEN_SECRET;
+  const segredo = segredoDoAmbiente();
   if (!segredo) return null;
   const t = passeDoPedido(req);
   if (!t) return null;

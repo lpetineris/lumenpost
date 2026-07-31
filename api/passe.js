@@ -7,7 +7,7 @@
 //
 // Não emite nada e não devolve dado de usuário, só o veredito.
 // ---------------------------------------------------------------------------
-import { lerPasse } from './_auth.js';
+import { lerPasse, segredoDoAmbiente } from './_auth.js';
 
 export default function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,7 +16,7 @@ export default function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const segredo = process.env.LUMEN_TOKEN_SECRET;
+  const segredo = segredoDoAmbiente();
   if (!segredo) return res.status(200).json({ configurado: false });
 
   const token = (req.body && req.body.token) || (req.query && req.query.token) || null;
