@@ -5,14 +5,14 @@
 // pedido. O corpo é escrito pelo navegador e qualquer pessoa pode mandar o id
 // de outra; o passe é assinado com um segredo que só existe nos servidores.
 //
-// Enquanto EXIGIR_PASSE for false, um pedido sem passe ainda é atendido no
-// modo antigo — é a fase de transição, para ninguém ficar trancado do lado de
-// fora enquanto as páginas do Wix não estiverem todas publicadas.
+// EXIGIR_PASSE está LIGADO: pedido sem passe válido é recusado, ponto. O id
+// que vem no corpo não vale mais nada. Desligar reabre o modo antigo e existe
+// só para destravar uma emergência — não é estado normal de operação.
 // ---------------------------------------------------------------------------
 import https from 'https';
 import { identidade } from './_auth.js';
 
-const EXIGIR_PASSE = false;
+const EXIGIR_PASSE = true;
 
 // O nome da tabela vinha do navegador e ia direto para a URL do Supabase, o
 // que dava acesso a qualquer tabela do projeto. Só estas são alcançáveis.

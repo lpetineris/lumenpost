@@ -6,14 +6,14 @@
 // conta a pagar. O passe assinado é o que amarra a chamada a um usuário real
 // do site.
 //
-// Enquanto EXIGIR_PASSE for false, segue atendendo sem passe: é a fase de
-// transição, para nenhuma ferramenta parar antes das páginas do Wix estarem
-// todas publicadas.
+// EXIGIR_PASSE está LIGADO: chamada sem passe válido é recusada. Desligar
+// reabre o proxy para qualquer pessoa que descubra o endereço e existe só
+// para destravar uma emergência — não é estado normal de operação.
 // ---------------------------------------------------------------------------
 import https from 'https';
 import { identidade } from './_auth.js';
 
-const EXIGIR_PASSE = false;
+const EXIGIR_PASSE = true;
 
 function httpsRequest(url, options, body) {
   return new Promise((resolve, reject) => {
