@@ -1923,12 +1923,61 @@ try {
   CURRENT_USER_ID = 'user_default';
 }
 
-window.addEventListener('message', function(e) {
-  if(e.data && e.data.type === 'set-user-id' && e.data.userId) {
-    CURRENT_USER_ID = e.data.userId;
-    liberarTela();
-    loadFromCloud();
+// ── PASSE DE ACESSO ───────────────────────────────────────────────────
+// O id acima é só o que o navegador acha que é. O passe é a prova assinada
+// pelo Wix de quem está logado — é ele que o servidor confere. Vale 12h; a
+// renovação é pedida à página do Wix antes de vencer, para a ferramenta não
+// parar sozinha em quem deixa a aba aberta o dia inteiro.
+let PASSE_ATUAL = null;
+let _passePendente = null;
+let _resolvePasse = null;
+
+function _expDoPasse(t) {
+  try {
+    let p = t.split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
+    while (p.length % 4) p += '=';
+    return JSON.parse(atob(p)).exp || 0;
+  } catch(e) {
+    return 0;
   }
+}
+
+// Renova com folga de 5 minutos: uma chamada que sai válida não pode chegar
+// vencida do outro lado.
+function _passeVencendo() {
+  if (!PASSE_ATUAL) return false;
+  return _expDoPasse(PASSE_ATUAL) - 300 < Math.floor(Date.now() / 1000);
+}
+
+function _pedirPasseNovo() {
+  if (window.parent === window) return Promise.resolve(null);
+  if (_passePendente) return _passePendente;
+  _passePendente = new Promise(function(resolve) {
+    // Se o Wix não responder, segue com o passe velho em vez de travar.
+    const limite = setTimeout(function() {
+      _passePendente = null; _resolvePasse = null; resolve(null);
+    }, 4000);
+    _resolvePasse = function(v) {
+      clearTimeout(limite); _passePendente = null; _resolvePasse = null; resolve(v);
+    };
+    window.parent.postMessage({ type: 'lumen-passe-renovar' }, '*');
+  });
+  return _passePendente;
+}
+
+window.addEventListener('message', function(e) {
+  if(!(e.data && e.data.type === 'set-user-id' && e.data.userId)) return;
+
+  if (e.data.passe) PASSE_ATUAL = e.data.passe;
+
+  // Resposta a um pedido de renovação: atualiza só o passe e sai. Seguir para
+  // o loadFromCloud aqui recarregaria a nuvem por cima do que o usuário está
+  // fazendo no meio do uso.
+  if (_resolvePasse) { _resolvePasse(e.data.passe || null); return; }
+
+  CURRENT_USER_ID = e.data.userId;
+  liberarTela();
+  loadFromCloud();
 });
 
 // Enquanto essa tela de "Conectando..." está visível, o usuário não consegue
@@ -1965,11 +2014,15 @@ function _falhou(res) {
 
 async function dbCall(action, table, data) {
   let resultado = null;
+  if (_passeVencendo()) await _pedirPasseNovo();
   try {
     const res = await fetch('https://lumenpost.vercel.app/api/db', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({action, table, data})
+      // O passe vai no corpo, não em cabeçalho próprio: cabeçalho fora do
+      // comum dispara verificação prévia do navegador em chamada cruzada, e
+      // aqui não há motivo para pagar esse risco.
+      body: JSON.stringify({action, table, data, passe: PASSE_ATUAL || undefined})
     });
     resultado = await res.json();
   } catch(e) {
@@ -1990,6 +2043,18 @@ async function dbCall(action, table, data) {
     }
   }
   return resultado;
+}
+
+// Toda chamada à IA passa por aqui, para o passe nunca ser esquecido num
+// ponto de chamada novo. Devolve a mesma Response do fetch, então nada muda
+// para quem chama.
+async function chamarIA(corpo, extras) {
+  if (_passeVencendo()) await _pedirPasseNovo();
+  return fetch('/api/chat', Object.assign({
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({}, corpo, { passe: PASSE_ATUAL || undefined }))
+  }, extras || {}));
 }
 
 async function loadFromCloud() {
@@ -3856,14 +3921,10 @@ Escreva o post agora. Comece direto pelo gancho — sem introdução, sem explic
   }
 
   try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system: buildSystemPara(key, fKey, tom),
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: msgContent }]
-      })
+    const res = await chamarIA({
+      system: buildSystemPara(key, fKey, tom),
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: msgContent }]
     });
 
     const data = await res.json();
@@ -5063,16 +5124,11 @@ Use apenas estas chaves de rede: ${redesGrupo.join(', ')}. Todas as datas devem 
   const timeoutId = setTimeout(() => controller.abort(), 60000);
 
   try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system: 'Você responde apenas com JSON válido, sem nenhum texto adicional, comentário ou explicação.',
-        max_tokens: 8000,
-        messages: [{ role: 'user', content: prompt }]
-      }),
-      signal: controller.signal
-    });
+    const res = await chamarIA({
+      system: 'Você responde apenas com JSON válido, sem nenhum texto adicional, comentário ou explicação.',
+      max_tokens: 8000,
+      messages: [{ role: 'user', content: prompt }]
+    }, { signal: controller.signal });
     clearTimeout(timeoutId);
 
     const data = await res.json();
@@ -5510,14 +5566,10 @@ Escreva uma resposta adequada para este comentário.`;
   _ultimoComentario = { comentario, legenda, argumento, rede, tom, postura };
 
   try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system: buildSystemComentario(rede, tom, postura),
-        max_tokens: 500,
-        messages: [{ role: 'user', content: userPrompt }]
-      })
+    const res = await chamarIA({
+      system: buildSystemComentario(rede, tom, postura),
+      max_tokens: 500,
+      messages: [{ role: 'user', content: userPrompt }]
     });
 
     const data = await res.json();
