@@ -1949,6 +1949,14 @@ function _passeVencendo() {
   return _expDoPasse(PASSE_ATUAL) - 300 < Math.floor(Date.now() / 1000);
 }
 
+// Antes de qualquer chamada ao servidor. A carga inicial dispara no topo do
+// arquivo, antes de o Wix responder com o passe — sem esperar aqui, essas
+// primeiras chamadas sairiam sem passe e voltariam recusadas.
+async function _garantirPasse() {
+  if (window.parent === window) return;      // fora do Wix não há passe a esperar
+  if (!PASSE_ATUAL || _passeVencendo()) await _pedirPasseNovo();
+}
+
 function _pedirPasseNovo() {
   if (window.parent === window) return Promise.resolve(null);
   if (_passePendente) return _passePendente;
@@ -1965,15 +1973,23 @@ function _pedirPasseNovo() {
   return _passePendente;
 }
 
+let _identidadeRecebida = false;
+
 window.addEventListener('message', function(e) {
   if(!(e.data && e.data.type === 'set-user-id' && e.data.userId)) return;
 
   if (e.data.passe) PASSE_ATUAL = e.data.passe;
 
-  // Resposta a um pedido de renovação: atualiza só o passe e sai. Seguir para
-  // o loadFromCloud aqui recarregaria a nuvem por cima do que o usuário está
-  // fazendo no meio do uso.
-  if (_resolvePasse) { _resolvePasse(e.data.passe || null); return; }
+  // Quem estiver esperando passe é atendido sempre — inclusive quando esta é
+  // a primeira mensagem. Distinguir "primeira" de "renovação" pelo esperador
+  // pendente daria errado: no carregamento as duas coisas acontecem juntas, e
+  // a identidade nunca se estabeleceria.
+  if (_resolvePasse) _resolvePasse(e.data.passe || null);
+
+  // Da segunda mensagem em diante é só renovação de passe. Recarregar a nuvem
+  // aqui passaria por cima do que o usuário está fazendo.
+  if (_identidadeRecebida) return;
+  _identidadeRecebida = true;
 
   CURRENT_USER_ID = e.data.userId;
   liberarTela();
@@ -2014,7 +2030,7 @@ function _falhou(res) {
 
 async function dbCall(action, table, data) {
   let resultado = null;
-  if (_passeVencendo()) await _pedirPasseNovo();
+  await _garantirPasse();
   try {
     const res = await fetch('https://lumenpost.vercel.app/api/db', {
       method: 'POST',
@@ -2049,7 +2065,7 @@ async function dbCall(action, table, data) {
 // ponto de chamada novo. Devolve a mesma Response do fetch, então nada muda
 // para quem chama.
 async function chamarIA(corpo, extras) {
-  if (_passeVencendo()) await _pedirPasseNovo();
+  await _garantirPasse();
   return fetch('/api/chat', Object.assign({
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
