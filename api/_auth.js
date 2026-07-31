@@ -84,6 +84,39 @@ export function lerPasse(token, segredo) {
   return { valido: true, uid: String(payload.uid), exp: payload.exp };
 }
 
+// ---------------------------------------------------------------------------
+// Credencial de usuário para o Supabase.
+//
+// Até aqui o servidor falava com o banco como administrador, e o banco obedecia
+// sem perguntar — todas as proteções moravam no nosso código. Com esta
+// credencial ele fala EM NOME DO USUÁRIO, e as regras de linha do Postgres
+// passam a valer. Um filtro errado no nosso código deixa de ser capaz de
+// entregar dado alheio: o banco recusa antes.
+//
+// É assinada com o segredo legado do projeto (SUPABASE_JWT_SECRET), que o
+// Supabase ainda usa para verificar. Vale um minuto: é emitida a cada chamada
+// e não precisa durar mais que ela.
+// ---------------------------------------------------------------------------
+export function credencialSupabase(uid, segundos = 60) {
+  const segredo = process.env.SUPABASE_JWT_SECRET;
+  if (!segredo || !uid) return null;
+
+  const agora = Math.floor(Date.now() / 1000);
+  const cabecalho = b64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const corpo = b64url(JSON.stringify({
+    sub: String(uid),
+    role: 'authenticated',   // papel a que as políticas de linha se aplicam
+    aud: 'authenticated',
+    iat: agora,
+    exp: agora + segundos,
+  }));
+  const dados = `${cabecalho}.${corpo}`;
+  const assinatura = b64url(
+    crypto.createHmac('sha256', String(segredo).trim()).update(dados).digest()
+  );
+  return `${dados}.${assinatura}`;
+}
+
 // O passe pode vir no cabeçalho (caminho normal) ou no corpo (reserva, para
 // chamadas que não conseguem definir cabeçalho, como um form ou um link).
 export function passeDoPedido(req) {

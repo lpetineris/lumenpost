@@ -16,13 +16,21 @@ export default function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  // Só diz se cada variável EXISTE, nunca o valor. Serve para conferir, antes
+  // de virar uma chave, que os três projetos foram configurados igual.
+  const ambiente = {
+    passe: !!process.env.LUMEN_TOKEN_SECRET,
+    jwtSupabase: !!process.env.SUPABASE_JWT_SECRET,
+    anonSupabase: !!process.env.SUPABASE_ANON_KEY,
+  };
+
   const segredo = segredoDoAmbiente();
-  if (!segredo) return res.status(200).json({ configurado: false });
+  if (!segredo) return res.status(200).json({ configurado: false, ambiente });
 
   const token = (req.body && req.body.token) || (req.query && req.query.token) || null;
-  if (!token) return res.status(200).json({ configurado: true, informado: false });
+  if (!token) return res.status(200).json({ configurado: true, informado: false, ambiente });
 
-  return res.status(200).json({ configurado: true, informado: true, ...lerPasse(token, segredo) });
+  return res.status(200).json({ configurado: true, informado: true, ambiente, ...lerPasse(token, segredo) });
 }
 
 export const config = { maxDuration: 10 };
