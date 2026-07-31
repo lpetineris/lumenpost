@@ -25,13 +25,18 @@ const TABELAS = new Set([
   'conversas',
 ]);
 
+// Tabelas de uma linha por usuário: o dono É a chave primária "id", e não
+// existe coluna user_id nelas. Escrever user_id aqui faz o Supabase recusar a
+// gravação inteira, porque a coluna não existe.
+const TABELAS_POR_ID = new Set(['perfil_central', 'perfis_post']);
+
 // Identidade informada pelo navegador — só serve enquanto EXIGIR_PASSE for
-// false. Em perfil_central o dono é a própria chave "id" e não existe coluna
-// user_id; nas demais ações "id" é o id da LINHA e não identifica ninguém.
+// false. Nas tabelas por id, "id" é o dono; nas demais, "id" é o id da LINHA
+// e não identifica ninguém.
 function idInformado(action, table, data) {
   if (!data) return null;
   if (data.user_id) return data.user_id;
-  if (table === 'perfil_central' && (action === 'upsert' || action === 'select_perfil')) {
+  if (TABELAS_POR_ID.has(table) && (action === 'upsert' || action === 'select_perfil')) {
     return data.id;
   }
   return null;
@@ -118,14 +123,15 @@ export default async function handler(req, res) {
       method = 'POST';
       // O dono é imposto aqui: o que vier no corpo é descartado, senão daria
       // para gravar uma linha em nome de outra pessoa.
-      body = JSON.stringify({ ...data, user_id: dono });
+      body = JSON.stringify(
+        TABELAS_POR_ID.has(table) ? { ...data, id: dono } : { ...data, user_id: dono }
+      );
     } else if (action === 'upsert') {
       url = `${supabaseUrl}/rest/v1/${table}`;
       method = 'POST';
       headers['Prefer'] = 'return=representation,resolution=merge-duplicates';
-      // perfil_central é chaveada por id (= dono); as outras, por user_id.
       body = JSON.stringify(
-        table === 'perfil_central' ? { ...data, id: dono } : { ...data, user_id: dono }
+        TABELAS_POR_ID.has(table) ? { ...data, id: dono } : { ...data, user_id: dono }
       );
     } else if (action === 'update') {
       if (!linhaQ) return res.status(400).json({ error: 'id ausente' });
