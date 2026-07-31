@@ -1,4 +1,42 @@
+// ---------------------------------------------------------------------------
+// Acesso ao banco.
+//
+// Quem é o usuário vem do passe assinado (ver _auth.js), NUNCA do corpo do
+// pedido. O corpo é escrito pelo navegador e qualquer pessoa pode mandar o id
+// de outra; o passe é assinado com um segredo que só existe nos servidores.
+//
+// Enquanto EXIGIR_PASSE for false, um pedido sem passe ainda é atendido no
+// modo antigo — é a fase de transição, para ninguém ficar trancado do lado de
+// fora enquanto as páginas do Wix não estiverem todas publicadas.
+// ---------------------------------------------------------------------------
 import https from 'https';
+import { identidade } from './_auth.js';
+
+const EXIGIR_PASSE = false;
+
+// O nome da tabela vinha do navegador e ia direto para a URL do Supabase, o
+// que dava acesso a qualquer tabela do projeto. Só estas são alcançáveis.
+const TABELAS = new Set([
+  'posts',
+  'perfis_post',
+  'perfil_central',
+  'resumos_salvos',
+  'analises',
+  'conversas',
+]);
+
+// Identidade informada pelo navegador — só serve enquanto EXIGIR_PASSE for
+// false. Em perfil_central o dono é a própria chave "id" e não existe coluna
+// user_id; nas demais ações "id" é o id da LINHA e não identifica ninguém.
+function idInformado(action, table, data) {
+  if (!data) return null;
+  if (data.user_id) return data.user_id;
+  if (table === 'perfil_central' && (action === 'upsert' || action === 'select_perfil')) {
+    return data.id;
+  }
+  return null;
+}
+
 function httpsRequest(url, options, body) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
@@ -24,72 +62,91 @@ function httpsRequest(url, options, body) {
     req.end();
   });
 }
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SECRET_KEY;
   if (!supabaseUrl || !supabaseKey) {
-    return res.status(500).json({ 
-      error: 'Missing env vars',
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseKey
-    });
+    return res.status(500).json({ error: 'Missing env vars' });
   }
-  const keyInfo = `len:${supabaseKey.length} start:${supabaseKey.slice(0,10)} end:${supabaseKey.slice(-5)}`;
-  const { action, table, data } = req.body;
+
+  const { action, table, data } = req.body || {};
+
+  if (!TABELAS.has(table)) {
+    return res.status(400).json({ error: 'Tabela não permitida' });
+  }
+
+  // A identidade verificada manda. Sem passe, cai no id informado pelo
+  // navegador — só enquanto EXIGIR_PASSE for false.
+  const verificado = identidade(req);
+  if (!verificado && EXIGIR_PASSE) {
+    return res.status(401).json({ error: 'Passe ausente ou inválido' });
+  }
+  const dono = verificado || idInformado(action, table, data);
+  if (!dono) {
+    return res.status(400).json({ error: 'Sem identificação' });
+  }
+
+  // Sem codificar, um id com "&" pendura parâmetros extras na consulta ao
+  // Supabase. Vale para o id do dono e para o id da linha.
+  const donoQ = encodeURIComponent(dono);
+  const linhaQ = data && data.id != null ? encodeURIComponent(data.id) : null;
+
   const headers = {
     'Content-Type': 'application/json',
     'apikey': supabaseKey,
     'Authorization': `Bearer ${supabaseKey}`,
     'Prefer': 'return=representation',
   };
+
   try {
-    const testUrl = `${supabaseUrl}/rest/v1/`;
-    const testResult = await httpsRequest(testUrl, { method: 'GET', headers }, null);
-    if (testResult.status === 401) {
-      return res.status(401).json({ 
-        error: 'Invalid Supabase key',
-        keyInfo,
-        supabaseResponse: testResult.body
-      });
-    }
     let url, method, body;
     if (action === 'select') {
-      url = `${supabaseUrl}/rest/v1/${table}?user_id=eq.${data?.user_id}&order=criado_em.desc`;
+      url = `${supabaseUrl}/rest/v1/${table}?user_id=eq.${donoQ}&order=criado_em.desc`;
       method = 'GET';
     } else if (action === 'select_perfil') {
-      url = `${supabaseUrl}/rest/v1/${table}?id=eq.${data?.user_id}`;
+      url = `${supabaseUrl}/rest/v1/${table}?id=eq.${donoQ}`;
       method = 'GET';
     } else if (action === 'insert') {
       url = `${supabaseUrl}/rest/v1/${table}`;
       method = 'POST';
-      body = JSON.stringify(data);
+      // O dono é imposto aqui: o que vier no corpo é descartado, senão daria
+      // para gravar uma linha em nome de outra pessoa.
+      body = JSON.stringify({ ...data, user_id: dono });
     } else if (action === 'upsert') {
       url = `${supabaseUrl}/rest/v1/${table}`;
       method = 'POST';
       headers['Prefer'] = 'return=representation,resolution=merge-duplicates';
-      body = JSON.stringify(data);
+      // perfil_central é chaveada por id (= dono); as outras, por user_id.
+      body = JSON.stringify(
+        table === 'perfil_central' ? { ...data, id: dono } : { ...data, user_id: dono }
+      );
     } else if (action === 'update') {
+      if (!linhaQ) return res.status(400).json({ error: 'id ausente' });
       const { id, user_id, ...fields } = data;
-      url = `${supabaseUrl}/rest/v1/${table}?id=eq.${id}&user_id=eq.${user_id}`;
+      url = `${supabaseUrl}/rest/v1/${table}?id=eq.${linhaQ}&user_id=eq.${donoQ}`;
       method = 'PATCH';
       body = JSON.stringify(fields);
     } else if (action === 'delete') {
-      url = `${supabaseUrl}/rest/v1/${table}?id=eq.${data.id}&user_id=eq.${data.user_id}`;
-      method = 'DELETE';
-      await httpsRequest(url, { method, headers }, null);
+      if (!linhaQ) return res.status(400).json({ error: 'id ausente' });
+      url = `${supabaseUrl}/rest/v1/${table}?id=eq.${linhaQ}&user_id=eq.${donoQ}`;
+      await httpsRequest(url, { method: 'DELETE', headers }, null);
       return res.status(200).json({ success: true });
     } else {
       return res.status(400).json({ error: 'Invalid action: ' + action });
     }
+
     const result = await httpsRequest(url, { method, headers }, body);
     return res.status(result.status).json(result.body);
   } catch (error) {
-    return res.status(500).json({ error: error.message, type: error.constructor.name });
+    return res.status(500).json({ error: error.message });
   }
 }
+
 export const config = { maxDuration: 30 };

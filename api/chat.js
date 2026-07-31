@@ -1,4 +1,19 @@
-const https = require('https');
+// ---------------------------------------------------------------------------
+// Ponte para a IA.
+//
+// Este endpoint gasta a chave da Anthropic. Sem exigir passe, qualquer pessoa
+// que descubra o endereço consome o orçamento — não é vazamento de dado, é
+// conta a pagar. O passe assinado é o que amarra a chamada a um usuário real
+// do site.
+//
+// Enquanto EXIGIR_PASSE for false, segue atendendo sem passe: é a fase de
+// transição, para nenhuma ferramenta parar antes das páginas do Wix estarem
+// todas publicadas.
+// ---------------------------------------------------------------------------
+import https from 'https';
+import { identidade } from './_auth.js';
+
+const EXIGIR_PASSE = false;
 
 function httpsRequest(url, options, body) {
   return new Promise((resolve, reject) => {
@@ -23,7 +38,7 @@ function httpsRequest(url, options, body) {
   });
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -31,10 +46,14 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  if (EXIGIR_PASSE && !identidade(req)) {
+    return res.status(401).json({ error: 'Passe ausente ou inválido' });
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
-  const { system, messages, max_tokens } = req.body;
+  const { system, messages, max_tokens } = req.body || {};
 
   const payload = JSON.stringify({
     model: 'claude-sonnet-4-6',
@@ -61,4 +80,4 @@ module.exports = async function handler(req, res) {
   } catch(e) {
     return res.status(500).json({ error: e.message });
   }
-};
+}
