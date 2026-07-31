@@ -1951,18 +1951,45 @@ window.addEventListener('load', function() {
   }
 });
 
+// Ações que gravam. Quando uma delas falha, a tela já mudou e a nuvem não —
+// e a alteração desaparece na próxima carga. Antes isso acontecia calado em
+// 17 lugares; avisar aqui cobre todos, inclusive os que vierem depois.
+const _ACOES_QUE_GRAVAM = ['insert', 'update', 'delete', 'upsert'];
+let _avisoDeFalhaEm = 0;
+
+function _falhou(res) {
+  if (res === null || res === undefined) return true;
+  if (res && res.error) return true;
+  return false;
+}
+
 async function dbCall(action, table, data) {
+  let resultado = null;
   try {
     const res = await fetch('https://lumenpost.vercel.app/api/db', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({action, table, data})
     });
-    return await res.json();
+    resultado = await res.json();
   } catch(e) {
     console.error('dbCall error:', e);
-    return null;
+    resultado = null;
   }
+
+  if (_ACOES_QUE_GRAVAM.includes(action) && _falhou(resultado)) {
+    console.error('Falha ao gravar na nuvem:', action, table, resultado);
+    // Uma mensagem por vez: um salvamento pode disparar várias gravações, e
+    // encher a tela de avisos idênticos não ajuda ninguém.
+    const agora = Date.now();
+    if (agora - _avisoDeFalhaEm > 4000) {
+      _avisoDeFalhaEm = agora;
+      if (typeof mostrarToast === 'function') {
+        mostrarToast('⚠ Não foi possível salvar na nuvem. A alteração pode se perder ao recarregar.');
+      }
+    }
+  }
+  return resultado;
 }
 
 async function loadFromCloud() {
