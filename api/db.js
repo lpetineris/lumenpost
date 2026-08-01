@@ -10,7 +10,7 @@
 // só para destravar uma emergência — não é estado normal de operação.
 // ---------------------------------------------------------------------------
 import https from 'https';
-import { identidade } from './_auth.js';
+import { identidade, credencialSupabase } from './_auth.js';
 
 const EXIGIR_PASSE = true;
 
@@ -75,9 +75,12 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Este arquivo não tem mais a chave de administrador. Ele só sabe falar em
+  // nome de um usuário, e o que ele consegue ver ou gravar é decidido pelas
+  // regras de linha do Postgres.
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SECRET_KEY;
-  if (!supabaseUrl || !supabaseKey) {
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !anonKey) {
     return res.status(500).json({ error: 'Missing env vars' });
   }
 
@@ -103,10 +106,17 @@ export default async function handler(req, res) {
   const donoQ = encodeURIComponent(dono);
   const linhaQ = data && data.id != null ? encodeURIComponent(data.id) : null;
 
+  // Credencial deste usuário, válida por um minuto. É sobre ela que as regras
+  // de linha agem: o banco só devolve e só aceita o que for do dono.
+  const credencial = credencialSupabase(dono);
+  if (!credencial) {
+    return res.status(500).json({ error: 'SUPABASE_JWT_SECRET não configurado' });
+  }
+
   const headers = {
     'Content-Type': 'application/json',
-    'apikey': supabaseKey,
-    'Authorization': `Bearer ${supabaseKey}`,
+    'apikey': anonKey,
+    'Authorization': `Bearer ${credencial}`,
     'Prefer': 'return=representation',
   };
 
