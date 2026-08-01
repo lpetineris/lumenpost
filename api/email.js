@@ -11,6 +11,10 @@ function httpsRequest(url, options, body) {
     };
     const req = https.request(reqOptions, (res) => {
       let data = '';
+      // Sem isto, cada pedaço da resposta é decodificado sozinho: um
+      // caractere de dois bytes que caia na emenda entre dois pedaços
+      // vira lixo. Era o que corrompia acentos vindos do banco.
+      res.setEncoding('utf8');
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
         try { resolve({ status: res.statusCode, body: JSON.parse(data || '{}') }); }
