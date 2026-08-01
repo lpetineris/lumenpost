@@ -53,14 +53,17 @@ export function segredoDoAmbiente() {
   return s ? String(s).trim() : null;
 }
 
-export function emitirPasse(userId, segredo, horas = VALIDADE_HORAS) {
+// Assinatura genérica com prazo. O passe é um caso particular disto; o outro
+// é a URL de download, que precisa carregar a autorização dentro do próprio
+// endereço porque a ponte do Wix só sabe navegar até um link.
+export function assinarDados(dados, segredo, segundos) {
   const agora = Math.floor(Date.now() / 1000);
-  const payload = { uid: String(userId), iat: agora, exp: agora + horas * 3600 };
+  const payload = { ...dados, iat: agora, exp: agora + segundos };
   const p = b64url(JSON.stringify(payload));
   return { token: `${p}.${assinar(p, segredo)}`, exp: payload.exp };
 }
 
-export function lerPasse(token, segredo) {
+export function lerDadosAssinados(token, segredo) {
   if (!token || typeof token !== 'string') return { valido: false, motivo: 'ausente' };
   const partes = token.split('.');
   if (partes.length !== 2) return { valido: false, motivo: 'formato' };
@@ -77,11 +80,22 @@ export function lerPasse(token, segredo) {
     return { valido: false, motivo: 'payload' };
   }
 
-  if (!payload || !payload.uid) return { valido: false, motivo: 'sem-uid' };
+  if (!payload || typeof payload !== 'object') return { valido: false, motivo: 'payload' };
   if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000)) {
     return { valido: false, motivo: 'expirado' };
   }
-  return { valido: true, uid: String(payload.uid), exp: payload.exp };
+  return { valido: true, dados: payload, exp: payload.exp };
+}
+
+export function emitirPasse(userId, segredo, horas = VALIDADE_HORAS) {
+  return assinarDados({ uid: String(userId) }, segredo, horas * 3600);
+}
+
+export function lerPasse(token, segredo) {
+  const r = lerDadosAssinados(token, segredo);
+  if (!r.valido) return r;
+  if (!r.dados.uid) return { valido: false, motivo: 'sem-uid' };
+  return { valido: true, uid: String(r.dados.uid), exp: r.exp };
 }
 
 // ---------------------------------------------------------------------------

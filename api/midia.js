@@ -4,8 +4,21 @@
 // sandboxed, sem allow-downloads, então <a download> com data URL é ignorado
 // silenciosamente. O caminho que funciona é o mesmo do Tendências — uma URL
 // de verdade que responde com cabeçalho de anexo, aberta pela ponte do Wix.
+//
+// A ponte só sabe navegar até um link — ela não carrega passe nem cabeçalho.
+// Antes, a autorização era "sabe o id do post e o id do dono", o que é fraco:
+// quem tivesse os dois baixava. Agora a autorização vai ASSINADA dentro do
+// próprio endereço, e vale dez minutos:
+//
+//   POST { id, i, passe }  ->  { url }   a ferramenta pede o endereço
+//   GET  ?t=<assinado>                   a ponte do Wix navega até ele
+//
+// O dono sai de dentro da assinatura, não da barra de endereços.
 
 import https from 'https';
+import { identidade, assinarDados, lerDadosAssinados, segredoDoAmbiente } from './_auth.js';
+
+const VALIDADE_SEGUNDOS = 600;
 
 function buscar(url, headers) {
   return new Promise((resolve, reject) => {
@@ -37,10 +50,38 @@ export default async function handler(req, res) {
     return res.status(500).send('Servidor sem configuração de banco.');
   }
 
-  const { id, user, i } = req.query || {};
-  if (!id || !user) return res.status(400).send('Faltam os parâmetros id e user.');
+  const segredo = segredoDoAmbiente();
+  if (!segredo) return res.status(500).send('Servidor sem configuração de acesso.');
 
-  const indice = Math.max(0, parseInt(i, 10) || 0);
+  // ── Pedido do endereço: exige passe, devolve um link assinado ──
+  if (req.method === 'POST') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'no-store');
+
+    const uid = identidade(req);
+    if (!uid) return res.status(401).json({ error: 'Passe ausente ou inválido' });
+
+    const { id, i } = req.body || {};
+    if (!id) return res.status(400).json({ error: 'Faltou o id.' });
+
+    const { token } = assinarDados(
+      { tipo: 'midia', id: String(id), i: Math.max(0, parseInt(i, 10) || 0), uid },
+      segredo,
+      VALIDADE_SEGUNDOS
+    );
+    return res.status(200).json({ url: `/api/midia?t=${encodeURIComponent(token)}` });
+  }
+
+  // ── Entrega: é por aqui que a ponte do Wix chega ──
+  const t = (req.query && req.query.t) || '';
+  const lido = lerDadosAssinados(t, segredo);
+  if (!lido.valido || lido.dados.tipo !== 'midia') {
+    return res.status(403).send('Link inválido ou expirado. Peça o download de novo.');
+  }
+
+  const id = lido.dados.id;
+  const user = lido.dados.uid;
+  const indice = Math.max(0, parseInt(lido.dados.i, 10) || 0);
 
   try {
     // O user_id entra na consulta: um post só é servido para o dono dele.

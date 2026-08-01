@@ -2075,6 +2075,28 @@ async function chamarIA(corpo, extras) {
   }, extras || {}));
 }
 
+// Pede ao servidor um endereço assinado para baixar a mídia. A ponte do Wix
+// só sabe navegar até um link — não carrega passe nem cabeçalho —, então a
+// autorização tem que viajar dentro do próprio endereço. Vale dez minutos.
+// Devolve null quando não dá: aí o download cai no caminho antigo, que
+// funciona fora do Wix.
+async function urlDeMidia(cloudId, indice) {
+  if (!cloudId) return null;
+  await _garantirPasse();
+  try {
+    const res = await fetch('/api/midia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: cloudId, i: indice, passe: PASSE_ATUAL || undefined })
+    });
+    const d = await res.json();
+    return d && d.url ? location.origin + d.url : null;
+  } catch (e) {
+    console.error('urlDeMidia:', e);
+    return null;
+  }
+}
+
 async function loadFromCloud() {
   // Carrega o perfil da tabela central compartilhada (perfil_central)
   await carregarPerfilCentral();
@@ -4541,12 +4563,10 @@ function baixarMidia(idx) {
 
   imgs.forEach(function(im, i) {
     // Um por vez, espaçados — o navegador descarta downloads simultâneos.
-    setTimeout(function() {
+    setTimeout(async function() {
       const base = (im.nome || `lumen-post-${post.rede || 'midia'}`).replace(/\.[^/.]+$/, '');
       const nomeArquivo = (imgs.length > 1 ? `${String(i + 1).padStart(2, '0')}-${base}` : base) + '.' + im.ext;
-      const url = post._cloudId
-        ? `${location.origin}/api/midia?id=${encodeURIComponent(post._cloudId)}&user=${encodeURIComponent(CURRENT_USER_ID)}&i=${i}`
-        : null;
+      const url = await urlDeMidia(post._cloudId, i);
       baixarArquivo(url, im.dataUrl, nomeArquivo);
     }, i * 600);
   });
@@ -4617,12 +4637,10 @@ function baixarMidiaModal() {
   }
 
   imgs.forEach(function(im, i) {
-    setTimeout(function() {
+    setTimeout(async function() {
       const base = (im.nome || `lumen-post-${window._modalMidiaRede || 'midia'}`).replace(/\.[^/.]+$/, '');
       const nomeArquivo = (imgs.length > 1 ? `${String(i + 1).padStart(2, '0')}-${base}` : base) + '.' + ext;
-      const url = cloudId
-        ? `${location.origin}/api/midia?id=${encodeURIComponent(cloudId)}&user=${encodeURIComponent(CURRENT_USER_ID)}&i=${i}`
-        : null;
+      const url = await urlDeMidia(cloudId, i);
       baixarArquivo(url, im.dataUrl, nomeArquivo);
     }, i * 600);
   });
