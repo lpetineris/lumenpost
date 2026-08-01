@@ -38,6 +38,11 @@ export default async function handler(req, res) {
 
   if (!slug) return res.status(400).json({ error: 'slug required' });
 
+  // O slug entra num filtro do banco, então só aceita o que um slug pode ser.
+  if (!/^[a-zA-Z0-9_-]{1,60}$/.test(slug)) {
+    return res.status(400).json({ error: 'slug inválido' });
+  }
+
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 
@@ -48,8 +53,12 @@ export default async function handler(req, res) {
   };
 
   try {
+    // Filtra no banco. Antes vinham as bios de todos os usuários a cada
+    // acesso, para achar uma — trabalho pesado que qualquer pessoa disparava,
+    // e um erro no laço abaixo devolveria a bio errada.
+    const filtro = encodeURIComponent(`*"slug":"${slug}"*`);
     const result = await httpsRequest(
-      `${supabaseUrl}/rest/v1/perfis_post?select=bio&bio=not.is.null`,
+      `${supabaseUrl}/rest/v1/perfis_post?select=bio&bio=ilike.${filtro}`,
       { method: 'GET', headers },
       null
     );

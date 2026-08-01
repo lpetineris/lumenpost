@@ -6001,7 +6001,8 @@ function enviarEmailAprovacao() {
   }
 
   // Enviar email via Resend
-  fetch('/api/email', {
+  _garantirPasse().then(function() {
+  return fetch('/api/email', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({
@@ -6009,7 +6010,9 @@ function enviarEmailAprovacao() {
       empresa: perfil.nome || '',
       rede: post.redeName || '',
       texto: post.texto || '',
+      passe: PASSE_ATUAL || undefined,
     })
+  });
   }).then(function(r) { return r.json(); })
     .then(function(r) {
       btn.disabled = false;

@@ -1,4 +1,5 @@
-const https = require('https');
+import https from 'https';
+import { identidade } from './_auth.js';
 
 function httpsRequest(url, options, body) {
   return new Promise((resolve, reject) => {
@@ -27,13 +28,28 @@ function httpsRequest(url, options, body) {
   });
 }
 
-module.exports = async function handler(req, res) {
+// Escapa o que vem do usuário antes de entrar no HTML do e-mail. Sem isto,
+// qualquer texto pode injetar marcação na mensagem — e um e-mail com a
+// aparência da Lumen Labs e conteúdo de terceiro é material de phishing.
+function esc(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Sem passe este endereço era um relé de spam: qualquer pessoa mandava
+  // e-mail saindo do nosso domínio, com texto próprio, para quem quisesse.
+  if (!identidade(req)) {
+    return res.status(401).json({ error: 'Passe ausente ou inválido' });
+  }
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'RESEND_API_KEY not configured' });
@@ -53,11 +69,11 @@ module.exports = async function handler(req, res) {
       <div style="background:#ffffff;padding:28px 32px;border:1px solid #E7E5E4;border-top:none">
         <p style="font-size:14px;margin-bottom:16px">Olá,</p>
         <p style="font-size:14px;margin-bottom:20px">
-          Você recebeu uma solicitação de aprovação de post da empresa <strong>${empresa || 'sua empresa'}</strong> para o <strong>${rede || 'redes sociais'}</strong>.
+          Você recebeu uma solicitação de aprovação de post da empresa <strong>${esc(empresa) || 'sua empresa'}</strong> para o <strong>${esc(rede) || 'redes sociais'}</strong>.
         </p>
         <div style="background:#F0FDF4;border-left:4px solid #2D6A4F;border-radius:4px;padding:16px 20px;margin-bottom:24px">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#40916C;margin-bottom:8px">Texto do post</div>
-          <div style="font-size:14px;line-height:1.7;color:#1C1917;white-space:pre-wrap">${resumo}</div>
+          <div style="font-size:14px;line-height:1.7;color:#1C1917;white-space:pre-wrap">${esc(resumo)}</div>
         </div>
         <p style="font-size:13px;color:#57534E;margin-bottom:8px">
           Para aprovar ou solicitar alterações, responda este email ou acesse o Lumen Post.
@@ -72,7 +88,7 @@ module.exports = async function handler(req, res) {
   const payload = JSON.stringify({
     from: 'Lumen Post <onboarding@resend.dev>',
     to: [para],
-    subject: `[Aprovação] Post ${rede || ''} — ${empresa || 'Lumen Post'}`,
+    subject: `[Aprovação] Post ${esc(rede)} — ${esc(empresa) || 'Lumen Post'}`,
     html,
   });
 
@@ -97,4 +113,4 @@ module.exports = async function handler(req, res) {
   } catch(e) {
     return res.status(500).json({ error: e.message });
   }
-};
+}
