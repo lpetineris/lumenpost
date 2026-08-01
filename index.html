@@ -734,24 +734,22 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
   padding: 2px 9px; border-radius: 10px;
   letter-spacing: .04em; text-transform: uppercase;
 }
-/* O status é ao mesmo tempo o que se lê e o que se muda: um botão escrito
-   "Aprovado" parecia dizer o estado atual, não a ação. Como seletor, ele
-   mostra onde o post está e abre as opções ao ser clicado. */
-select.status {
-  font-family: inherit; border: none; cursor: pointer;
+/* Mudar o status é uma ação, então ela mora com as outras ações, no rodapé
+   do cartão — o cabeçalho fica só para ler o estado. Um botão escrito
+   "Aprovado" parecia dizer o estado atual em vez do que faria; o seletor diz
+   as duas coisas sem ambiguidade. */
+select.sel-status {
   -webkit-appearance: none; appearance: none;
-  padding-right: 20px;
+  padding-right: 26px !important;
   background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
                     linear-gradient(135deg, currentColor 50%, transparent 50%);
-  background-position: calc(100% - 11px) center, calc(100% - 7px) center;
+  background-position: calc(100% - 15px) center, calc(100% - 11px) center;
   background-size: 4px 4px, 4px 4px;
   background-repeat: no-repeat;
 }
-select.status:hover { filter: brightness(1.25); }
-select.status:focus-visible { outline: 2px solid var(--g-c); outline-offset: 1px; }
 /* A lista aberta é desenhada pelo sistema: sem isto, texto escuro em fundo
    escuro em alguns navegadores. */
-select.status option { background: var(--bg); color: var(--text); text-transform: none; }
+select.sel-status option { background: var(--bg); color: var(--text); }
 .st-producao { background: rgba(139,92,246,.16); color: #A78BFA; }
 .st-rascunho { background: rgba(168,162,158,.16); color: var(--text3); }
 .st-aprovado { background: var(--ok-bg); color: var(--ok); }
@@ -4318,7 +4316,7 @@ function renderBanco() {
               ${rotuloFormato(p.rede, p.formato) ? `<span class="badge badge-formato">${FORMATOS[p.rede][p.formato].emoji} ${rotuloFormato(p.rede, p.formato)}</span>` : ''}
               <span class="post-data">${p.empresa || ''} · ${criado}${p.data ? ' · ' + new Date(p.data+'T12:00:00').toLocaleDateString('pt-BR') + (p.hora ? ' às ' + p.hora : '') : ''}</span>
             </div>
-            ${seletorStatus(idx, p.status)}
+            <span class="status ${sc[p.status]}">${sl[p.status]}</span>
           </div>
           ${expiraHtml}
           <div class="post-corpo">${resumo}${p.texto.length > 180 ? '...' : ''}</div>
@@ -4329,7 +4327,7 @@ function renderBanco() {
             <button class="btn2 btn2-sm" onclick="abrirModalData(${idx}, null)">📅 Alterar data</button>
             ${p.status === 'producao'
               ? `<button class="btn" style="font-size:11px;padding:5px 12px" onclick="gerarLegendaDePost(${idx})">✦ Já produzi — gerar legenda</button>`
-              : ''}
+              : seletorStatus(idx, p.status)}
             <button class="btnd" onclick="excluirPost(${idx})">Excluir</button>
           </div>
         </div>
@@ -4365,8 +4363,8 @@ function seletorStatus(idx, atual) {
     const bloqueado = STATUS_ESCOLHIVEIS.includes(v) ? '' : ' disabled';
     return `<option value="${v}"${selecionado}${bloqueado}>${STATUS_ROTULO[v]}</option>`;
   }).join('');
-  return `<select class="status ${STATUS_CLASSE[atual]}" onchange="mudarStatus(${idx}, this.value)"
-                  title="Status do post — clique para mudar">${opcoes}</select>`;
+  return `<select class="btn2 btn2-sm sel-status" onchange="mudarStatus(${idx}, this.value)"
+                  title="Status do post">${opcoes}</select>`;
 }
 
 function mudarStatus(idx, s) {
