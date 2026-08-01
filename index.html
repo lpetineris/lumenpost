@@ -989,7 +989,9 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 /* ── TOAST ── */
 #toast {
   position: fixed; bottom: 24px; right: 24px;
-  background: var(--g-d); color: white;
+  /* Fundo claro com texto branco dava contraste 2,98:1, abaixo do mínimo de
+     4,5. Aviso que o usuário precisa ler não pode depender de boa vista. */
+  background: #26262C; color: var(--text); border: 1px solid var(--border);
   font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 500;
   padding: 10px 16px; border-radius: var(--rs);
   border-left: 3px solid var(--g-c);
