@@ -54,7 +54,7 @@ export default async function handler(req, res) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'RESEND_API_KEY not configured' });
 
-  const { para, empresa, rede, texto, emailRemetente } = req.body;
+  const { para, empresa, rede, texto } = req.body;
 
   if (!para || !texto) return res.status(400).json({ error: 'Missing required fields' });
 
@@ -86,7 +86,11 @@ export default async function handler(req, res) {
   `;
 
   const payload = JSON.stringify({
-    from: 'Lumen Post <onboarding@resend.dev>',
+    // onboarding@resend.dev é o remetente de teste do Resend: só entrega
+    // para o dono da conta, e chega como se fosse de resend.dev. Assim que o
+    // domínio estiver verificado lá, basta definir EMAIL_REMETENTE — sem
+    // deploy, e sem risco de o envio parar antes da verificação.
+    from: process.env.EMAIL_REMETENTE || 'Lumen Post <onboarding@resend.dev>',
     to: [para],
     subject: `[Aprovação] Post ${esc(rede)} — ${esc(empresa) || 'Lumen Post'}`,
     html,
