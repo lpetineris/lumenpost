@@ -7,6 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
+  /* Diz ao navegador que o tema é escuro. Sem isto ele desenha os controles
+     nativos — calendário, relógio, listas de seleção, barras de rolagem —
+     como se o fundo fosse claro. */
+  color-scheme: dark;
   --g:      #2D6A4F;
   --g-d:    #40916C;
   --g-dd:   #0D2B1F;
@@ -309,6 +313,8 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 .field select,
 .field textarea,
 .field input[type="date"],
+.field input[type="time"],
+.field input[type="url"],
 .field input[type="text"] {
   width: 100%;
   font-family: 'Poppins', sans-serif;

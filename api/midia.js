@@ -20,6 +20,16 @@ import { identidade, assinarDados, lerDadosAssinados, segredoDoAmbiente } from '
 
 const VALIDADE_SEGUNDOS = 600;
 
+// Cabeçalho de anexo com nome acentuado. Cabeçalho HTTP só carrega ASCII, e
+// mandar "Análise" cru fazia o navegador escrever "An?lise" no arquivo. A
+// forma correta é dar as duas versões: uma sem acento, para quem só entende
+// ASCII, e a de verdade em UTF-8.
+function cabecalhoAnexo(nome) {
+  const limpo = String(nome).replace(/["\\]/g, '');
+  const semAcento = limpo.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, '_');
+  return `attachment; filename="${semAcento}"; filename*=UTF-8''${encodeURIComponent(limpo)}`;
+}
+
 function buscar(url, headers) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
@@ -124,7 +134,7 @@ export default async function handler(req, res) {
     const nome = (imagens.length > 1 ? String(indice + 1).padStart(2, '0') + '-' : '') + base + '.' + ext;
 
     res.setHeader('Content-Type', tipo);
-    res.setHeader('Content-Disposition', `attachment; filename="${nome}"`);
+    res.setHeader('Content-Disposition', cabecalhoAnexo(nome));
     res.setHeader('Content-Length', bytes.length);
     res.setHeader('Cache-Control', 'private, max-age=300');
     return res.status(200).send(bytes);
