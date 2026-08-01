@@ -729,11 +729,6 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 
 .post-data { font-size: 11px; color: var(--text3); }
 
-.status {
-  font-size: 10px; font-weight: 600;
-  padding: 2px 9px; border-radius: 10px;
-  letter-spacing: .04em; text-transform: uppercase;
-}
 /* Mudar o status é uma ação, então ela mora com as outras ações, no rodapé
    do cartão — o cabeçalho fica só para ler o estado. Um botão escrito
    "Aprovado" parecia dizer o estado atual em vez do que faria; o seletor diz
@@ -750,10 +745,6 @@ select.sel-status {
 /* A lista aberta é desenhada pelo sistema: sem isto, texto escuro em fundo
    escuro em alguns navegadores. */
 select.sel-status option { background: var(--bg); color: var(--text); }
-.st-producao { background: rgba(139,92,246,.16); color: #A78BFA; }
-.st-rascunho { background: rgba(168,162,158,.16); color: var(--text3); }
-.st-aprovado { background: var(--ok-bg); color: var(--ok); }
-.st-publicado { background: var(--g); color: white; }
 
 .post-corpo {
   padding: 12px 14px; font-size: 13px;
@@ -4257,10 +4248,9 @@ function salvarPost() {
 
 
 // ── BANCO ─────────────────────────────────────────────────────────────
-// Rótulo e cor de cada status, num lugar só. Estavam duplicados em duas
-// funções, e foi por isso que um status removido sobreviveu em um dos dois.
+// Rótulo de cada status, num lugar só. Estava duplicado em duas funções, e
+// foi por isso que um status removido sobreviveu em uma delas.
 const STATUS_ROTULO = { producao:'Em produção', rascunho:'Rascunho', aprovado:'Aprovado', publicado:'Publicado' };
-const STATUS_CLASSE = { producao:'st-producao', rascunho:'st-rascunho', aprovado:'st-aprovado', publicado:'st-publicado' };
 
 function renderBanco() {
   const lista = document.getElementById('banco-lista');
@@ -4275,7 +4265,6 @@ function renderBanco() {
     return;
   }
 
-  const sl = STATUS_ROTULO, sc = STATUS_CLASSE;
 
   lista.innerHTML = filtrados.map(p => {
     const idx = bancoPosts.indexOf(p);
@@ -4316,7 +4305,6 @@ function renderBanco() {
               ${rotuloFormato(p.rede, p.formato) ? `<span class="badge badge-formato">${FORMATOS[p.rede][p.formato].emoji} ${rotuloFormato(p.rede, p.formato)}</span>` : ''}
               <span class="post-data">${p.empresa || ''} · ${criado}${p.data ? ' · ' + new Date(p.data+'T12:00:00').toLocaleDateString('pt-BR') + (p.hora ? ' às ' + p.hora : '') : ''}</span>
             </div>
-            <span class="status ${sc[p.status]}">${sl[p.status]}</span>
           </div>
           ${expiraHtml}
           <div class="post-corpo">${resumo}${p.texto.length > 180 ? '...' : ''}</div>
