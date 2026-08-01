@@ -112,8 +112,8 @@ CONTEUDO = [
 
     ("secao", "Banco de Posts"),
     ("p", "Reúne todos os posts gerados e salvos. Dá para filtrar por status e por rede social."),
-    ("p", "Cada post tem ações de Ver completo, Copiar, Baixar mídia, Alterar data, mudar status "
-          "e Excluir."),
+    ("p", "Cada post tem ações de Ver completo, Copiar, Baixar mídia, Alterar data e Excluir. O "
+          "status fica no alto do cartão: clique nele para mudar."),
     ("sub", "Status"),
     ("li", "Em produção — tem orientação, falta o material"),
     ("li", "Rascunho — pronto, ainda não enviado para aprovação"),

@@ -734,6 +734,24 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
   padding: 2px 9px; border-radius: 10px;
   letter-spacing: .04em; text-transform: uppercase;
 }
+/* O status é ao mesmo tempo o que se lê e o que se muda: um botão escrito
+   "Aprovado" parecia dizer o estado atual, não a ação. Como seletor, ele
+   mostra onde o post está e abre as opções ao ser clicado. */
+select.status {
+  font-family: inherit; border: none; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  padding-right: 20px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 11px) center, calc(100% - 7px) center;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+select.status:hover { filter: brightness(1.25); }
+select.status:focus-visible { outline: 2px solid var(--g-c); outline-offset: 1px; }
+/* A lista aberta é desenhada pelo sistema: sem isto, texto escuro em fundo
+   escuro em alguns navegadores. */
+select.status option { background: var(--bg); color: var(--text); text-transform: none; }
 .st-producao { background: rgba(139,92,246,.16); color: #A78BFA; }
 .st-rascunho { background: rgba(168,162,158,.16); color: var(--text3); }
 .st-aprovado { background: var(--ok-bg); color: var(--ok); }
@@ -4241,6 +4259,11 @@ function salvarPost() {
 
 
 // ── BANCO ─────────────────────────────────────────────────────────────
+// Rótulo e cor de cada status, num lugar só. Estavam duplicados em duas
+// funções, e foi por isso que um status removido sobreviveu em um dos dois.
+const STATUS_ROTULO = { producao:'Em produção', rascunho:'Rascunho', aprovado:'Aprovado', publicado:'Publicado' };
+const STATUS_CLASSE = { producao:'st-producao', rascunho:'st-rascunho', aprovado:'st-aprovado', publicado:'st-publicado' };
+
 function renderBanco() {
   const lista = document.getElementById('banco-lista');
   let filtrados = filtroAtual === 'todos' ? bancoPosts : bancoPosts.filter(p => p.status === filtroAtual);
@@ -4254,8 +4277,7 @@ function renderBanco() {
     return;
   }
 
-  const sl = { producao:'Em produção', rascunho:'Rascunho', aprovado:'Aprovado', publicado:'Publicado' };
-  const sc = { producao:'st-producao', rascunho:'st-rascunho', aprovado:'st-aprovado', publicado:'st-publicado' };
+  const sl = STATUS_ROTULO, sc = STATUS_CLASSE;
 
   lista.innerHTML = filtrados.map(p => {
     const idx = bancoPosts.indexOf(p);
@@ -4296,7 +4318,7 @@ function renderBanco() {
               ${rotuloFormato(p.rede, p.formato) ? `<span class="badge badge-formato">${FORMATOS[p.rede][p.formato].emoji} ${rotuloFormato(p.rede, p.formato)}</span>` : ''}
               <span class="post-data">${p.empresa || ''} · ${criado}${p.data ? ' · ' + new Date(p.data+'T12:00:00').toLocaleDateString('pt-BR') + (p.hora ? ' às ' + p.hora : '') : ''}</span>
             </div>
-            <span class="status ${sc[p.status]}">${sl[p.status]}</span>
+            ${seletorStatus(idx, p.status)}
           </div>
           ${expiraHtml}
           <div class="post-corpo">${resumo}${p.texto.length > 180 ? '...' : ''}</div>
@@ -4307,8 +4329,7 @@ function renderBanco() {
             <button class="btn2 btn2-sm" onclick="abrirModalData(${idx}, null)">📅 Alterar data</button>
             ${p.status === 'producao'
               ? `<button class="btn" style="font-size:11px;padding:5px 12px" onclick="gerarLegendaDePost(${idx})">✦ Já produzi — gerar legenda</button>`
-              : `${p.status==='rascunho'?`<button class="btng" onclick="mudarStatus(${idx},'aprovado')">Aprovado ✓</button>`:''}
-                 ${p.status==='aprovado'?`<button class="btn" style="font-size:11px;padding:5px 12px" onclick="mudarStatus(${idx},'publicado')">Publicado</button>`:''}`}
+              : ''}
             <button class="btnd" onclick="excluirPost(${idx})">Excluir</button>
           </div>
         </div>
@@ -4330,6 +4351,22 @@ function filtrarRede(rede, btn) {
   document.querySelectorAll('#filtros-rede .filtro').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
   renderBanco();
+}
+
+// "Em produção" não é escolha do usuário: é o estado de um post que ainda
+// não tem material. Ele aparece na lista para o post que está nele, mas não
+// dá para entrar nele à mão — sair de lá é pela ação "Já produzi".
+const STATUS_ESCOLHIVEIS = ['rascunho', 'aprovado', 'publicado'];
+
+function seletorStatus(idx, atual) {
+  const opcoes = ['producao'].concat(STATUS_ESCOLHIVEIS).map(function(v) {
+    if (v === 'producao' && atual !== 'producao') return '';
+    const selecionado = v === atual ? ' selected' : '';
+    const bloqueado = STATUS_ESCOLHIVEIS.includes(v) ? '' : ' disabled';
+    return `<option value="${v}"${selecionado}${bloqueado}>${STATUS_ROTULO[v]}</option>`;
+  }).join('');
+  return `<select class="status ${STATUS_CLASSE[atual]}" onchange="mudarStatus(${idx}, this.value)"
+                  title="Status do post — clique para mudar">${opcoes}</select>`;
 }
 
 function mudarStatus(idx, s) {
@@ -5711,7 +5748,7 @@ function esvaziarLixeira() {
 function exportarPosts() {
   if (bancoPosts.length === 0) { mostrarToast('Nenhum post no banco para exportar.'); return; }
 
-  const sl = { producao: 'Em produção', rascunho: 'Rascunho', aprovado: 'Aprovado', publicado: 'Publicado' };
+  const sl = STATUS_ROTULO;
   const linhas = [];
   linhas.push('LUMEN POST — BACKUP DE POSTS');
   linhas.push('Exportado em: ' + new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}));
