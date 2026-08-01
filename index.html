@@ -1984,6 +1984,7 @@ window.addEventListener('message', function(e) {
   CURRENT_USER_ID = e.data.userId;
   liberarTela();
   loadFromCloud();
+    enviarErrosPendentes();  // fila do arranque sobe agora que há passe
 });
 
 // Enquanto essa tela de "Conectando..." está visível, o usuário não consegue
@@ -2036,6 +2037,15 @@ async function dbCall(action, table, data) {
     resultado = null;
   }
 
+  // Registrar a falha de leitura também: foi uma leitura silenciosa que
+  // escondeu por meses que as análises não subiam. A tabela de erros é a
+  // única exceção — registrar que o registro falhou daria laço.
+  if (_falhou(resultado) && table !== 'erros') {
+    const err = resultado && resultado.error;
+    registrarErro('banco', action + ' ' + table,
+      (err && (err.code || '') + ' ' + (err.message || '')) || 'sem resposta');
+  }
+
   if (_ACOES_QUE_GRAVAM.includes(action) && _falhou(resultado)) {
     console.error('Falha ao gravar na nuvem:', action, table, resultado);
     // Uma mensagem por vez: um salvamento pode disparar várias gravações, e
@@ -2060,7 +2070,10 @@ async function chamarIA(corpo, extras) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(Object.assign({}, corpo, { passe: PASSE_ATUAL || undefined }))
-  }, extras || {}));
+  }, extras || {})).then(function(r) {
+    if (!r.ok) registrarErro('ia', 'chamarIA', 'HTTP ' + r.status);
+    return r;
+  });
 }
 
 // Pede ao servidor um endereço assinado para baixar a mídia. A ponte do Wix
@@ -2084,6 +2097,80 @@ async function urlDeMidia(cloudId, indice) {
     return null;
   }
 }
+
+// ── REGISTRO DE ERROS ─────────────────────────────────────────────────
+// Falha que ninguém relata é falha que dura meses. As análises que não
+// subiam e as programações que não salvavam ficaram assim por não haver
+// onde olhar.
+//
+// Registra a NATUREZA da falha, nunca o conteúdo do usuário: o texto do
+// post não ajuda a consertar, e guardá-lo criaria um segundo banco de dados
+// pessoais, com todos os deveres que isso traz.
+//
+// Os erros ficam numa fila no navegador e sobem quando há passe. Assim os
+// que acontecem no arranque — antes de o Wix responder — não se perdem, que
+// são justamente os mais difíceis de reproduzir.
+const _FERRAMENTA = 'post';
+const _FILA_ERROS = 'lp_erros_pendentes';
+const _MAX_ERROS_NA_FILA = 20;
+let _enviandoErros = false;
+
+function _lerFilaErros() {
+  try { return JSON.parse(localStorage.getItem(_FILA_ERROS) || '[]'); } catch(e) { return []; }
+}
+
+function _gravarFilaErros(fila) {
+  // Só os mais recentes: uma falha em laço não pode encher o navegador.
+  try { localStorage.setItem(_FILA_ERROS, JSON.stringify(fila.slice(-_MAX_ERROS_NA_FILA))); } catch(e) {}
+}
+
+function registrarErro(tipo, operacao, mensagem) {
+  try {
+    const fila = _lerFilaErros();
+    fila.push({
+      ferramenta: _FERRAMENTA,
+      tipo: String(tipo || '').slice(0, 40),
+      operacao: String(operacao || '').slice(0, 120),
+      mensagem: String(mensagem == null ? '' : mensagem).slice(0, 300),
+      navegador: String(navigator.userAgent || '').slice(0, 160),
+    });
+    _gravarFilaErros(fila);
+    enviarErrosPendentes();
+  } catch(e) {
+    // Registrar erro não pode ser mais uma fonte de erro.
+  }
+}
+
+async function enviarErrosPendentes() {
+  if (_enviandoErros) return;
+  if (!_lerFilaErros().length) return;
+  // Dentro do Wix, sem passe ainda: a fila espera a próxima oportunidade.
+  if (window.parent !== window && !PASSE_ATUAL) return;
+
+  _enviandoErros = true;
+  try {
+    while (_lerFilaErros().length) {
+      const fila = _lerFilaErros();
+      const res = await dbCall('insert', 'erros', fila[0]);
+      // Não subiu: para por aqui e tenta de novo depois, sem perder a fila.
+      if (!res || !Array.isArray(res) || !res.length) break;
+      _gravarFilaErros(_lerFilaErros().slice(1));
+    }
+  } catch(e) {
+  } finally {
+    _enviandoErros = false;
+  }
+}
+
+// Quebras de JavaScript: hoje só aparecem no console de quem está com o F12
+// aberto, ou seja, quase nunca.
+window.addEventListener('error', function(e) {
+  registrarErro('javascript', (e.filename || '') + ':' + (e.lineno || ''), e.message);
+});
+window.addEventListener('unhandledrejection', function(e) {
+  const r = e.reason;
+  registrarErro('promessa', '', (r && r.message) || String(r));
+});
 
 async function loadFromCloud() {
   // Carrega o perfil da tabela central compartilhada (perfil_central)

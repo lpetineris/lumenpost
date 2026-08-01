@@ -20,6 +20,7 @@ const TABELAS = new Set([
   'posts',
   'perfis_post',
   'perfil_central',
+  'erros',
   'resumos_salvos',
   'analises',
   'conversas',
