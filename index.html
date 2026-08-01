@@ -736,7 +736,6 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
 }
 .st-producao { background: rgba(139,92,246,.16); color: #A78BFA; }
 .st-rascunho { background: rgba(168,162,158,.16); color: var(--text3); }
-.st-aguardando { background: rgba(245,158,11,.16); color: #FBBF24; }
 .st-aprovado { background: var(--ok-bg); color: var(--ok); }
 .st-publicado { background: var(--g); color: white; }
 
@@ -1261,7 +1260,6 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
       <button class="filtro on" onclick="filtrar('todos', this)">Todos</button>
       <button class="filtro" onclick="filtrar('producao', this)">Em produção</button>
       <button class="filtro" onclick="filtrar('rascunho', this)">Rascunho</button>
-      <button class="filtro" onclick="filtrar('aguardando', this)">Aguardando aprovação</button>
       <button class="filtro" onclick="filtrar('aprovado', this)">Aprovado</button>
       <button class="filtro" onclick="filtrar('publicado', this)">Publicado</button>
     </div>
@@ -1593,7 +1591,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>O Banco reúne todos os posts gerados. Você pode filtrar por status (Rascunho, Aguardando aprovação, Aprovado, Publicado) e por rede social. Cada post tem ações de Copiar, Baixar mídia, Alterar data, Aprovar por email, mudar status e Excluir. Posts excluídos vão para a Lixeira (aparecem no final do Banco) e ficam disponíveis por 7 dias para restauração.</p>
+            <p>O Banco reúne todos os posts gerados. Você pode filtrar por status (Rascunho, Aprovado, Publicado) e por rede social. Cada post tem ações de Copiar, Baixar mídia, Alterar data, Aprovar por email, mudar status e Excluir. Posts excluídos vão para a Lixeira (aparecem no final do Banco) e ficam disponíveis por 7 dias para restauração.</p>
           </div>
         </div>
 
@@ -1604,7 +1602,7 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
           </button>
           <div class="faq-a">
             <p>Ao excluir um post, ele vai para a Lixeira no final da aba Banco — não é apagado imediatamente. Você tem 7 dias para restaurá-lo. Após esse prazo, é removido permanentemente. Também é possível esvaziar a lixeira manualmente.</p>
-            <p>Excluir uma programação inteira leva junto os posts dela que ainda estão em rascunho, em produção ou aguardando aprovação — todos vão para a Lixeira, com os mesmos 7 dias. Os que já foram aprovados ou publicados ficam no Banco: são trabalho aprovado ou conteúdo que já foi ao ar. O aviso de confirmação diz quantos vão e quantos ficam.</p>
+            <p>Excluir uma programação inteira leva junto os posts dela que ainda estão em rascunho ou em produção — todos vão para a Lixeira, com os mesmos 7 dias. Os que já foram aprovados ou publicados ficam no Banco: são trabalho aprovado ou conteúdo que já foi ao ar. O aviso de confirmação diz quantos vão e quantos ficam.</p>
           </div>
         </div>
 
@@ -2118,7 +2116,10 @@ async function loadFromCloud() {
           redeName: redeInfo.label || redeKey,
           badge: redeInfo.badge || p.badge || 'badge-green',
           cal: redeInfo.cal || 'generico',
-          status: p.status || 'rascunho',
+          // 'aguardando aprovação' existia só porque o envio por e-mail o
+          // produzia. Sem ele, posts antigos nesse estado voltam a rascunho —
+          // senão ficariam sem rótulo e sem botão na tela.
+          status: (p.status === 'aguardando' ? 'rascunho' : p.status) || 'rascunho',
           empresa: p.empresa || '',
           criadoEm: p.criado_em,
           data: p.data_publicacao || '',
@@ -2261,6 +2262,8 @@ function salvarProgramacoes() {
 }
 
 try { bancoPosts = JSON.parse(localStorage.getItem('lp_posts') || '[]'); } catch(e) { bancoPosts = []; }
+// Mesmo motivo da carga da nuvem: o status 'aguardando' não existe mais.
+bancoPosts.forEach(function(p) { if (p.status === 'aguardando') p.status = 'rascunho'; });
 try { calPosts = JSON.parse(localStorage.getItem('lp_cal') || '{}'); } catch(e) { calPosts = {}; }
 try { programacoes = JSON.parse(localStorage.getItem('lp_programacoes') || '[]'); } catch(e) { programacoes = []; }
 try { programacaoAtivaId = localStorage.getItem('lp_programacao_ativa') || null; } catch(e) { programacaoAtivaId = null; }
@@ -4251,8 +4254,8 @@ function renderBanco() {
     return;
   }
 
-  const sl = { producao:'Em produção', rascunho:'Rascunho', aguardando:'Aguardando aprovação', aprovado:'Aprovado', publicado:'Publicado' };
-  const sc = { producao:'st-producao', rascunho:'st-rascunho', aguardando:'st-aguardando', aprovado:'st-aprovado', publicado:'st-publicado' };
+  const sl = { producao:'Em produção', rascunho:'Rascunho', aprovado:'Aprovado', publicado:'Publicado' };
+  const sc = { producao:'st-producao', rascunho:'st-rascunho', aprovado:'st-aprovado', publicado:'st-publicado' };
 
   lista.innerHTML = filtrados.map(p => {
     const idx = bancoPosts.indexOf(p);
@@ -4304,7 +4307,7 @@ function renderBanco() {
             <button class="btn2 btn2-sm" onclick="abrirModalData(${idx}, null)">📅 Alterar data</button>
             ${p.status === 'producao'
               ? `<button class="btn" style="font-size:11px;padding:5px 12px" onclick="gerarLegendaDePost(${idx})">✦ Já produzi — gerar legenda</button>`
-              : `${(p.status==='rascunho'||p.status==='aguardando')?`<button class="btng" onclick="mudarStatus(${idx},'aprovado')">Aprovado ✓</button>`:''}
+              : `${p.status==='rascunho'?`<button class="btng" onclick="mudarStatus(${idx},'aprovado')">Aprovado ✓</button>`:''}
                  ${p.status==='aprovado'?`<button class="btn" style="font-size:11px;padding:5px 12px" onclick="mudarStatus(${idx},'publicado')">Publicado</button>`:''}`}
             <button class="btnd" onclick="excluirPost(${idx})">Excluir</button>
           </div>
@@ -4989,13 +4992,13 @@ function excluirProgramacaoAtiva() {
   // registro disso ao reorganizar o calendário é perda de verdade.
   const daProgramacao = bancoPosts.filter(p =>
     (p.programacaoId || ID_PROGRAMACAO_FIXA) === ativa.id);
-  const descartaveis = daProgramacao.filter(p => p.status === 'rascunho' || p.status === 'aguardando');
+  const descartaveis = daProgramacao.filter(p => p.status === 'rascunho');
   const preservados = daProgramacao.length - descartaveis.length;
 
   const partes = [`Excluir a programação "${ativa.nome}"?`];
   if (total > 0) partes.push(`${total} espaço(s) ainda não preenchido(s) serão removidos.`);
   if (descartaveis.length > 0) {
-    partes.push(`${descartaveis.length} post(s) em rascunho ou aguardando aprovação irão para a lixeira, com 7 dias para restaurar.`);
+    partes.push(`${descartaveis.length} post(s) em rascunho irão para a lixeira, com 7 dias para restaurar.`);
   }
   if (preservados > 0) {
     partes.push(`${preservados} post(s) aprovado(s) ou publicado(s) serão mantidos no Banco.`);
@@ -5708,7 +5711,7 @@ function esvaziarLixeira() {
 function exportarPosts() {
   if (bancoPosts.length === 0) { mostrarToast('Nenhum post no banco para exportar.'); return; }
 
-  const sl = { producao: 'Em produção', rascunho: 'Rascunho', aguardando: 'Aguardando aprovação', aprovado: 'Aprovado', publicado: 'Publicado' };
+  const sl = { producao: 'Em produção', rascunho: 'Rascunho', aprovado: 'Aprovado', publicado: 'Publicado' };
   const linhas = [];
   linhas.push('LUMEN POST — BACKUP DE POSTS');
   linhas.push('Exportado em: ' + new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}));

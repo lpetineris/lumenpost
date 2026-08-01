@@ -117,7 +117,6 @@ CONTEUDO = [
     ("sub", "Status"),
     ("li", "Em produção — tem orientação, falta o material"),
     ("li", "Rascunho — pronto, ainda não enviado para aprovação"),
-    ("li", "Aguardando aprovação — está com alguém para aprovar"),
     ("li", "Aprovado — liberado para publicar"),
     ("li", "Publicado — já foi ao ar"),
     ("sub", "Terminar um post Em produção"),
@@ -133,7 +132,7 @@ CONTEUDO = [
           "restauração. Depois disso é removido em definitivo. Também dá para esvaziar a lixeira "
           "manualmente."),
     ("p", "Excluir uma programação inteira leva junto os posts dela que ainda estão em produção, em "
-          "rascunho ou aguardando aprovação. Os aprovados e publicados ficam no Banco: são trabalho "
+          "rascunho. Os aprovados e publicados ficam no Banco: são trabalho "
           "aprovado ou conteúdo que já foi ao ar. O aviso de confirmação diz quantos vão e quantos "
           "ficam."),
 
