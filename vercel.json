@@ -35,10 +35,6 @@
       "dest": "/api/guia.js"
     },
     {
-      "src": "/api/email",
-      "dest": "/api/email.js"
-    },
-    {
       "src": "/api/bio",
       "dest": "/api/bio.js"
     },

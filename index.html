@@ -1695,7 +1695,8 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
             <span class="faq-ico">+</span>
           </button>
           <div class="faq-a">
-            <p>No Banco de Posts, clique em "✉ Aprovar por email", insira o email do aprovador e clique em Enviar. O post muda para "Aguardando aprovação" e o aprovador recebe o texto por email. Quando aprovado, mude o status para "Aprovado" e depois "Publicado" manualmente.</p>
+            <p>No Banco de Posts, use o botão "Copiar" e envie o texto para quem vai aprovar pelo canal que preferir. Com a resposta em mãos, marque o post como "Aprovado" e, depois de publicar, como "Publicado".</p>
+            <p style="margin-top:10px;color:var(--text3)">O envio direto para aprovação está sendo refeito e volta em breve.</p>
           </div>
         </div>
 
@@ -1859,29 +1860,6 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
   </div>
 </div>
 
-<!-- Modal Email Aprovação -->
-<div class="modal-overlay" id="modal-email-overlay">
-  <div class="modal" style="max-width:440px">
-    <div class="modal-hdr">
-      <h3>Enviar para aprovação</h3>
-      <button class="modal-close" onclick="fecharModalEmail()">×</button>
-    </div>
-    <div style="padding:20px">
-      <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
-        Insira o email de quem vai aprovar. Será enviado o texto do post para revisão.
-      </p>
-      <div class="field">
-        <label>E-mail do aprovador</label>
-        <input type="text" id="email-aprovador-input" placeholder="Ex: diretora@empresa.com.br">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn2" onclick="fecharModalEmail()">Cancelar</button>
-      <button class="btn" onclick="enviarEmailAprovacao()" id="btn-enviar-email">Enviar</button>
-    </div>
-  </div>
-</div>
-
 <!-- Modal -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
@@ -1893,7 +1871,6 @@ body.rail-pinned.pinned main { margin-left: calc(var(--rail-w-open) + var(--side
       <button class="modal-close" onclick="fecharModal()">×</button>
     </div>
     <div class="modal-midia" id="modal-midia"></div>
-    <div id="modal-email" style="display:none;padding:8px 20px;font-size:12px;color:var(--text2);background:var(--bg2);border-bottom:1px solid var(--border)"></div>
     <div class="modal-corpo" id="modal-corpo"></div>
     <div class="modal-footer">
       <button class="btn2" onclick="copiarModal()">Copiar texto</button>
@@ -4035,7 +4012,7 @@ function renderizarResultado(tema, tom) {
       roteiro: etapaAtual === 'produzir' ? r.texto : (roteiroDeOrigem || null),
       midia: midiaParaSalvar(midiaAtual),
       data: document.getElementById('input-data').value || '',
-      status: etapaAtual === 'produzir' ? 'producao' : 'rascunho', aprovacao: false, emailAprovacao: '',
+      status: etapaAtual === 'produzir' ? 'producao' : 'rascunho',
       empresa: perfil.nome, criadoEm: new Date().toISOString(),
     };
 
@@ -4127,7 +4104,6 @@ function salvarAba(key) {
     data: dataAtual,
     hora: document.getElementById('input-hora').value || '',
     status: etapaAtual === 'produzir' ? 'producao' : 'rascunho',
-    aprovacao: false, emailAprovacao: '',
     empresa: perfil.nome,
     programacaoId: programacaoContextoAtual || ID_PROGRAMACAO_FIXA,
     id: Date.now() + Math.random(),
@@ -4320,7 +4296,6 @@ function renderBanco() {
             <span class="status ${sc[p.status]}">${sl[p.status]}</span>
           </div>
           ${expiraHtml}
-          ${p.emailAprovacao ? `<div style="padding:4px 14px;font-size:11px;color:var(--text3);background:var(--bg2);border-bottom:1px solid var(--border)">✉ Aprovador: <strong style="color:var(--text2)">${p.emailAprovacao}</strong></div>` : ''}
           <div class="post-corpo">${resumo}${p.texto.length > 180 ? '...' : ''}</div>
           <div class="post-footer">
             <button class="btn2 btn2-sm" onclick="verPost(${idx})">Ver completo</button>
@@ -4329,8 +4304,7 @@ function renderBanco() {
             <button class="btn2 btn2-sm" onclick="abrirModalData(${idx}, null)">📅 Alterar data</button>
             ${p.status === 'producao'
               ? `<button class="btn" style="font-size:11px;padding:5px 12px" onclick="gerarLegendaDePost(${idx})">✦ Já produzi — gerar legenda</button>`
-              : `<button class="btng" onclick="abrirModalEmail(${idx})">✉ Aprovar por email</button>
-                 ${(p.status==='rascunho'||p.status==='aguardando')?`<button class="btng" onclick="mudarStatus(${idx},'aprovado')">Aprovado ✓</button>`:''}
+              : `${(p.status==='rascunho'||p.status==='aguardando')?`<button class="btng" onclick="mudarStatus(${idx},'aprovado')">Aprovado ✓</button>`:''}
                  ${p.status==='aprovado'?`<button class="btn" style="font-size:11px;padding:5px 12px" onclick="mudarStatus(${idx},'publicado')">Publicado</button>`:''}`}
             <button class="btnd" onclick="excluirPost(${idx})">Excluir</button>
           </div>
@@ -4590,14 +4564,6 @@ function verPost(idx) {
     dhEl.style.display = 'block';
   } else { dhEl.style.display = 'none'; }
   document.getElementById('modal-corpo').textContent = p.texto;
-  // Show email if present
-  var emailEl = document.getElementById('modal-email');
-  if (p.emailAprovacao) {
-    emailEl.textContent = '✉ Aprovador: ' + p.emailAprovacao;
-    emailEl.style.display = 'block';
-  } else {
-    emailEl.style.display = 'none';
-  }
   const mm = document.getElementById('modal-midia');
   const dlBtn = document.getElementById('modal-footer-download-btn');
   if (p.midia) {
@@ -4824,14 +4790,6 @@ function verPostCal(p, chave) {
   const dataBtn = document.getElementById('modal-footer-data-btn');
   if (dataBtn) { dataBtn.style.display = 'inline-flex'; dataBtn._source = 'calendario'; }
 
-  // Email do aprovador
-  var emailEl = document.getElementById('modal-email');
-  if (p.emailAprovacao) {
-    emailEl.textContent = '✉ Aprovador: ' + p.emailAprovacao;
-    emailEl.style.display = 'block';
-  } else {
-    emailEl.style.display = 'none';
-  }
 
   document.getElementById('modal-overlay').classList.add('open');
 }
@@ -5958,80 +5916,6 @@ function copiarTextoSeguro(texto) {
     mostrarToast('Não foi possível copiar.');
   }
   document.body.removeChild(ta);
-}
-
-// ── MODAL EMAIL APROVAÇÃO ────────────────────────────────────────────
-var _emailPostIdx = null;
-
-function abrirModalEmail(idx) {
-  _emailPostIdx = idx;
-  var post = bancoPosts[idx];
-  // Preencher email salvo se houver
-  document.getElementById('email-aprovador-input').value = post.emailAprovacao || '';
-  document.getElementById('modal-email-overlay').classList.add('open');
-}
-
-function fecharModalEmail() {
-  document.getElementById('modal-email-overlay').classList.remove('open');
-  _emailPostIdx = null;
-}
-
-function enviarEmailAprovacao() {
-  if (_emailPostIdx === null) return;
-  var post = bancoPosts[_emailPostIdx];
-  var email = document.getElementById('email-aprovador-input').value.trim();
-  if (!email) { mostrarToast('Insira um email válido.'); return; }
-
-  var btn = document.getElementById('btn-enviar-email');
-  btn.disabled = true;
-  btn.textContent = 'Enviando...';
-
-  // Salvar email no post
-  bancoPosts[_emailPostIdx].emailAprovacao = email;
-  bancoPosts[_emailPostIdx].status = 'aguardando';
-  salvarStorage();
-
-  // Atualizar status no Supabase
-  if (post._cloudId) {
-    dbCall('update', 'posts', {
-      id: post._cloudId,
-      user_id: CURRENT_USER_ID,
-      status: 'aguardando'
-    });
-  }
-
-  // Enviar email via Resend
-  _garantirPasse().then(function() {
-  return fetch('/api/email', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({
-      para: email,
-      empresa: perfil.nome || '',
-      rede: post.redeName || '',
-      texto: post.texto || '',
-      passe: PASSE_ATUAL || undefined,
-    })
-  });
-  }).then(function(r) { return r.json(); })
-    .then(function(r) {
-      btn.disabled = false;
-      btn.textContent = 'Enviar';
-      if (r.success) {
-        fecharModalEmail();
-        renderBanco();
-        mostrarToast('Email de aprovação enviado para ' + email);
-      } else {
-        mostrarToast('Erro ao enviar email. Tente novamente.');
-        console.error('Resend error:', r);
-      }
-    })
-    .catch(function(e) {
-      btn.disabled = false;
-      btn.textContent = 'Enviar';
-      mostrarToast('Erro ao enviar email.');
-      console.error(e);
-    });
 }
 
 // ── ALTERAR DATA ─────────────────────────────────────────────────────

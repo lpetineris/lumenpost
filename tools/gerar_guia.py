@@ -112,12 +112,12 @@ CONTEUDO = [
 
     ("secao", "Banco de Posts"),
     ("p", "Reúne todos os posts gerados e salvos. Dá para filtrar por status e por rede social."),
-    ("p", "Cada post tem ações de Ver completo, Copiar, Baixar mídia, Alterar data, Aprovar por "
-          "email, mudar status e Excluir."),
+    ("p", "Cada post tem ações de Ver completo, Copiar, Baixar mídia, Alterar data, mudar status "
+          "e Excluir."),
     ("sub", "Status"),
     ("li", "Em produção — tem orientação, falta o material"),
     ("li", "Rascunho — pronto, ainda não enviado para aprovação"),
-    ("li", "Aguardando aprovação — enviado para alguém aprovar"),
+    ("li", "Aguardando aprovação — está com alguém para aprovar"),
     ("li", "Aprovado — liberado para publicar"),
     ("li", "Publicado — já foi ao ar"),
     ("sub", "Terminar um post Em produção"),
@@ -166,9 +166,10 @@ CONTEUDO = [
           "conteúdo."),
 
     ("secao", "Fluxo de aprovação"),
-    ("p", "Em Aprovar por email, informe o endereço de quem vai aprovar. A pessoa recebe o post e "
-          "responde aprovando ou pedindo ajuste, sem precisar de acesso à ferramenta. O status do "
-          "post acompanha a resposta."),
+    ("p", "Use Copiar no Banco de Posts e mande o texto para quem vai aprovar pelo canal que essa "
+          "pessoa já usa. Com a resposta, marque o post como Aprovado e, depois de publicar, como "
+          "Publicado — o status acompanha onde cada post está."),
+    ("nota", "O envio direto para aprovação está sendo refeito e volta em breve."),
 
     ("secao", "Aba Comentários"),
     ("p", "Cole o comentário recebido e, se quiser, a legenda do post que o gerou. A IA sugere uma "
