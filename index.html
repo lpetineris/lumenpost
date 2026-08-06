@@ -2015,7 +2015,12 @@ let _avisoDeFalhaEm = 0;
 
 function _falhou(res) {
   if (res === null || res === undefined) return true;
-  if (res && res.error) return true;
+  // Resposta boa é sempre uma lista de registros.
+  if (Array.isArray(res)) return false;
+  // Erro do Postgres chega como {code, message, details, hint} — sem a chave
+  // "error" que este teste procurava. Falha assim passava por sucesso: sem
+  // aviso na tela e sem linha no registro de erros.
+  if (res.error || res.code || res.message) return true;
   return false;
 }
 
