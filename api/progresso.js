@@ -68,9 +68,19 @@ export default async function handler(req, res) {
 
     // Uma estratégia montada vale tanto quanto um post gerado: são os dois
     // caminhos para o mesmo passo.
-    const temProgramacao = temAlgo(perfilPost) &&
-      !!perfilPost[0].programacoes &&
-      perfilPost[0].programacoes !== '[]';
+    //
+    // Mas "Posts gerais" não conta: ela é criada sozinha na primeira vez que
+    // o Post abre, e é só a gaveta dos posts avulsos. Contá-la fazia o passo
+    // nascer marcado e nunca desmarcar, mesmo com tudo apagado.
+    let temProgramacao = false;
+    if (temAlgo(perfilPost) && perfilPost[0].programacoes) {
+      try {
+        const lista = JSON.parse(perfilPost[0].programacoes);
+        temProgramacao = Array.isArray(lista) && lista.some((p) => p && !p.fixa);
+      } catch (e) {
+        temProgramacao = false;
+      }
+    }
 
     return res.status(200).json({
       perfil: temAlgo(perfil) && !!String(perfil[0].nome || '').trim(),
