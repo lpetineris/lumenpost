@@ -1465,6 +1465,7 @@ select.sel-status option { background: var(--bg); color: var(--text); }
           <div style="display:flex;gap:8px;margin-top:16px">
             <button class="btn btn-full" onclick="salvarBio()">Salvar página</button>
           </div>
+          <button class="btn2 btn2-sm" onclick="limparBio()" style="margin-top:8px;color:var(--text3)">Limpar página</button>
 
           <div id="bio-ok" style="display:none;margin-top:10px;font-size:12px;color:var(--g);font-weight:600">✓ Página salva com sucesso!</div>
 
@@ -5981,6 +5982,40 @@ async function salvarBio() {
   setTimeout(() => okEl.style.display = 'none', 3000);
   atualizarPreviewBio();
   mostrarToast('Página salva! Compartilhe o link na bio do Instagram.');
+}
+
+async function limparBio() {
+  const tinhaSlug = (bioData.slug || '').trim();
+  // O aviso precisa dizer o que sai do ar, não só o que some da tela: o
+  // endereço já está na bio do Instagram de quem publicou, e quem clicar nele
+  // vai encontrar página inexistente.
+  const aviso = tinhaSlug
+    ? 'Limpar a página do Link na Bio?\n\n' +
+      'O endereço lumenpost.vercel.app/bio/' + tinhaSlug + ' sai do ar. ' +
+      'Quem clicar nele — inclusive a partir da sua bio do Instagram — não vai encontrar nada.\n\n' +
+      'Título, descrição e todos os links serão apagados. Não dá para desfazer.'
+    : 'Limpar a página do Link na Bio?\n\nTítulo, descrição e links serão apagados. Não dá para desfazer.';
+  if (!confirm(aviso)) return;
+
+  bioData = { slug: '', titulo: '', descricao: '', links: [] };
+  document.getElementById('bio-slug').value = '';
+  document.getElementById('bio-titulo').value = '';
+  document.getElementById('bio-descricao').value = '';
+
+  try { localStorage.setItem('lp_bio', JSON.stringify(bioData)); } catch(e) {}
+
+  const res = await dbCall('upsert', 'perfis_post', {
+    id: CURRENT_USER_ID,
+    bio: JSON.stringify(bioData),
+  });
+  if (_falhou(res)) {
+    mostrarToast('⚠ A página foi limpa na tela, mas a nuvem recusou. Recarregue para conferir.');
+  } else {
+    mostrarToast('Página limpa. O endereço saiu do ar.');
+  }
+
+  renderLinksBio();
+  atualizarPreviewBio();
 }
 
 function copiarUrlBio() {
