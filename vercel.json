@@ -47,6 +47,10 @@
       "dest": "/api/token.js"
     },
     {
+      "src": "/api/progresso",
+      "dest": "/api/progresso.js"
+    },
+    {
       "src": "/api/passe",
       "dest": "/api/passe.js"
     },
