@@ -1308,8 +1308,7 @@ select.sel-status option { background: var(--bg); color: var(--text); }
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
-      <div id="programacao-ativa-info" style="font-size:12px;color:var(--text3)"></div>
+    <div style="display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-bottom:16px">
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <select id="select-programacao" onchange="trocarProgramacaoAtiva(this.value)" style="font-family:'Poppins',sans-serif;font-size:12px;padding:7px 10px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--bg);color:var(--text);display:none"></select>
         <button class="btn2 btn2-sm" id="btn-editar-programacao" onclick="toggleModoEdicaoPrograacao()" style="display:none">✎ Editar programação</button>
@@ -5054,16 +5053,14 @@ function navMes(dir) {
 
 function atualizarSeletorProgramacao() {
   const sel = document.getElementById('select-programacao');
-  const info = document.getElementById('programacao-ativa-info');
   const btnExcluir = document.getElementById('btn-excluir-programacao');
   const btnEditar = document.getElementById('btn-editar-programacao');
-  if (!sel || !info) return;
+  if (!sel) return;
 
   if (programacoes.length === 0) {
     sel.style.display = 'none';
     if (btnExcluir) btnExcluir.style.display = 'none';
     if (btnEditar) btnEditar.style.display = 'none';
-    info.textContent = 'Nenhuma programação ativa.';
     return;
   }
 
@@ -5084,14 +5081,6 @@ function atualizarSeletorProgramacao() {
     btnEditar.style.display = ativa ? 'inline-flex' : 'none';
   }
 
-  if (ativa) {
-    const total = Object.values(ativa.espacos || {}).reduce((acc, arr) => acc + arr.length, 0);
-    info.textContent = total > 0
-      ? `"${ativa.nome}" — ${total} espaço(s) aguardando conteúdo`
-      : `"${ativa.nome}" — todos os espaços preenchidos! 🎉`;
-  } else {
-    info.textContent = '';
-  }
 }
 
 function trocarProgramacaoAtiva(id) {
